@@ -8,7 +8,6 @@ local rs = game:GetService("RunService")
 -- 状态变量
 local flying = false
 local flySpeed = 50
-local vehicleFlying = false
 local walkSpeed = 16
 local jumpPower = 50
 local infiniteJump = false
@@ -21,37 +20,35 @@ local aimSmoothness = 0.5
 
 local bodyGyro = nil
 local bodyVel = nil
-local vehicleGyro = nil
-local vehicleVel = nil
 
 local leftJoyActive = false
 local leftJoyInput = Vector2.zero
 local rightJoyActive = false
 local rightJoyInput = Vector2.zero
 
--- GUI
+-- 创建 GUI
 local gui = Instance.new("ScreenGui", player:WaitForChild("PlayerGui"))
 gui.Name = "脚本中心"
 gui.ResetOnSpawn = false
 
--- 主窗口（较小）
+-- 主窗口 (400x400)
 local win = Instance.new("Frame", gui)
-win.Size = UDim2.new(0, 420, 0, 420)
-win.Position = UDim2.new(0.5, -210, 0.5, -210)
+win.Size = UDim2.new(0, 400, 0, 400)
+win.Position = UDim2.new(0.5, -200, 0.5, -200)
 win.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
 win.Visible = false
 win.ZIndex = 50
 Instance.new("UICorner", win).CornerRadius = UDim.new(0, 10)
 
 -- 飞行控制面板
-local flyControlPanel = Instance.new("Frame", gui)
-flyControlPanel.Size = UDim2.new(0, 280, 0, 200)
-flyControlPanel.Position = UDim2.new(0.8, -140, 0.65, -100)
-flyControlPanel.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
-flyControlPanel.BackgroundTransparency = 0.2
-flyControlPanel.Visible = false
-flyControlPanel.ZIndex = 60
-Instance.new("UICorner", flyControlPanel).CornerRadius = UDim.new(0, 10)
+local flyPanel = Instance.new("Frame", gui)
+flyPanel.Size = UDim2.new(0, 260, 0, 190)
+flyPanel.Position = UDim2.new(0.8, -130, 0.65, -95)
+flyPanel.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
+flyPanel.BackgroundTransparency = 0.2
+flyPanel.Visible = false
+flyPanel.ZIndex = 60
+Instance.new("UICorner", flyPanel).CornerRadius = UDim.new(0, 10)
 
 -- 标题栏
 local titleBar = Instance.new("Frame", win)
@@ -78,12 +75,30 @@ closeBtn.TextSize = 12
 Instance.new("UICorner", closeBtn).CornerRadius = UDim.new(0, 4)
 closeBtn.MouseButton1Click:Connect(function() win.Visible = false end)
 
--- 侧边栏
+-- 侧边栏（可滚动）
 local sidebar = Instance.new("Frame", win)
 sidebar.Size = UDim2.new(0, 100, 1, -32)
 sidebar.Position = UDim2.new(0, 0, 0, 32)
 sidebar.BackgroundColor3 = Color3.fromRGB(35, 35, 35)
 sidebar.BorderSizePixel = 0
+
+local sidebarScroll = Instance.new("ScrollingFrame", sidebar)
+sidebarScroll.Size = UDim2.new(1, 0, 1, 0)
+sidebarScroll.Position = UDim2.new(0, 0, 0, 0)
+sidebarScroll.BackgroundTransparency = 1
+sidebarScroll.ScrollBarThickness = 6
+sidebarScroll.ScrollingDirection = Enum.ScrollingDirection.Y
+sidebarScroll.CanvasSize = UDim2.new(0, 0, 0, 600)
+sidebarScroll.BottomImage = "rbxassetid://0"
+sidebarScroll.TopImage = "rbxassetid://0"
+sidebarScroll.ClipsDescendants = true
+sidebarScroll.TouchEnabled = true
+sidebarScroll.TouchPanSpeed = 25
+
+local sidebarList = Instance.new("UIListLayout", sidebarScroll)
+sidebarList.Padding = UDim.new(0, 6)
+sidebarList.FillDirection = Enum.FillDirection.Vertical
+sidebarList.SortOrder = Enum.SortOrder.LayoutOrder
 
 -- 内容区
 local content = Instance.new("Frame", win)
@@ -98,17 +113,17 @@ local function showPage(name)
     for pageName, page in pairs(pages) do
         page.Visible = (pageName == name)
     end
-    for _, btn in ipairs(sidebar:GetChildren()) do
+    for _, btn in ipairs(sidebarScroll:GetChildren()) do
         if btn:IsA("TextButton") then
             btn.BackgroundColor3 = (btn.Text == name) and Color3.fromRGB(80, 130, 200) or Color3.fromRGB(55, 55, 55)
         end
     end
 end
 
-local function addSideButton(text, pageName, yPos)
+local function addSideButton(text, pageName)
     local btn = Instance.new("TextButton")
-    btn.Size = UDim2.new(1, -12, 0, 36)
-    btn.Position = UDim2.new(0, 6, 0, yPos)
+    btn.Size = UDim2.new(1, -12, 0, 40)
+    btn.Position = UDim2.new(0, 6, 0, 0)
     btn.BackgroundColor3 = Color3.fromRGB(55, 55, 55)
     btn.Text = text
     btn.TextColor3 = Color3.new(1, 1, 1)
@@ -116,7 +131,8 @@ local function addSideButton(text, pageName, yPos)
     btn.TextSize = 14
     btn.AutoButtonColor = false
     Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 6)
-    btn.Parent = sidebar
+    btn.LayoutOrder = #sidebarScroll:GetChildren()
+    btn.Parent = sidebarScroll
     btn.MouseButton1Click:Connect(function() showPage(pageName) end)
 end
 
@@ -230,6 +246,7 @@ local function createPage(name)
     return page
 end
 
+-- 更新ESP
 local function updateESP()
     for _, obj in ipairs(workspace:GetDescendants()) do
         if obj:IsA("Highlight") and (obj.Name == "玩家高亮" or obj.Name == "物品高亮") then
@@ -260,27 +277,27 @@ local function updateESP()
     end
 end
 
--- 飞行控制面板内容
+-- 飞行面板内容
 local panelDragging = false
 local panelDragStart = nil
 local panelStartPos = nil
-flyControlPanel.InputBegan:Connect(function(input)
+flyPanel.InputBegan:Connect(function(input)
     if input.UserInputType == Enum.UserInputType.Touch or input.UserInputType == Enum.UserInputType.MouseButton1 then
         panelDragging = true
         panelDragStart = input.Position
-        panelStartPos = flyControlPanel.Position
+        panelStartPos = flyPanel.Position
     end
 end)
-flyControlPanel.InputEnded:Connect(function() panelDragging = false end)
+flyPanel.InputEnded:Connect(function() panelDragging = false end)
 uis.InputChanged:Connect(function(input)
     if panelDragging and panelDragStart and panelStartPos and (input.UserInputType == Enum.UserInputType.Touch or input.UserInputType == Enum.UserInputType.MouseMovement) then
         local delta = input.Position - panelDragStart
-        flyControlPanel.Position = UDim2.new(panelStartPos.X.Scale, panelStartPos.X.Offset + delta.X, panelStartPos.Y.Scale, panelStartPos.Y.Offset + delta.Y)
+        flyPanel.Position = UDim2.new(panelStartPos.X.Scale, panelStartPos.X.Offset + delta.X, panelStartPos.Y.Scale, panelStartPos.Y.Offset + delta.Y)
     end
 end)
 
 -- 左摇杆
-local leftJoyBase = Instance.new("Frame", flyControlPanel)
+local leftJoyBase = Instance.new("Frame", flyPanel)
 leftJoyBase.Size = UDim2.new(0, 90, 0, 90)
 leftJoyBase.Position = UDim2.new(0.15, -45, 0.5, -45)
 leftJoyBase.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
@@ -323,7 +340,7 @@ uis.InputChanged:Connect(function(input)
 end)
 
 -- 右摇杆
-local rightJoyBase = Instance.new("Frame", flyControlPanel)
+local rightJoyBase = Instance.new("Frame", flyPanel)
 rightJoyBase.Size = UDim2.new(0, 90, 0, 90)
 rightJoyBase.Position = UDim2.new(0.85, -45, 0.5, -45)
 rightJoyBase.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
@@ -366,7 +383,7 @@ uis.InputChanged:Connect(function(input)
 end)
 
 -- 面板关闭按钮
-local panelClose = Instance.new("TextButton", flyControlPanel)
+local panelClose = Instance.new("TextButton", flyPanel)
 panelClose.Size = UDim2.new(0, 20, 0, 20)
 panelClose.Position = UDim2.new(1, -22, 0, 2)
 panelClose.BackgroundColor3 = Color3.fromRGB(200, 60, 60)
@@ -375,7 +392,7 @@ panelClose.TextColor3 = Color3.new(1, 1, 1)
 panelClose.Font = Enum.Font.SourceSansBold
 panelClose.TextSize = 12
 Instance.new("UICorner", panelClose).CornerRadius = UDim.new(0, 4)
-panelClose.MouseButton1Click:Connect(function() flyControlPanel.Visible = false end)
+panelClose.MouseButton1Click:Connect(function() flyPanel.Visible = false end)
 
 -- 飞行页面
 local flyPage = createPage("飞行")
@@ -405,40 +422,18 @@ flyToggle.MouseButton1Click:Connect(function()
             bodyVel.Velocity = Vector3.zero
             hum.PlatformStand = true
         end
-        flyControlPanel.Visible = true
+        flyPanel.Visible = true
     else
         flyToggle.Text = "飞行：关"
         flyToggle.BackgroundColor3 = Color3.fromRGB(255, 100, 100)
         if bodyGyro then bodyGyro:Destroy(); bodyGyro = nil end
         if bodyVel then bodyVel:Destroy(); bodyVel = nil end
         hum.PlatformStand = false
-        flyControlPanel.Visible = false
+        flyPanel.Visible = false
     end
 end)
 
-local vehicleFlyToggle = Instance.new("TextButton")
-vehicleFlyToggle.Size = UDim2.new(1, -20, 0, 36)
-vehicleFlyToggle.Position = UDim2.new(0, 10, 0, 55)
-vehicleFlyToggle.BackgroundColor3 = Color3.fromRGB(255, 100, 100)
-vehicleFlyToggle.Text = "载具飞行：关"
-vehicleFlyToggle.TextColor3 = Color3.new(1, 1, 1)
-vehicleFlyToggle.Font = Enum.Font.SourceSansBold
-vehicleFlyToggle.TextSize = 14
-vehicleFlyToggle.AutoButtonColor = false
-Instance.new("UICorner", vehicleFlyToggle).CornerRadius = UDim.new(0, 6)
-vehicleFlyToggle.Parent = flyPage
-vehicleFlyToggle.MouseButton1Click:Connect(function()
-    vehicleFlying = not vehicleFlying
-    if vehicleFlying then
-        vehicleFlyToggle.Text = "载具飞行：开"
-        vehicleFlyToggle.BackgroundColor3 = Color3.fromRGB(100, 255, 100)
-    else
-        vehicleFlyToggle.Text = "载具飞行：关"
-        vehicleFlyToggle.BackgroundColor3 = Color3.fromRGB(255, 100, 100)
-    end
-end)
-
-addSlider(flyPage, "飞行速度", 10, 200, 50, function(v) flySpeed = v end, 100)
+addSlider(flyPage, "飞行速度", 10, 200, 50, function(v) flySpeed = v end, 55)
 
 -- 速度页面
 local speedPage = createPage("速度")
@@ -477,12 +472,15 @@ addToggle(aimbotPage, "自瞄", false, function(v) aimbotEnabled = v end, 10)
 addSlider(aimbotPage, "平滑度", 0, 1, 0.5, function(v) aimSmoothness = v end, 60)
 
 -- 侧边栏按钮
-addSideButton("飞行", "飞行", 8)
-addSideButton("速度", "速度", 52)
-addSideButton("跳跃", "跳跃", 96)
-addSideButton("穿墙", "穿墙", 140)
-addSideButton("透视", "透视", 184)
-addSideButton("自瞄", "自瞄", 228)
+addSideButton("飞行", "飞行")
+addSideButton("速度", "速度")
+addSideButton("跳跃", "跳跃")
+addSideButton("穿墙", "穿墙")
+addSideButton("透视", "透视")
+addSideButton("自瞄", "自瞄")
+
+-- 默认页面
+pages["飞行"].Visible = true
 
 -- 右侧边缘悬浮按钮
 local edgeButton = Instance.new("TextButton", gui)
@@ -501,10 +499,9 @@ edgeButton.MouseButton1Click:Connect(function()
     win.Visible = not win.Visible
 end)
 
-pages["飞行"].Visible = true
-
 -- 主循环
 rs.RenderStepped:Connect(function()
+    -- 飞行
     if flying and bodyVel and bodyGyro and root then
         local cam = workspace.CurrentCamera
         if cam then
@@ -517,34 +514,7 @@ rs.RenderStepped:Connect(function()
         end
     end
 
-    if vehicleFlying then
-        local vehicle = findVehicle()
-        if vehicle then
-            if not vehicleGyro then
-                vehicleGyro = Instance.new("BodyGyro", vehicle)
-                vehicleGyro.P = 9e4
-                vehicleGyro.MaxTorque = Vector3.new(9e9, 9e9, 9e9)
-                vehicleVel = Instance.new("BodyVelocity", vehicle)
-                vehicleVel.MaxForce = Vector3.new(9e9, 9e9, 9e9)
-            end
-            local cam = workspace.CurrentCamera
-            if cam then
-                local dir = Vector3.zero
-                dir += cam.CFrame.RightVector * leftJoyInput.X
-                dir += cam.CFrame.LookVector * leftJoyInput.Y
-                dir += Vector3.new(0, rightJoyInput.Y, 0)
-                vehicleVel.Velocity = (dir.Magnitude > 0) and (dir.Unit * flySpeed) or Vector3.zero
-                vehicleGyro.CFrame = CFrame.lookAt(vehicle.Position, vehicle.Position + cam.CFrame.LookVector)
-            end
-        else
-            if vehicleGyro then vehicleGyro:Destroy(); vehicleGyro = nil end
-            if vehicleVel then vehicleVel:Destroy(); vehicleVel = nil end
-        end
-    else
-        if vehicleGyro then vehicleGyro:Destroy(); vehicleGyro = nil end
-        if vehicleVel then vehicleVel:Destroy(); vehicleVel = nil end
-    end
-
+    -- 穿墙
     if noclip and char then
         for _, part in ipairs(char:GetDescendants()) do
             if part:IsA("BasePart") then part.CanCollide = false end
@@ -555,10 +525,12 @@ rs.RenderStepped:Connect(function()
         end
     end
 
+    -- 无限跳
     if infiniteJump and hum and hum.FloorMaterial ~= Enum.Material.Air then
         hum:ChangeState(Enum.HumanoidStateType.Jumping)
     end
 
+    -- 自瞄
     if aimbotEnabled and char and root then
         local nearest = nil
         local nearestDist = math.huge
@@ -578,36 +550,21 @@ rs.RenderStepped:Connect(function()
             cam.CFrame = cam.CFrame:Lerp(targetCFrame, aimSmoothness)
         end
     end
-
-    if workspace.CurrentCamera then
-        workspace.CurrentCamera.FieldOfView = fov
-    end
 end)
 
-local function findVehicle()
-    for _, v in ipairs(workspace:GetDescendants()) do
-        if v:IsA("Model") and v:FindFirstChild("VehicleSeat") then
-            return v:FindFirstChild("VehicleSeat") or v:FindFirstChildWhichIsA("BasePart")
-        end
-    end
-    return nil
-end
-
+-- 角色重生重置
 player.CharacterAdded:Connect(function(c)
     if bodyGyro then bodyGyro:Destroy(); bodyGyro = nil end
     if bodyVel then bodyVel:Destroy(); bodyVel = nil end
-    if vehicleGyro then vehicleGyro:Destroy(); vehicleGyro = nil end
-    if vehicleVel then vehicleVel:Destroy(); vehicleVel = nil end
     flying = false
     flyToggle.Text = "飞行：关"
     flyToggle.BackgroundColor3 = Color3.fromRGB(255, 100, 100)
-    flyControlPanel.Visible = false
+    flyPanel.Visible = false
     char = c
     hum = c:WaitForChild("Humanoid")
     root = c:WaitForChild("HumanoidRootPart")
     hum.WalkSpeed = walkSpeed
     hum.JumpPower = jumpPower
-    workspace.Gravity = gravity
     noclip = false
     semiNoclip = false
     espPlayers = false
