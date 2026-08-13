@@ -35,7 +35,7 @@ local leftJoyInput = Vector2.zero
 local rightJoyActive = false
 local rightJoyInput = Vector2.zero
 
--- GUI
+-- 创建 GUI
 local gui = Instance.new("ScreenGui", player:WaitForChild("PlayerGui"))
 gui.Name = "脚本中心"
 gui.ResetOnSpawn = false
@@ -72,11 +72,10 @@ local welcomeText = Instance.new("TextLabel", welcomeFrame)
 welcomeText.Size = UDim2.new(1, -20, 1, -20)
 welcomeText.Position = UDim2.new(0, 10, 0, 10)
 welcomeText.BackgroundTransparency = 1
-welcomeText.Text = "感谢使用此脚本，祝你游玩愉快！v6文字修复版"
+welcomeText.Text = "感谢使用此脚本，祝你游玩愉快！v8最终修复版"
 welcomeText.TextColor3 = Color3.new(1, 1, 1)
-welcomeText.Font = Enum.Font.SourceSans
+welcomeText.Font = Enum.Font.SourceSansBold
 welcomeText.TextSize = 16
-welcomeText.TextTransparency = 0
 welcomeText.TextWrapped = true
 welcomeText.Visible = true
 
@@ -86,9 +85,8 @@ welcomeClose.Position = UDim2.new(0.5, -40, 1, -40)
 welcomeClose.BackgroundColor3 = Color3.fromRGB(80, 130, 200)
 welcomeClose.Text = "确定"
 welcomeClose.TextColor3 = Color3.new(1, 1, 1)
-welcomeClose.Font = Enum.Font.SourceSans
+welcomeClose.Font = Enum.Font.SourceSansBold
 welcomeClose.TextSize = 14
-welcomeClose.TextTransparency = 0
 welcomeClose.ZIndex = 11
 Instance.new("UICorner", welcomeClose).CornerRadius = UDim.new(0, 6)
 welcomeClose.MouseButton1Click:Connect(function()
@@ -103,19 +101,18 @@ ball.Position = UDim2.new(0.9, -28, 0.5, -28)
 ball.BackgroundColor3 = Color3.fromRGB(70, 130, 200)
 ball.Text = "菜单"
 ball.TextColor3 = Color3.new(1, 1, 1)
-ball.Font = Enum.Font.SourceSans
+ball.Font = Enum.Font.SourceSansBold
 ball.TextSize = 14
-ball.TextTransparency = 0
 ball.BorderSizePixel = 0
 ball.AutoButtonColor = false
 ball.ZIndex = 100
 Instance.new("UICorner", ball).CornerRadius = UDim.new(1, 0)
 
--- 点击与拖拽分离
+-- 点击与拖拽处理
 local isDragging = false
 local dragStartPos = nil
 local ballStartPos = nil
-local dragThreshold = 30
+local dragThreshold = 20
 
 ball.MouseButton1Click:Connect(function()
     if not isDragging then
@@ -145,7 +142,8 @@ ball.InputEnded:Connect(function(input)
     if input.UserInputType == Enum.UserInputType.Touch or input.UserInputType == Enum.UserInputType.MouseButton1 then
         dragStartPos = nil
         ballStartPos = nil
-        task.wait(0.1)
+        -- 延迟重置，避免点击时误判
+        wait(0.1)
         isDragging = false
     end
 end)
@@ -162,9 +160,8 @@ titleLabel.Position = UDim2.new(0, 10, 0, 0)
 titleLabel.BackgroundTransparency = 1
 titleLabel.Text = "脚本中心"
 titleLabel.TextColor3 = Color3.new(1, 1, 1)
-titleLabel.Font = Enum.Font.SourceSans
+titleLabel.Font = Enum.Font.SourceSansBold
 titleLabel.TextSize = 18
-titleLabel.TextTransparency = 0
 titleLabel.TextXAlignment = Enum.TextXAlignment.Left
 titleLabel.Visible = true
 
@@ -174,13 +171,12 @@ closeBtn.Position = UDim2.new(1, -30, 0, 5)
 closeBtn.BackgroundColor3 = Color3.fromRGB(200, 60, 60)
 closeBtn.Text = "X"
 closeBtn.TextColor3 = Color3.new(1, 1, 1)
-closeBtn.Font = Enum.Font.SourceSans
+closeBtn.Font = Enum.Font.SourceSansBold
 closeBtn.TextSize = 14
-closeBtn.TextTransparency = 0
 Instance.new("UICorner", closeBtn).CornerRadius = UDim.new(0, 4)
 closeBtn.MouseButton1Click:Connect(function() win.Visible = false end)
 
--- 侧边栏（固定按钮位置，不使用布局）
+-- 侧边栏（固定按钮位置）
 local sidebar = Instance.new("Frame", win)
 sidebar.Size = UDim2.new(0, 140, 1, -36)
 sidebar.Position = UDim2.new(0, 0, 0, 36)
@@ -200,7 +196,6 @@ local function showPage(name)
     for pageName, page in pairs(pages) do
         page.Visible = (pageName == name)
     end
-    -- 高亮侧边栏按钮
     for _, btn in ipairs(sidebar:GetChildren()) do
         if btn:IsA("TextButton") then
             btn.BackgroundColor3 = (btn.Text == name) and Color3.fromRGB(80, 130, 200) or Color3.fromRGB(55, 55, 55)
@@ -208,7 +203,7 @@ local function showPage(name)
     end
 end
 
--- 创建侧边栏按钮（手动定位）
+-- 创建侧边栏按钮
 local function addSideButton(text, pageName, yPos)
     local btn = Instance.new("TextButton")
     btn.Size = UDim2.new(1, -16, 0, 40)
@@ -216,9 +211,8 @@ local function addSideButton(text, pageName, yPos)
     btn.BackgroundColor3 = Color3.fromRGB(55, 55, 55)
     btn.Text = text
     btn.TextColor3 = Color3.new(1, 1, 1)
-    btn.Font = Enum.Font.SourceSans
+    btn.Font = Enum.Font.SourceSansBold
     btn.TextSize = 14
-    btn.TextTransparency = 0
     btn.AutoButtonColor = false
     btn.Visible = true
     Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 6)
@@ -226,7 +220,7 @@ local function addSideButton(text, pageName, yPos)
     btn.MouseButton1Click:Connect(function() showPage(pageName) end)
 end
 
--- 滑条（手动定位）
+-- 滑条
 local function addSlider(parent, label, min, max, default, callback, yPos)
     local frame = Instance.new("Frame")
     frame.Size = UDim2.new(1, -30, 0, 40)
@@ -240,9 +234,8 @@ local function addSlider(parent, label, min, max, default, callback, yPos)
     lbl.BackgroundTransparency = 1
     lbl.Text = label
     lbl.TextColor3 = Color3.new(1, 1, 1)
-    lbl.Font = Enum.Font.SourceSans
+    lbl.Font = Enum.Font.SourceSansBold
     lbl.TextSize = 14
-    lbl.TextTransparency = 0
     lbl.TextXAlignment = Enum.TextXAlignment.Left
     lbl.Visible = true
 
@@ -252,9 +245,8 @@ local function addSlider(parent, label, min, max, default, callback, yPos)
     valLabel.BackgroundTransparency = 1
     valLabel.Text = tostring(default)
     valLabel.TextColor3 = Color3.new(1, 1, 1)
-    valLabel.Font = Enum.Font.SourceSans
+    valLabel.Font = Enum.Font.SourceSansBold
     valLabel.TextSize = 14
-    valLabel.TextTransparency = 0
     valLabel.TextXAlignment = Enum.TextXAlignment.Right
     valLabel.Visible = true
 
@@ -274,7 +266,6 @@ local function addSlider(parent, label, min, max, default, callback, yPos)
     knob.Position = UDim2.new((default-min)/(max-min), -8, 0.5, -8)
     knob.BackgroundColor3 = Color3.new(1, 1, 1)
     knob.Text = ""
-    knob.TextTransparency = 0
     Instance.new("UICorner", knob).CornerRadius = UDim.new(1, 0)
 
     local draggingSlider = false
@@ -307,7 +298,7 @@ local function addSlider(parent, label, min, max, default, callback, yPos)
     sliderBg.InputEnded:Connect(function() draggingSlider = false end)
 end
 
--- 开关按钮（手动定位）
+-- 开关按钮
 local function addToggle(parent, text, default, callback, yPos)
     local btn = Instance.new("TextButton")
     btn.Size = UDim2.new(1, -30, 0, 36)
@@ -315,9 +306,8 @@ local function addToggle(parent, text, default, callback, yPos)
     btn.BackgroundColor3 = default and Color3.fromRGB(100, 255, 100) or Color3.fromRGB(255, 100, 100)
     btn.Text = text .. "：" .. (default and "开" or "关")
     btn.TextColor3 = Color3.new(1, 1, 1)
-    btn.Font = Enum.Font.SourceSans
+    btn.Font = Enum.Font.SourceSansBold
     btn.TextSize = 14
-    btn.TextTransparency = 0
     btn.AutoButtonColor = false
     btn.Visible = true
     Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 6)
@@ -404,7 +394,6 @@ leftJoyKnob.Size = UDim2.new(0, 40, 0, 40)
 leftJoyKnob.Position = UDim2.new(0.5, -20, 0.5, -20)
 leftJoyKnob.BackgroundColor3 = Color3.fromRGB(80, 130, 200)
 leftJoyKnob.Text = ""
-leftJoyKnob.TextTransparency = 0
 leftJoyKnob.AutoButtonColor = false
 Instance.new("UICorner", leftJoyKnob).CornerRadius = UDim.new(1, 0)
 
@@ -448,7 +437,6 @@ rightJoyKnob.Size = UDim2.new(0, 40, 0, 40)
 rightJoyKnob.Position = UDim2.new(0.5, -20, 0.5, -20)
 rightJoyKnob.BackgroundColor3 = Color3.fromRGB(200, 100, 50)
 rightJoyKnob.Text = ""
-rightJoyKnob.TextTransparency = 0
 rightJoyKnob.AutoButtonColor = false
 Instance.new("UICorner", rightJoyKnob).CornerRadius = UDim.new(1, 0)
 
@@ -487,9 +475,8 @@ panelClose.Position = UDim2.new(1, -22, 0, 2)
 panelClose.BackgroundColor3 = Color3.fromRGB(200, 60, 60)
 panelClose.Text = "X"
 panelClose.TextColor3 = Color3.new(1, 1, 1)
-panelClose.Font = Enum.Font.SourceSans
+panelClose.Font = Enum.Font.SourceSansBold
 panelClose.TextSize = 12
-panelClose.TextTransparency = 0
 Instance.new("UICorner", panelClose).CornerRadius = UDim.new(0, 4)
 panelClose.MouseButton1Click:Connect(function() flyControlPanel.Visible = false end)
 
@@ -501,9 +488,8 @@ flyToggle.Position = UDim2.new(0, 15, 0, 10)
 flyToggle.BackgroundColor3 = Color3.fromRGB(255, 100, 100)
 flyToggle.Text = "飞行：关"
 flyToggle.TextColor3 = Color3.new(1, 1, 1)
-flyToggle.Font = Enum.Font.SourceSans
+flyToggle.Font = Enum.Font.SourceSansBold
 flyToggle.TextSize = 16
-flyToggle.TextTransparency = 0
 flyToggle.AutoButtonColor = false
 flyToggle.Visible = true
 Instance.new("UICorner", flyToggle).CornerRadius = UDim.new(0, 6)
@@ -543,9 +529,8 @@ vehicleFlyToggle.Position = UDim2.new(0, 15, 0, 55)
 vehicleFlyToggle.BackgroundColor3 = Color3.fromRGB(255, 100, 100)
 vehicleFlyToggle.Text = "载具飞行：关"
 vehicleFlyToggle.TextColor3 = Color3.new(1, 1, 1)
-vehicleFlyToggle.Font = Enum.Font.SourceSans
+vehicleFlyToggle.Font = Enum.Font.SourceSansBold
 vehicleFlyToggle.TextSize = 16
-vehicleFlyToggle.TextTransparency = 0
 vehicleFlyToggle.AutoButtonColor = false
 vehicleFlyToggle.Visible = true
 Instance.new("UICorner", vehicleFlyToggle).CornerRadius = UDim.new(0, 6)
@@ -643,9 +628,8 @@ tpLabel.Position = UDim2.new(0, 15, 0, 10)
 tpLabel.BackgroundTransparency = 1
 tpLabel.Text = "点击保存当前位置，点击传送回到保存点"
 tpLabel.TextColor3 = Color3.new(1, 1, 1)
-tpLabel.Font = Enum.Font.SourceSans
+tpLabel.Font = Enum.Font.SourceSansBold
 tpLabel.TextSize = 12
-tpLabel.TextTransparency = 0
 tpLabel.TextWrapped = true
 tpLabel.Visible = true
 tpLabel.Parent = teleportPage
@@ -656,9 +640,8 @@ saveTpBtn.Position = UDim2.new(0, 15, 0, 50)
 saveTpBtn.BackgroundColor3 = Color3.fromRGB(80, 130, 200)
 saveTpBtn.Text = "保存位置"
 saveTpBtn.TextColor3 = Color3.new(1, 1, 1)
-saveTpBtn.Font = Enum.Font.SourceSans
+saveTpBtn.Font = Enum.Font.SourceSansBold
 saveTpBtn.TextSize = 14
-saveTpBtn.TextTransparency = 0
 saveTpBtn.Visible = true
 saveTpBtn.Parent = teleportPage
 saveTpBtn.MouseButton1Click:Connect(function()
@@ -674,9 +657,8 @@ loadTpBtn.Position = UDim2.new(0, 15, 0, 95)
 loadTpBtn.BackgroundColor3 = Color3.fromRGB(200, 100, 50)
 loadTpBtn.Text = "传送到保存点"
 loadTpBtn.TextColor3 = Color3.new(1, 1, 1)
-loadTpBtn.Font = Enum.Font.SourceSans
+loadTpBtn.Font = Enum.Font.SourceSansBold
 loadTpBtn.TextSize = 14
-loadTpBtn.TextTransparency = 0
 loadTpBtn.Visible = true
 loadTpBtn.Parent = teleportPage
 loadTpBtn.MouseButton1Click:Connect(function()
@@ -688,7 +670,7 @@ loadTpBtn.MouseButton1Click:Connect(function()
     end
 end)
 
--- 侧边栏按钮（手动定位，共10个）
+-- 侧边栏按钮（手动定位）
 addSideButton("飞行", "飞行", 8)
 addSideButton("速度", "速度", 56)
 addSideButton("跳跃", "跳跃", 104)
@@ -709,9 +691,8 @@ debugLabel.Position = UDim2.new(0, 0, 1, -30)
 debugLabel.BackgroundTransparency = 1
 debugLabel.Text = "UI加载成功"
 debugLabel.TextColor3 = Color3.new(0, 255, 0)
-debugLabel.Font = Enum.Font.SourceSans
+debugLabel.Font = Enum.Font.SourceSansBold
 debugLabel.TextSize = 14
-debugLabel.TextTransparency = 0
 debugLabel.Visible = true
 
 -- 主循环
