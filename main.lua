@@ -145,27 +145,19 @@ local sidebarScroll = Instance.new("ScrollingFrame", sidebar)
 sidebarScroll.Size = UDim2.new(1, 0, 1, 0)
 sidebarScroll.Position = UDim2.new(0, 0, 0, 0)
 sidebarScroll.BackgroundTransparency = 1
-sidebarScroll.ScrollBarThickness = 4
+sidebarScroll.ScrollBarThickness = 8
 sidebarScroll.ScrollingDirection = Enum.ScrollingDirection.Y
-sidebarScroll.CanvasSize = UDim2.new(0, 0, 0, 0)
+sidebarScroll.CanvasSize = UDim2.new(0, 0, 0, 500)
 sidebarScroll.BottomImage = "rbxassetid://0"
 sidebarScroll.TopImage = "rbxassetid://0"
 sidebarScroll.ClipsDescendants = true
+sidebarScroll.TouchEnabled = true
+sidebarScroll.TouchPanSpeed = 25
 
 local sidebarList = Instance.new("UIListLayout", sidebarScroll)
 sidebarList.Padding = UDim.new(0, 6)
 sidebarList.FillDirection = Enum.FillDirection.Vertical
 sidebarList.SortOrder = Enum.SortOrder.LayoutOrder
-
-local function updateSidebarCanvas()
-    local totalHeight = 0
-    for _, child in ipairs(sidebarScroll:GetChildren()) do
-        if child:IsA("TextButton") then
-            totalHeight = totalHeight + child.Size.Y.Offset + sidebarList.Padding.Offset
-        end
-    end
-    sidebarScroll.CanvasSize = UDim2.new(0, 0, 0, totalHeight)
-end
 
 local content = Instance.new("Frame", win)
 content.Size = UDim2.new(1, -140, 1, -36)
@@ -201,7 +193,6 @@ local function addSideButton(text, pageName)
     btn.MouseButton1Click:Connect(function()
         showPage(pageName)
     end)
-    updateSidebarCanvas()
 end
 
 local function addSlider(parent, label, min, max, default, callback)
