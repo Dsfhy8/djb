@@ -12,18 +12,12 @@ local vehicleFlying = false
 local walkSpeed = 16
 local jumpPower = 50
 local infiniteJump = false
-local gravity = 196.2
 local noclip = false
 local semiNoclip = false
 local espPlayers = false
 local espItems = false
 local aimbotEnabled = false
 local aimSmoothness = 0.5
-local godMode = false
-local infStamina = false
-local fov = 70
-local nightVision = false
-local tpPositions = {}
 
 local bodyGyro = nil
 local bodyVel = nil
@@ -35,125 +29,35 @@ local leftJoyInput = Vector2.zero
 local rightJoyActive = false
 local rightJoyInput = Vector2.zero
 
--- 创建 GUI
+-- GUI
 local gui = Instance.new("ScreenGui", player:WaitForChild("PlayerGui"))
 gui.Name = "脚本中心"
 gui.ResetOnSpawn = false
 
--- 主窗口
+-- 主窗口（较小）
 local win = Instance.new("Frame", gui)
-win.Size = UDim2.new(0, 520, 0, 520)
-win.Position = UDim2.new(0.5, -260, 0.5, -260)
+win.Size = UDim2.new(0, 420, 0, 420)
+win.Position = UDim2.new(0.5, -210, 0.5, -210)
 win.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
 win.Visible = false
 win.ZIndex = 50
-Instance.new("UICorner", win).CornerRadius = UDim.new(0, 12)
+Instance.new("UICorner", win).CornerRadius = UDim.new(0, 10)
 
 -- 飞行控制面板
 local flyControlPanel = Instance.new("Frame", gui)
-flyControlPanel.Size = UDim2.new(0, 300, 0, 220)
-flyControlPanel.Position = UDim2.new(0.8, -150, 0.6, -110)
+flyControlPanel.Size = UDim2.new(0, 280, 0, 200)
+flyControlPanel.Position = UDim2.new(0.8, -140, 0.65, -100)
 flyControlPanel.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
 flyControlPanel.BackgroundTransparency = 0.2
 flyControlPanel.Visible = false
 flyControlPanel.ZIndex = 60
-Instance.new("UICorner", flyControlPanel).CornerRadius = UDim.new(0, 12)
-
--- 欢迎界面
-local welcomeFrame = Instance.new("Frame", gui)
-welcomeFrame.Size = UDim2.new(0, 300, 0, 120)
-welcomeFrame.Position = UDim2.new(0.5, -150, 0.5, -60)
-welcomeFrame.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
-welcomeFrame.BorderSizePixel = 0
-welcomeFrame.ZIndex = 10
-Instance.new("UICorner", welcomeFrame).CornerRadius = UDim.new(0, 12)
-
-local welcomeText = Instance.new("TextLabel", welcomeFrame)
-welcomeText.Size = UDim2.new(1, -20, 1, -20)
-welcomeText.Position = UDim2.new(0, 10, 0, 10)
-welcomeText.BackgroundTransparency = 1
-welcomeText.Text = "感谢使用此脚本，祝你游玩愉快！v8最终修复版"
-welcomeText.TextColor3 = Color3.new(1, 1, 1)
-welcomeText.Font = Enum.Font.SourceSansBold
-welcomeText.TextSize = 16
-welcomeText.TextWrapped = true
-welcomeText.Visible = true
-
-local welcomeClose = Instance.new("TextButton", welcomeFrame)
-welcomeClose.Size = UDim2.new(0, 80, 0, 30)
-welcomeClose.Position = UDim2.new(0.5, -40, 1, -40)
-welcomeClose.BackgroundColor3 = Color3.fromRGB(80, 130, 200)
-welcomeClose.Text = "确定"
-welcomeClose.TextColor3 = Color3.new(1, 1, 1)
-welcomeClose.Font = Enum.Font.SourceSansBold
-welcomeClose.TextSize = 14
-welcomeClose.ZIndex = 11
-Instance.new("UICorner", welcomeClose).CornerRadius = UDim.new(0, 6)
-welcomeClose.MouseButton1Click:Connect(function()
-    welcomeFrame.Visible = false
-    welcomeFrame.Active = false
-end)
-
--- 悬浮球
-local ball = Instance.new("TextButton", gui)
-ball.Size = UDim2.new(0, 56, 0, 56)
-ball.Position = UDim2.new(0.9, -28, 0.5, -28)
-ball.BackgroundColor3 = Color3.fromRGB(70, 130, 200)
-ball.Text = "菜单"
-ball.TextColor3 = Color3.new(1, 1, 1)
-ball.Font = Enum.Font.SourceSansBold
-ball.TextSize = 14
-ball.BorderSizePixel = 0
-ball.AutoButtonColor = false
-ball.ZIndex = 100
-Instance.new("UICorner", ball).CornerRadius = UDim.new(1, 0)
-
--- 点击与拖拽处理
-local isDragging = false
-local dragStartPos = nil
-local ballStartPos = nil
-local dragThreshold = 20
-
-ball.MouseButton1Click:Connect(function()
-    if not isDragging then
-        win.Visible = not win.Visible
-    end
-end)
-
-ball.InputBegan:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.Touch or input.UserInputType == Enum.UserInputType.MouseButton1 then
-        isDragging = false
-        dragStartPos = input.Position
-        ballStartPos = ball.Position
-    end
-end)
-
-ball.InputChanged:Connect(function(input)
-    if (input.UserInputType == Enum.UserInputType.Touch or input.UserInputType == Enum.UserInputType.MouseMovement) and dragStartPos and ballStartPos then
-        local delta = input.Position - dragStartPos
-        if delta.Magnitude > dragThreshold then
-            isDragging = true
-            ball.Position = UDim2.new(ballStartPos.X.Scale, ballStartPos.X.Offset + delta.X, ballStartPos.Y.Scale, ballStartPos.Y.Offset + delta.Y)
-        end
-    end
-end)
-
-ball.InputEnded:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.Touch or input.UserInputType == Enum.UserInputType.MouseButton1 then
-        dragStartPos = nil
-        ballStartPos = nil
-        -- 延迟重置，避免点击时误判
-        wait(0.1)
-        isDragging = false
-    end
-end)
+Instance.new("UICorner", flyControlPanel).CornerRadius = UDim.new(0, 10)
 
 -- 标题栏
 local titleBar = Instance.new("Frame", win)
-titleBar.Size = UDim2.new(1, 0, 0, 36)
+titleBar.Size = UDim2.new(1, 0, 0, 32)
 titleBar.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
-Instance.new("UICorner", titleBar).CornerRadius = UDim.new(0, 12)
-
+Instance.new("UICorner", titleBar).CornerRadius = UDim.new(0, 10)
 local titleLabel = Instance.new("TextLabel", titleBar)
 titleLabel.Size = UDim2.new(1, -30, 1, 0)
 titleLabel.Position = UDim2.new(0, 10, 0, 0)
@@ -161,32 +65,30 @@ titleLabel.BackgroundTransparency = 1
 titleLabel.Text = "脚本中心"
 titleLabel.TextColor3 = Color3.new(1, 1, 1)
 titleLabel.Font = Enum.Font.SourceSansBold
-titleLabel.TextSize = 18
+titleLabel.TextSize = 16
 titleLabel.TextXAlignment = Enum.TextXAlignment.Left
-titleLabel.Visible = true
-
 local closeBtn = Instance.new("TextButton", titleBar)
-closeBtn.Size = UDim2.new(0, 26, 0, 26)
-closeBtn.Position = UDim2.new(1, -30, 0, 5)
+closeBtn.Size = UDim2.new(0, 24, 0, 24)
+closeBtn.Position = UDim2.new(1, -28, 0, 4)
 closeBtn.BackgroundColor3 = Color3.fromRGB(200, 60, 60)
 closeBtn.Text = "X"
 closeBtn.TextColor3 = Color3.new(1, 1, 1)
 closeBtn.Font = Enum.Font.SourceSansBold
-closeBtn.TextSize = 14
+closeBtn.TextSize = 12
 Instance.new("UICorner", closeBtn).CornerRadius = UDim.new(0, 4)
 closeBtn.MouseButton1Click:Connect(function() win.Visible = false end)
 
--- 侧边栏（固定按钮位置）
+-- 侧边栏
 local sidebar = Instance.new("Frame", win)
-sidebar.Size = UDim2.new(0, 140, 1, -36)
-sidebar.Position = UDim2.new(0, 0, 0, 36)
+sidebar.Size = UDim2.new(0, 100, 1, -32)
+sidebar.Position = UDim2.new(0, 0, 0, 32)
 sidebar.BackgroundColor3 = Color3.fromRGB(35, 35, 35)
 sidebar.BorderSizePixel = 0
 
 -- 内容区
 local content = Instance.new("Frame", win)
-content.Size = UDim2.new(1, -140, 1, -36)
-content.Position = UDim2.new(0, 140, 0, 36)
+content.Size = UDim2.new(1, -100, 1, -32)
+content.Position = UDim2.new(0, 100, 0, 32)
 content.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
 content.BorderSizePixel = 0
 
@@ -203,18 +105,16 @@ local function showPage(name)
     end
 end
 
--- 创建侧边栏按钮
 local function addSideButton(text, pageName, yPos)
     local btn = Instance.new("TextButton")
-    btn.Size = UDim2.new(1, -16, 0, 40)
-    btn.Position = UDim2.new(0, 8, 0, yPos)
+    btn.Size = UDim2.new(1, -12, 0, 36)
+    btn.Position = UDim2.new(0, 6, 0, yPos)
     btn.BackgroundColor3 = Color3.fromRGB(55, 55, 55)
     btn.Text = text
     btn.TextColor3 = Color3.new(1, 1, 1)
     btn.Font = Enum.Font.SourceSansBold
     btn.TextSize = 14
     btn.AutoButtonColor = false
-    btn.Visible = true
     Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 6)
     btn.Parent = sidebar
     btn.MouseButton1Click:Connect(function() showPage(pageName) end)
@@ -223,32 +123,30 @@ end
 -- 滑条
 local function addSlider(parent, label, min, max, default, callback, yPos)
     local frame = Instance.new("Frame")
-    frame.Size = UDim2.new(1, -30, 0, 40)
-    frame.Position = UDim2.new(0, 15, 0, yPos)
+    frame.Size = UDim2.new(1, -20, 0, 40)
+    frame.Position = UDim2.new(0, 10, 0, yPos)
     frame.BackgroundTransparency = 1
     frame.Parent = parent
 
     local lbl = Instance.new("TextLabel", frame)
-    lbl.Size = UDim2.new(0, 100, 0, 20)
+    lbl.Size = UDim2.new(0, 80, 0, 20)
     lbl.Position = UDim2.new(0, 0, 0, 0)
     lbl.BackgroundTransparency = 1
     lbl.Text = label
     lbl.TextColor3 = Color3.new(1, 1, 1)
     lbl.Font = Enum.Font.SourceSansBold
-    lbl.TextSize = 14
+    lbl.TextSize = 13
     lbl.TextXAlignment = Enum.TextXAlignment.Left
-    lbl.Visible = true
 
     local valLabel = Instance.new("TextLabel", frame)
-    valLabel.Size = UDim2.new(0, 50, 0, 20)
-    valLabel.Position = UDim2.new(1, -50, 0, 0)
+    valLabel.Size = UDim2.new(0, 40, 0, 20)
+    valLabel.Position = UDim2.new(1, -40, 0, 0)
     valLabel.BackgroundTransparency = 1
     valLabel.Text = tostring(default)
     valLabel.TextColor3 = Color3.new(1, 1, 1)
     valLabel.Font = Enum.Font.SourceSansBold
-    valLabel.TextSize = 14
+    valLabel.TextSize = 13
     valLabel.TextXAlignment = Enum.TextXAlignment.Right
-    valLabel.Visible = true
 
     local sliderBg = Instance.new("Frame", frame)
     sliderBg.Size = UDim2.new(1, 0, 0, 8)
@@ -301,15 +199,14 @@ end
 -- 开关按钮
 local function addToggle(parent, text, default, callback, yPos)
     local btn = Instance.new("TextButton")
-    btn.Size = UDim2.new(1, -30, 0, 36)
-    btn.Position = UDim2.new(0, 15, 0, yPos)
+    btn.Size = UDim2.new(1, -20, 0, 36)
+    btn.Position = UDim2.new(0, 10, 0, yPos)
     btn.BackgroundColor3 = default and Color3.fromRGB(100, 255, 100) or Color3.fromRGB(255, 100, 100)
     btn.Text = text .. "：" .. (default and "开" or "关")
     btn.TextColor3 = Color3.new(1, 1, 1)
     btn.Font = Enum.Font.SourceSansBold
     btn.TextSize = 14
     btn.AutoButtonColor = false
-    btn.Visible = true
     Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 6)
     btn.Parent = parent
 
@@ -384,14 +281,14 @@ end)
 
 -- 左摇杆
 local leftJoyBase = Instance.new("Frame", flyControlPanel)
-leftJoyBase.Size = UDim2.new(0, 100, 0, 100)
-leftJoyBase.Position = UDim2.new(0.1, -50, 0.5, -50)
+leftJoyBase.Size = UDim2.new(0, 90, 0, 90)
+leftJoyBase.Position = UDim2.new(0.15, -45, 0.5, -45)
 leftJoyBase.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
 leftJoyBase.BackgroundTransparency = 0.3
 Instance.new("UICorner", leftJoyBase).CornerRadius = UDim.new(1, 0)
 local leftJoyKnob = Instance.new("TextButton", leftJoyBase)
-leftJoyKnob.Size = UDim2.new(0, 40, 0, 40)
-leftJoyKnob.Position = UDim2.new(0.5, -20, 0.5, -20)
+leftJoyKnob.Size = UDim2.new(0, 36, 0, 36)
+leftJoyKnob.Position = UDim2.new(0.5, -18, 0.5, -18)
 leftJoyKnob.BackgroundColor3 = Color3.fromRGB(80, 130, 200)
 leftJoyKnob.Text = ""
 leftJoyKnob.AutoButtonColor = false
@@ -415,7 +312,7 @@ leftJoyBase.InputEnded:Connect(function(input)
     if input.UserInputType == Enum.UserInputType.Touch or input.UserInputType == Enum.UserInputType.MouseButton1 then
         leftJoyActive = false
         leftJoyInput = Vector2.zero
-        leftJoyKnob.Position = UDim2.new(0.5, -20, 0.5, -20)
+        leftJoyKnob.Position = UDim2.new(0.5, -18, 0.5, -18)
     end
 end)
 uis.InputChanged:Connect(function(input)
@@ -427,14 +324,14 @@ end)
 
 -- 右摇杆
 local rightJoyBase = Instance.new("Frame", flyControlPanel)
-rightJoyBase.Size = UDim2.new(0, 100, 0, 100)
-rightJoyBase.Position = UDim2.new(0.85, -50, 0.5, -50)
+rightJoyBase.Size = UDim2.new(0, 90, 0, 90)
+rightJoyBase.Position = UDim2.new(0.85, -45, 0.5, -45)
 rightJoyBase.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
 rightJoyBase.BackgroundTransparency = 0.3
 Instance.new("UICorner", rightJoyBase).CornerRadius = UDim.new(1, 0)
 local rightJoyKnob = Instance.new("TextButton", rightJoyBase)
-rightJoyKnob.Size = UDim2.new(0, 40, 0, 40)
-rightJoyKnob.Position = UDim2.new(0.5, -20, 0.5, -20)
+rightJoyKnob.Size = UDim2.new(0, 36, 0, 36)
+rightJoyKnob.Position = UDim2.new(0.5, -18, 0.5, -18)
 rightJoyKnob.BackgroundColor3 = Color3.fromRGB(200, 100, 50)
 rightJoyKnob.Text = ""
 rightJoyKnob.AutoButtonColor = false
@@ -458,7 +355,7 @@ rightJoyBase.InputEnded:Connect(function(input)
     if input.UserInputType == Enum.UserInputType.Touch or input.UserInputType == Enum.UserInputType.MouseButton1 then
         rightJoyActive = false
         rightJoyInput = Vector2.zero
-        rightJoyKnob.Position = UDim2.new(0.5, -20, 0.5, -20)
+        rightJoyKnob.Position = UDim2.new(0.5, -18, 0.5, -18)
     end
 end)
 uis.InputChanged:Connect(function(input)
@@ -483,15 +380,14 @@ panelClose.MouseButton1Click:Connect(function() flyControlPanel.Visible = false 
 -- 飞行页面
 local flyPage = createPage("飞行")
 local flyToggle = Instance.new("TextButton")
-flyToggle.Size = UDim2.new(1, -30, 0, 36)
-flyToggle.Position = UDim2.new(0, 15, 0, 10)
+flyToggle.Size = UDim2.new(1, -20, 0, 36)
+flyToggle.Position = UDim2.new(0, 10, 0, 10)
 flyToggle.BackgroundColor3 = Color3.fromRGB(255, 100, 100)
 flyToggle.Text = "飞行：关"
 flyToggle.TextColor3 = Color3.new(1, 1, 1)
 flyToggle.Font = Enum.Font.SourceSansBold
 flyToggle.TextSize = 16
 flyToggle.AutoButtonColor = false
-flyToggle.Visible = true
 Instance.new("UICorner", flyToggle).CornerRadius = UDim.new(0, 6)
 flyToggle.Parent = flyPage
 flyToggle.MouseButton1Click:Connect(function()
@@ -499,7 +395,6 @@ flyToggle.MouseButton1Click:Connect(function()
     if flying then
         flyToggle.Text = "飞行：开"
         flyToggle.BackgroundColor3 = Color3.fromRGB(100, 255, 100)
-        ball.BackgroundColor3 = Color3.fromRGB(100, 255, 100)
         if not bodyGyro then
             bodyGyro = Instance.new("BodyGyro", root)
             bodyGyro.P = 9e4
@@ -514,7 +409,6 @@ flyToggle.MouseButton1Click:Connect(function()
     else
         flyToggle.Text = "飞行：关"
         flyToggle.BackgroundColor3 = Color3.fromRGB(255, 100, 100)
-        ball.BackgroundColor3 = Color3.fromRGB(255, 120, 120)
         if bodyGyro then bodyGyro:Destroy(); bodyGyro = nil end
         if bodyVel then bodyVel:Destroy(); bodyVel = nil end
         hum.PlatformStand = false
@@ -522,17 +416,15 @@ flyToggle.MouseButton1Click:Connect(function()
     end
 end)
 
--- 载具飞行
 local vehicleFlyToggle = Instance.new("TextButton")
-vehicleFlyToggle.Size = UDim2.new(1, -30, 0, 36)
-vehicleFlyToggle.Position = UDim2.new(0, 15, 0, 55)
+vehicleFlyToggle.Size = UDim2.new(1, -20, 0, 36)
+vehicleFlyToggle.Position = UDim2.new(0, 10, 0, 55)
 vehicleFlyToggle.BackgroundColor3 = Color3.fromRGB(255, 100, 100)
 vehicleFlyToggle.Text = "载具飞行：关"
 vehicleFlyToggle.TextColor3 = Color3.new(1, 1, 1)
 vehicleFlyToggle.Font = Enum.Font.SourceSansBold
-vehicleFlyToggle.TextSize = 16
+vehicleFlyToggle.TextSize = 14
 vehicleFlyToggle.AutoButtonColor = false
-vehicleFlyToggle.Visible = true
 Instance.new("UICorner", vehicleFlyToggle).CornerRadius = UDim.new(0, 6)
 vehicleFlyToggle.Parent = flyPage
 vehicleFlyToggle.MouseButton1Click:Connect(function()
@@ -557,10 +449,6 @@ addSlider(speedPage, "跳跃高度", 50, 200, 50, function(v) jumpPower = v; hum
 local jumpPage = createPage("跳跃")
 addSlider(jumpPage, "跳跃高度", 50, 200, 50, function(v) jumpPower = v; hum.JumpPower = v end, 10)
 addToggle(jumpPage, "无限跳", false, function(v) infiniteJump = v end, 60)
-
--- 重力页面
-local gravPage = createPage("重力")
-addSlider(gravPage, "重力", 0, 196.2, 196.2, function(v) gravity = v; workspace.Gravity = v end, 10)
 
 -- 穿墙页面
 local noclipPage = createPage("穿墙")
@@ -588,112 +476,32 @@ local aimbotPage = createPage("自瞄")
 addToggle(aimbotPage, "自瞄", false, function(v) aimbotEnabled = v end, 10)
 addSlider(aimbotPage, "平滑度", 0, 1, 0.5, function(v) aimSmoothness = v end, 60)
 
--- 神模式页面
-local godPage = createPage("神模式")
-addToggle(godPage, "无敌模式", false, function(v)
-    godMode = v
-    if v then
-        hum.MaxHealth = 99999
-        hum.Health = 99999
-    else
-        hum.MaxHealth = 100
-        hum.Health = 100
-    end
-end, 10)
-addToggle(godPage, "无限体力", false, function(v) infStamina = v end, 60)
-
--- 视野页面
-local viewPage = createPage("视野")
-addSlider(viewPage, "视野范围", 30, 120, 70, function(v)
-    fov = v
-    if workspace.CurrentCamera then workspace.CurrentCamera.FieldOfView = v end
-end, 10)
-addToggle(viewPage, "夜视", false, function(v)
-    nightVision = v
-    local lighting = game:GetService("Lighting")
-    if v then
-        lighting.Brightness = 2
-        lighting.ClockTime = 14
-    else
-        lighting.Brightness = 1
-        lighting.ClockTime = 14
-    end
-end, 60)
-
--- 传送页面
-local teleportPage = createPage("传送")
-local tpLabel = Instance.new("TextLabel")
-tpLabel.Size = UDim2.new(1, -30, 0, 20)
-tpLabel.Position = UDim2.new(0, 15, 0, 10)
-tpLabel.BackgroundTransparency = 1
-tpLabel.Text = "点击保存当前位置，点击传送回到保存点"
-tpLabel.TextColor3 = Color3.new(1, 1, 1)
-tpLabel.Font = Enum.Font.SourceSansBold
-tpLabel.TextSize = 12
-tpLabel.TextWrapped = true
-tpLabel.Visible = true
-tpLabel.Parent = teleportPage
-
-local saveTpBtn = Instance.new("TextButton")
-saveTpBtn.Size = UDim2.new(1, -30, 0, 36)
-saveTpBtn.Position = UDim2.new(0, 15, 0, 50)
-saveTpBtn.BackgroundColor3 = Color3.fromRGB(80, 130, 200)
-saveTpBtn.Text = "保存位置"
-saveTpBtn.TextColor3 = Color3.new(1, 1, 1)
-saveTpBtn.Font = Enum.Font.SourceSansBold
-saveTpBtn.TextSize = 14
-saveTpBtn.Visible = true
-saveTpBtn.Parent = teleportPage
-saveTpBtn.MouseButton1Click:Connect(function()
-    if root then
-        table.insert(tpPositions, root.Position)
-        tpLabel.Text = "已保存位置！共" .. #tpPositions .. "个点"
-    end
-end)
-
-local loadTpBtn = Instance.new("TextButton")
-loadTpBtn.Size = UDim2.new(1, -30, 0, 36)
-loadTpBtn.Position = UDim2.new(0, 15, 0, 95)
-loadTpBtn.BackgroundColor3 = Color3.fromRGB(200, 100, 50)
-loadTpBtn.Text = "传送到保存点"
-loadTpBtn.TextColor3 = Color3.new(1, 1, 1)
-loadTpBtn.Font = Enum.Font.SourceSansBold
-loadTpBtn.TextSize = 14
-loadTpBtn.Visible = true
-loadTpBtn.Parent = teleportPage
-loadTpBtn.MouseButton1Click:Connect(function()
-    if #tpPositions > 0 and root then
-        root.CFrame = CFrame.new(tpPositions[#tpPositions])
-        tpLabel.Text = "已传送到最近保存点"
-    else
-        tpLabel.Text = "没有保存点"
-    end
-end)
-
--- 侧边栏按钮（手动定位）
+-- 侧边栏按钮
 addSideButton("飞行", "飞行", 8)
-addSideButton("速度", "速度", 56)
-addSideButton("跳跃", "跳跃", 104)
-addSideButton("重力", "重力", 152)
-addSideButton("穿墙", "穿墙", 200)
-addSideButton("透视", "透视", 248)
-addSideButton("自瞄", "自瞄", 296)
-addSideButton("神模式", "神模式", 344)
-addSideButton("视野", "视野", 392)
-addSideButton("传送", "传送", 440)
+addSideButton("速度", "速度", 52)
+addSideButton("跳跃", "跳跃", 96)
+addSideButton("穿墙", "穿墙", 140)
+addSideButton("透视", "透视", 184)
+addSideButton("自瞄", "自瞄", 228)
+
+-- 右侧边缘悬浮按钮
+local edgeButton = Instance.new("TextButton", gui)
+edgeButton.Size = UDim2.new(0, 50, 0, 100)
+edgeButton.Position = UDim2.new(1, -50, 0.5, -50)
+edgeButton.BackgroundColor3 = Color3.fromRGB(70, 130, 200)
+edgeButton.Text = "菜单"
+edgeButton.TextColor3 = Color3.new(1, 1, 1)
+edgeButton.Font = Enum.Font.SourceSansBold
+edgeButton.TextSize = 14
+edgeButton.BorderSizePixel = 0
+edgeButton.AutoButtonColor = false
+edgeButton.ZIndex = 80
+Instance.new("UICorner", edgeButton).CornerRadius = UDim.new(0, 8)
+edgeButton.MouseButton1Click:Connect(function()
+    win.Visible = not win.Visible
+end)
 
 pages["飞行"].Visible = true
-
--- 调试文字
-local debugLabel = Instance.new("TextLabel", content)
-debugLabel.Size = UDim2.new(1, 0, 0, 30)
-debugLabel.Position = UDim2.new(0, 0, 1, -30)
-debugLabel.BackgroundTransparency = 1
-debugLabel.Text = "UI加载成功"
-debugLabel.TextColor3 = Color3.new(0, 255, 0)
-debugLabel.Font = Enum.Font.SourceSansBold
-debugLabel.TextSize = 14
-debugLabel.Visible = true
 
 -- 主循环
 rs.RenderStepped:Connect(function()
@@ -751,14 +559,6 @@ rs.RenderStepped:Connect(function()
         hum:ChangeState(Enum.HumanoidStateType.Jumping)
     end
 
-    if godMode and hum then
-        hum.Health = hum.MaxHealth
-    end
-
-    if infStamina and hum then
-        -- 留空
-    end
-
     if aimbotEnabled and char and root then
         local nearest = nil
         local nearestDist = math.huge
@@ -801,7 +601,6 @@ player.CharacterAdded:Connect(function(c)
     flying = false
     flyToggle.Text = "飞行：关"
     flyToggle.BackgroundColor3 = Color3.fromRGB(255, 100, 100)
-    ball.BackgroundColor3 = Color3.fromRGB(255, 120, 120)
     flyControlPanel.Visible = false
     char = c
     hum = c:WaitForChild("Humanoid")
@@ -814,7 +613,5 @@ player.CharacterAdded:Connect(function(c)
     espPlayers = false
     espItems = false
     aimbotEnabled = false
-    godMode = false
     infiniteJump = false
-    infStamina = false
 end)
