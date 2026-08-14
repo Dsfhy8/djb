@@ -21,8 +21,9 @@ spin=false,spinSpeed=50,
 fastInteract=false
 }
 
+local aimSmooth = 0.12 -- 自瞄平滑度
 local savedPos=nil
-local bodyGyro,bodyVel,bodyFloat
+local bodyGyro,bodyVel,bodyFloat,bodySpin
 local selectedTarget=nil
 local targetList={}
 local targetIndex=0
@@ -123,7 +124,7 @@ closeBtn.TextSize=12
 closeBtn.AutoButtonColor=false
 closeBtn.MouseButton1Click:Connect(function() panel.Visible=false end)
 
--- 页面容器（增加至9页）
+-- 页面容器（9页）
 local pages={}
 local names={"自瞄合集","透视合集","武器合集","移动合集","生存合集","通用合集","娱乐合集","其他合集","更多合集"}
 for i=1,9 do
@@ -317,89 +318,87 @@ addButton(pages[8],"防闪光","antiflash",230,25); addButton(pages[8],"防烟�
 
 -- 第9页 更多合集
 addButton(pages[9],"旋转","spin",10,25)
-local spinSpeedLabel=Instance.new("TextLabel",pages[9])
-spinSpeedLabel.Size=UDim2.new(0,100,0,20)
-spinSpeedLabel.Position=UDim2.new(0,120,0,30)
-spinSpeedLabel.BackgroundTransparency=1
-spinSpeedLabel.Text="速度："..st.spinSpeed
-spinSpeedLabel.TextColor3=Color3.new(1,1,1)
-spinSpeedLabel.Font=Enum.Font.SourceSansBold
-spinSpeedLabel.TextSize=13
 
 local spinMinus=Instance.new("TextButton",pages[9])
-spinMinus.Size=UDim2.new(0,30,0,30)
-spinMinus.Position=UDim2.new(0,120,0,60)
+spinMinus.Size=UDim2.new(0,100,0,35)
+spinMinus.Position=UDim2.new(0,120,0,25)
 spinMinus.BackgroundColor3=Color3.fromRGB(110,110,110)
-spinMinus.Text="-"
+spinMinus.Text="速度-"..st.spinSpeed
 spinMinus.TextColor3=Color3.new(1,1,1)
 spinMinus.Font=Enum.Font.SourceSansBold
-spinMinus.TextSize=16
+spinMinus.TextSize=13
 spinMinus.AutoButtonColor=false
+spinMinus.ZIndex=80
 spinMinus.MouseButton1Click:Connect(function()
     st.spinSpeed=math.max(1,st.spinSpeed-10)
-    spinSpeedLabel.Text="速度："..st.spinSpeed
+    spinMinus.Text="速度-"..st.spinSpeed
 end)
 
 local spinPlus=Instance.new("TextButton",pages[9])
-spinPlus.Size=UDim2.new(0,30,0,30)
-spinPlus.Position=UDim2.new(0,190,0,60)
+spinPlus.Size=UDim2.new(0,100,0,35)
+spinPlus.Position=UDim2.new(0,230,0,25)
 spinPlus.BackgroundColor3=Color3.fromRGB(110,110,110)
-spinPlus.Text="+"
+spinPlus.Text="速度+"..st.spinSpeed
 spinPlus.TextColor3=Color3.new(1,1,1)
 spinPlus.Font=Enum.Font.SourceSansBold
-spinPlus.TextSize=16
+spinPlus.TextSize=13
 spinPlus.AutoButtonColor=false
+spinPlus.ZIndex=80
 spinPlus.MouseButton1Click:Connect(function()
     st.spinSpeed=math.min(200,st.spinSpeed+10)
-    spinSpeedLabel.Text="速度："..st.spinSpeed
+    spinPlus.Text="速度+"..st.spinSpeed
 end)
 
--- 变大变小按钮
+addButton(pages[9],"快速互动","fastInteract",10,70)
+
 local enlargeBtn=Instance.new("TextButton",pages[9])
-enlargeBtn.Size=UDim2.new(0,80,0,30)
-enlargeBtn.Position=UDim2.new(0,10,0,100)
+enlargeBtn.Size=UDim2.new(0,100,0,35)
+enlargeBtn.Position=UDim2.new(0,120,0,70)
 enlargeBtn.BackgroundColor3=Color3.fromRGB(110,110,110)
 enlargeBtn.Text="变大"
 enlargeBtn.TextColor3=Color3.new(1,1,1)
 enlargeBtn.Font=Enum.Font.SourceSansBold
 enlargeBtn.TextSize=13
 enlargeBtn.AutoButtonColor=false
+enlargeBtn.ZIndex=80
 enlargeBtn.MouseButton1Click:Connect(function()
     scaleFactor=math.min(3, scaleFactor+0.1)
-    for _,obj in ipairs(player.Character:GetDescendants()) do
-        if obj:IsA("BasePart") then
-            if not originalSizes[obj] then originalSizes[obj]=obj.Size end
-            obj.Size=originalSizes[obj]*scaleFactor
+    if player.Character then
+        for _,obj in ipairs(player.Character:GetDescendants()) do
+            if obj:IsA("BasePart") then
+                if not originalSizes[obj] then originalSizes[obj]=obj.Size end
+                obj.Size=originalSizes[obj]*scaleFactor
+            end
         end
     end
 end)
 
 local shrinkBtn=Instance.new("TextButton",pages[9])
-shrinkBtn.Size=UDim2.new(0,80,0,30)
-shrinkBtn.Position=UDim2.new(0,150,0,100)
+shrinkBtn.Size=UDim2.new(0,100,0,35)
+shrinkBtn.Position=UDim2.new(0,230,0,70)
 shrinkBtn.BackgroundColor3=Color3.fromRGB(110,110,110)
 shrinkBtn.Text="变小"
 shrinkBtn.TextColor3=Color3.new(1,1,1)
 shrinkBtn.Font=Enum.Font.SourceSansBold
 shrinkBtn.TextSize=13
 shrinkBtn.AutoButtonColor=false
+shrinkBtn.ZIndex=80
 shrinkBtn.MouseButton1Click:Connect(function()
     scaleFactor=math.max(0.3, scaleFactor-0.1)
-    for _,obj in ipairs(player.Character:GetDescendants()) do
-        if obj:IsA("BasePart") then
-            if not originalSizes[obj] then originalSizes[obj]=obj.Size end
-            obj.Size=originalSizes[obj]*scaleFactor
+    if player.Character then
+        for _,obj in ipairs(player.Character:GetDescendants()) do
+            if obj:IsA("BasePart") then
+                if not originalSizes[obj] then originalSizes[obj]=obj.Size end
+                obj.Size=originalSizes[obj]*scaleFactor
+            end
         end
     end
 end)
 
--- 快速互动
-addButton(pages[9],"快速互动","fastInteract",10,145)
-
--- 悬浮球点击
+-- 悬浮球点击：打开时保持当前页码
 ball.MouseButton1Click:Connect(function()
     panel.Visible=not panel.Visible
-    if panel.Visible then showPage(1) end
+    if panel.Visible then showPage(curPage) end
 end)
 
 -- 启动流程
@@ -456,14 +455,15 @@ RS.RenderStepped:Connect(function()
         local myRoot=player.Character.HumanoidRootPart
         local hum=player.Character:FindFirstChildOfClass("Humanoid")
 
-        -- 自瞄
+        -- 自瞄（平滑）
         if st.aim or st.silent then
             local targets=getEnemies()
             table.sort(targets,function(a,b) return (a.HumanoidRootPart.Position-myRoot.Position).Magnitude<(b.HumanoidRootPart.Position-myRoot.Position).Magnitude end)
             for _,tChar in ipairs(targets) do
                 local aimPart=st.lockh and tChar:FindFirstChild("Head") or tChar:FindFirstChild("HumanoidRootPart")
                 if aimPart and los(cam.CFrame.Position,aimPart.Position,tChar) then
-                    cam.CFrame=CFrame.lookAt(cam.CFrame.Position,aimPart.Position)
+                    local lookAt=CFrame.lookAt(cam.CFrame.Position,aimPart.Position)
+                    cam.CFrame=cam.CFrame:Lerp(lookAt, aimSmooth)
                     break
                 end
             end
@@ -559,17 +559,24 @@ RS.RenderStepped:Connect(function()
         -- 假死
         if st.fakeDeath then hum.Sit=true else hum.Sit=false end
 
-        -- 旋转（角色自身旋转，但摄像机不跟随）
+        -- 旋转（自身旋转，不影响视角）
         if st.spin then
-            myRoot.CFrame = myRoot.CFrame * CFrame.Angles(0, math.rad(st.spinSpeed*0.1), 0)
+            if not bodySpin then
+                bodySpin=Instance.new("BodyAngularVelocity")
+                bodySpin.MaxTorque=Vector3.new(0,9e9,0)
+                bodySpin.AngularVelocity=Vector3.new(0,st.spinSpeed*0.5,0)
+                bodySpin.Parent=myRoot
+            else
+                bodySpin.AngularVelocity=Vector3.new(0,st.spinSpeed*0.5,0)
+            end
+        else
+            if bodySpin then bodySpin:Destroy(); bodySpin=nil end
         end
 
-        -- 快速互动：修改所有ProximityPrompt的HoldDuration
+        -- 快速互动
         if st.fastInteract then
             for _,obj in ipairs(WS:GetDescendants()) do
-                if obj:IsA("ProximityPrompt") then
-                    obj.HoldDuration = 0
-                end
+                if obj:IsA("ProximityPrompt") then obj.HoldDuration=0 end
             end
         end
 
@@ -605,7 +612,7 @@ RS.RenderStepped:Connect(function()
                 local tChar=targets[1]
                 local aimPart=tChar:FindFirstChild("Head") or tChar:FindFirstChild("HumanoidRootPart")
                 if aimPart and los(cam.CFrame.Position,aimPart.Position,tChar) then
-                    cam.CFrame=CFrame.lookAt(cam.CFrame.Position,aimPart.Position)
+                    cam.CFrame=cam.CFrame:Lerp(CFrame.lookAt(cam.CFrame.Position,aimPart.Position), 0.3)
                     if player:GetMouse() then player:GetMouse().Button1Down:Fire(); player:GetMouse().Button1Up:Fire() end
                 end
             end
@@ -616,6 +623,23 @@ RS.RenderStepped:Connect(function()
         if st.tpto and savedPos then myRoot.CFrame=CFrame.new(savedPos); st.tpto=false end
         if st.zoom then cam.FieldOfView=30 else cam.FieldOfView=70 end
     end)
+end)
+
+-- 角色重生时自动恢复
+player.CharacterAdded:Connect(function(char)
+    bodyGyro=nil
+    bodyVel=nil
+    bodyFloat=nil
+    bodySpin=nil
+    originalSizes={}
+    scaleFactor=1
+    selectedTarget=nil
+    targetList={}
+    targetIndex=0
+    -- 恢复默认速度
+    local hum=char:WaitForChild("Humanoid")
+    hum.WalkSpeed=st.speed and st.walkspeed or 16
+    hum.JumpPower=st.jumpboost and st.jumppower or 50
 end)
 
 -- 透视循环
