@@ -16,7 +16,9 @@ god=false,stamina=false,regen=false,night=false,nofall=false,nofoot=false,
 fly=false,flyspeed=50,noclip=false,noplayercol=false,frontpush=false,zoom=false,
 savepos=false,tpto=false,
 swimBoost=false,waterWalk=false,invisible=false,fakeDeath=false,
-trackPlayer=false
+trackPlayer=false,
+spin=false,spinSpeed=50,
+fastInteract=false
 }
 
 local savedPos=nil
@@ -25,11 +27,9 @@ local selectedTarget=nil
 local targetList={}
 local targetIndex=0
 
--- Seat 隐身核心参数
-local INVISIBILITY_STAGING_POSITION = Vector3.new(-25.95, 84, 3537.55)
-local INVIS_SEAT_NAME = "SageInvisibilitySeat"
-local invisSeat = nil
-local savedTransparency = {}
+-- 角色尺寸控制
+local scaleFactor=1
+local originalSizes={}
 
 -- 通知
 local function notif(text)
@@ -43,6 +43,35 @@ local gui=Instance.new("ScreenGui",player:WaitForChild("PlayerGui"))
 gui.Name="机械脚本"
 gui.ResetOnSpawn=false
 gui.ZIndexBehavior=Enum.ZIndexBehavior.Sibling
+
+-- 启动信息UI
+local startFrame=Instance.new("Frame",gui)
+startFrame.Size=UDim2.new(0,280,0,120)
+startFrame.Position=UDim2.new(0.5,-140,0.5,-60)
+startFrame.BackgroundColor3=Color3.fromRGB(20,20,20)
+startFrame.BorderSizePixel=0
+startFrame.ZIndex=200
+startFrame.Visible=true
+
+local startTitle=Instance.new("TextLabel",startFrame)
+startTitle.Size=UDim2.new(1,-20,0,30)
+startTitle.Position=UDim2.new(0,10,0,15)
+startTitle.BackgroundTransparency=1
+startTitle.Text="作者：Dsfhy8"
+startTitle.TextColor3=Color3.fromRGB(255,255,255)
+startTitle.Font=Enum.Font.SourceSansBold
+startTitle.TextSize=16
+startTitle.TextXAlignment=Enum.TextXAlignment.Center
+
+local startDesc=Instance.new("TextLabel",startFrame)
+startDesc.Size=UDim2.new(1,-20,0,25)
+startDesc.Position=UDim2.new(0,10,0,60)
+startDesc.BackgroundTransparency=1
+startDesc.Text="脚本持续云更新（但是很慢）"
+startDesc.TextColor3=Color3.fromRGB(255,225,90)
+startDesc.Font=Enum.Font.SourceSansBold
+startDesc.TextSize=13
+startDesc.TextXAlignment=Enum.TextXAlignment.Center
 
 -- 悬浮球
 local ball=Instance.new("TextButton",gui)
@@ -94,10 +123,10 @@ closeBtn.TextSize=12
 closeBtn.AutoButtonColor=false
 closeBtn.MouseButton1Click:Connect(function() panel.Visible=false end)
 
--- 页面容器
+-- 页面容器（增加至9页）
 local pages={}
-local names={"自瞄合集","透视合集","武器合集","移动合集","生存合集","通用合集","娱乐合集","其他合集"}
-for i=1,8 do
+local names={"自瞄合集","透视合集","武器合集","移动合集","生存合集","通用合集","娱乐合集","其他合集","更多合集"}
+for i=1,9 do
     local p=Instance.new("Frame",panel)
     p.Size=UDim2.new(1,0,1,-50)
     p.Position=UDim2.new(0,0,0,30)
@@ -144,7 +173,7 @@ local pageLabel=Instance.new("TextLabel",panel)
 pageLabel.Size=UDim2.new(0,80,0,20)
 pageLabel.Position=UDim2.new(0.5,-40,1,-28)
 pageLabel.BackgroundTransparency=1
-pageLabel.Text="第1/8页"
+pageLabel.Text="第1/9页"
 pageLabel.TextColor3=Color3.new(1,1,1)
 pageLabel.Font=Enum.Font.SourceSansBold
 pageLabel.TextSize=11
@@ -152,10 +181,10 @@ pageLabel.ZIndex=70
 pageLabel.TextXAlignment=Enum.TextXAlignment.Center
 
 local function showPage(p)
-    for i=1,8 do pages[i].Visible=(i==p) end
+    for i=1,9 do pages[i].Visible=(i==p) end
     prevBtn.Visible=(p>1)
-    nextBtn.Visible=(p<8)
-    pageLabel.Text="第"..p.."/8页"
+    nextBtn.Visible=(p<9)
+    pageLabel.Text="第"..p.."/9页"
     curPage=p
 end
 prevBtn.MouseButton1Click:Connect(function() showPage(curPage-1) end)
@@ -286,15 +315,98 @@ addButton(pages[7],"假死","fakeDeath",10,70); addButton(pages[7],"跟踪玩家
 addButton(pages[8],"保存位置","savepos",10,25); addButton(pages[8],"传送到保存点","tpto",120,25)
 addButton(pages[8],"防闪光","antiflash",230,25); addButton(pages[8],"防烟雾","antismoke",10,70); addButton(pages[8],"防震屏","antishake",120,70)
 
+-- 第9页 更多合集
+addButton(pages[9],"旋转","spin",10,25)
+local spinSpeedLabel=Instance.new("TextLabel",pages[9])
+spinSpeedLabel.Size=UDim2.new(0,100,0,20)
+spinSpeedLabel.Position=UDim2.new(0,120,0,30)
+spinSpeedLabel.BackgroundTransparency=1
+spinSpeedLabel.Text="速度："..st.spinSpeed
+spinSpeedLabel.TextColor3=Color3.new(1,1,1)
+spinSpeedLabel.Font=Enum.Font.SourceSansBold
+spinSpeedLabel.TextSize=13
+
+local spinMinus=Instance.new("TextButton",pages[9])
+spinMinus.Size=UDim2.new(0,30,0,30)
+spinMinus.Position=UDim2.new(0,120,0,60)
+spinMinus.BackgroundColor3=Color3.fromRGB(110,110,110)
+spinMinus.Text="-"
+spinMinus.TextColor3=Color3.new(1,1,1)
+spinMinus.Font=Enum.Font.SourceSansBold
+spinMinus.TextSize=16
+spinMinus.AutoButtonColor=false
+spinMinus.MouseButton1Click:Connect(function()
+    st.spinSpeed=math.max(1,st.spinSpeed-10)
+    spinSpeedLabel.Text="速度："..st.spinSpeed
+end)
+
+local spinPlus=Instance.new("TextButton",pages[9])
+spinPlus.Size=UDim2.new(0,30,0,30)
+spinPlus.Position=UDim2.new(0,190,0,60)
+spinPlus.BackgroundColor3=Color3.fromRGB(110,110,110)
+spinPlus.Text="+"
+spinPlus.TextColor3=Color3.new(1,1,1)
+spinPlus.Font=Enum.Font.SourceSansBold
+spinPlus.TextSize=16
+spinPlus.AutoButtonColor=false
+spinPlus.MouseButton1Click:Connect(function()
+    st.spinSpeed=math.min(200,st.spinSpeed+10)
+    spinSpeedLabel.Text="速度："..st.spinSpeed
+end)
+
+-- 变大变小按钮
+local enlargeBtn=Instance.new("TextButton",pages[9])
+enlargeBtn.Size=UDim2.new(0,80,0,30)
+enlargeBtn.Position=UDim2.new(0,10,0,100)
+enlargeBtn.BackgroundColor3=Color3.fromRGB(110,110,110)
+enlargeBtn.Text="变大"
+enlargeBtn.TextColor3=Color3.new(1,1,1)
+enlargeBtn.Font=Enum.Font.SourceSansBold
+enlargeBtn.TextSize=13
+enlargeBtn.AutoButtonColor=false
+enlargeBtn.MouseButton1Click:Connect(function()
+    scaleFactor=math.min(3, scaleFactor+0.1)
+    for _,obj in ipairs(player.Character:GetDescendants()) do
+        if obj:IsA("BasePart") then
+            if not originalSizes[obj] then originalSizes[obj]=obj.Size end
+            obj.Size=originalSizes[obj]*scaleFactor
+        end
+    end
+end)
+
+local shrinkBtn=Instance.new("TextButton",pages[9])
+shrinkBtn.Size=UDim2.new(0,80,0,30)
+shrinkBtn.Position=UDim2.new(0,150,0,100)
+shrinkBtn.BackgroundColor3=Color3.fromRGB(110,110,110)
+shrinkBtn.Text="变小"
+shrinkBtn.TextColor3=Color3.new(1,1,1)
+shrinkBtn.Font=Enum.Font.SourceSansBold
+shrinkBtn.TextSize=13
+shrinkBtn.AutoButtonColor=false
+shrinkBtn.MouseButton1Click:Connect(function()
+    scaleFactor=math.max(0.3, scaleFactor-0.1)
+    for _,obj in ipairs(player.Character:GetDescendants()) do
+        if obj:IsA("BasePart") then
+            if not originalSizes[obj] then originalSizes[obj]=obj.Size end
+            obj.Size=originalSizes[obj]*scaleFactor
+        end
+    end
+end)
+
+-- 快速互动
+addButton(pages[9],"快速互动","fastInteract",10,145)
+
+-- 悬浮球点击
 ball.MouseButton1Click:Connect(function()
     panel.Visible=not panel.Visible
     if panel.Visible then showPage(1) end
 end)
 
+-- 启动流程
+notif("欢迎 " .. player.Name .. " 使用此脚本")
 task.spawn(function()
-    notif("正在加载机械脚本...")
-    wait(2)
-    notif("加载完成，点击悬浮球打开菜单")
+    wait(4)
+    startFrame.Visible=false
     ball.Visible=true
 end)
 
@@ -336,58 +448,6 @@ local function los(origin,targetPos,targetChar)
     local ray=Ray.new(origin,(targetPos-origin).Unit*500)
     local hit=WS:FindPartOnRayWithIgnoreList(ray,{player.Character,targetChar})
     return not hit
-end
-
--- Seat 隐身核心函数
-local function setInvisibility(enabled)
-    local character=player.Character
-    if not character then return end
-    local rootPart=character:FindFirstChild("HumanoidRootPart")
-    local torso=character:FindFirstChild("UpperTorso") or character:FindFirstChild("Torso")
-    if not rootPart or not torso then return end
-
-    if enabled then
-        local savedPosition = rootPart.CFrame
-        character:MoveTo(INVISIBILITY_STAGING_POSITION)
-        task.wait(0.15)
-
-        if invisSeat then invisSeat:Destroy() end
-        local seat = Instance.new("Seat")
-        seat.Name = INVIS_SEAT_NAME
-        seat.Anchored = false
-        seat.CanCollide = false
-        seat.Transparency = 1
-        seat.Position = INVISIBILITY_STAGING_POSITION
-        seat.Parent = workspace
-
-        local weld = Instance.new("WeldConstraint")
-        weld.Part0 = seat
-        weld.Part1 = torso
-        weld.Parent = seat
-
-        task.wait()
-        seat.CFrame = savedPosition
-
-        for _, object in ipairs(character:GetDescendants()) do
-            if object:IsA("BasePart") or object:IsA("Decal") then
-                if savedTransparency[object] == nil then
-                    savedTransparency[object] = object.Transparency
-                end
-                object.Transparency = 0.5
-            end
-        end
-        invisSeat = seat
-        notif("隐身已开启")
-    else
-        if invisSeat then invisSeat:Destroy(); invisSeat=nil end
-        for object, oldTransparency in pairs(savedTransparency) do
-            if object and object.Parent then
-                object.Transparency = oldTransparency
-            end
-        end
-        table.clear(savedTransparency)
-        notif("隐身已关闭")
-    end
 end
 
 RS.RenderStepped:Connect(function()
@@ -499,9 +559,18 @@ RS.RenderStepped:Connect(function()
         -- 假死
         if st.fakeDeath then hum.Sit=true else hum.Sit=false end
 
-        -- 隐身（Seat 逻辑在按钮回调中处理，这里只做备用透明度恢复）
-        if not st.invisible then
-            -- 如果隐身关闭但之前有残留透明度，恢复
+        -- 旋转（角色自身旋转，但摄像机不跟随）
+        if st.spin then
+            myRoot.CFrame = myRoot.CFrame * CFrame.Angles(0, math.rad(st.spinSpeed*0.1), 0)
+        end
+
+        -- 快速互动：修改所有ProximityPrompt的HoldDuration
+        if st.fastInteract then
+            for _,obj in ipairs(WS:GetDescendants()) do
+                if obj:IsA("ProximityPrompt") then
+                    obj.HoldDuration = 0
+                end
+            end
         end
 
         -- 生存
