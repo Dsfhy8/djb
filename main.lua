@@ -5,12 +5,14 @@ local RS=game:GetService("RunService")
 local WS=workspace
 local UIS=game:GetService("UserInputService")
 local StarterGui=game:GetService("StarterGui")
+local TweenService=game:GetService("TweenService")
+local Lighting=game:GetService("Lighting")
 
 -- 状态
 local st={
 aim=false,lockh=false,silent=false,wallcheck=false,teamcheck=true,aimrange=300,
 aimPriority="distance", aimPart="Head", aimSmooth=0.2,
-aimCircleEnabled=true, aimCircleRadius=80,
+aimCircleEnabled=false, aimCircleRadius=80,
 esp=false,espn=false,espd=false,esphp=false,espnpc=true,espBox=false,espRange=300,
 norecoil=false,fastrel=false,nospread=false,infammo=false,rapid=false,autofire=false,
 speed=false,walkspeed=16,jumpboost=false,jumppower=50,autobhop=false,third=false,
@@ -62,7 +64,152 @@ gui.Name="机械脚本"
 gui.ResetOnSpawn=false
 gui.ZIndexBehavior=Enum.ZIndexBehavior.Sibling
 
--- 灵动岛（可拖拽）
+-- 黑客开场遮罩
+local hackOverlay=Instance.new("Frame",gui)
+hackOverlay.Size=UDim2.new(1,0,1,0)
+hackOverlay.Position=UDim2.new(0,0,0,0)
+hackOverlay.BackgroundColor3=Color3.new(0,0,0)
+hackOverlay.BackgroundTransparency=0.4
+hackOverlay.BorderSizePixel=0
+hackOverlay.ZIndex=300
+hackOverlay.Visible=true
+
+-- 数字雨（背景层，在终端后面）
+local rainFrame=Instance.new("Frame",hackOverlay)
+rainFrame.Size=UDim2.new(1,0,1,0)
+rainFrame.Position=UDim2.new(0,0,0,0)
+rainFrame.BackgroundTransparency=1
+rainFrame.ZIndex=298
+rainFrame.ClipsDescendants=true
+
+local rainLabels={}
+for i=1,25 do
+    local label=Instance.new("TextLabel",rainFrame)
+    label.Size=UDim2.new(0,18,0,120)
+    label.Position=UDim2.new((i-1)/24,0,0,math.random(-300,0))
+    label.BackgroundTransparency=1
+    label.TextColor3=Color3.new(0,1,0)
+    label.Font=Enum.Font.SourceSansBold
+    label.TextSize=14
+    label.Text=""
+    table.insert(rainLabels,label)
+end
+
+task.spawn(function()
+    while true do
+        for _,label in ipairs(rainLabels) do
+            local y=label.Position.Y.Offset
+            y=y+8
+            if y>500 then y=-150;label.Position=UDim2.new(label.Position.X.Scale,label.Position.X.Offset,0,math.random(-200,0)) end
+            label.Position=UDim2.new(label.Position.X.Scale,label.Position.X.Offset,0,y)
+            local str=""
+            for _=1,10 do str=str..string.char(math.random(48,57)).."\n" end
+            label.Text=str
+        end
+        task.wait(0.1)
+    end
+end)
+
+-- 终端框
+local terminal=Instance.new("Frame",hackOverlay)
+terminal.Size=UDim2.new(0,380,0,260)
+terminal.Position=UDim2.new(0.5,-190,0.5,-130)
+terminal.BackgroundColor3=Color3.fromRGB(10,12,14)
+terminal.BorderSizePixel=2
+terminal.BorderColor3=Color3.fromRGB(0,255,0)
+terminal.ZIndex=301
+
+local termTitle=Instance.new("TextLabel",terminal)
+termTitle.Size=UDim2.new(1,0,0,22)
+termTitle.Position=UDim2.new(0,0,0,0)
+termTitle.BackgroundColor3=Color3.fromRGB(0,30,0)
+termTitle.Text="ROBLOX_EXPLOIT_CONSOLE"
+termTitle.TextColor3=Color3.fromRGB(0,255,0)
+termTitle.Font=Enum.Font.SourceSansBold
+termTitle.TextSize=12
+termTitle.TextXAlignment=Enum.TextXAlignment.Center
+termTitle.ZIndex=302
+
+local termText=Instance.new("TextLabel",terminal)
+termText.Size=UDim2.new(1,-20,0,200)
+termText.Position=UDim2.new(0,10,0,30)
+termText.BackgroundTransparency=1
+termText.Text=""
+termText.TextColor3=Color3.fromRGB(0,255,0)
+termText.Font=Enum.Font.SourceSansBold
+termText.TextSize=14
+termText.TextXAlignment=Enum.TextXAlignment.Left
+termText.TextYAlignment=Enum.TextYAlignment.Top
+termText.RichText=true
+
+local progressFrame=Instance.new("Frame",terminal)
+progressFrame.Size=UDim2.new(0,200,0,8)
+progressFrame.Position=UDim2.new(0.5,-100,1,-40)
+progressFrame.BackgroundColor3=Color3.fromRGB(0,40,0)
+progressFrame.BorderSizePixel=0
+progressFrame.ZIndex=303
+local progressFill=Instance.new("Frame",progressFrame)
+progressFill.Size=UDim2.new(0,0,1,0)
+progressFill.BackgroundColor3=Color3.fromRGB(0,255,0)
+progressFill.BorderSizePixel=0
+progressFill.ZIndex=304
+
+local percentLabel=Instance.new("TextLabel",terminal)
+percentLabel.Size=UDim2.new(0,200,0,18)
+percentLabel.Position=UDim2.new(0.5,-100,1,-60)
+percentLabel.BackgroundTransparency=1
+percentLabel.Text="Loading... 0%"
+percentLabel.TextColor3=Color3.fromRGB(0,255,0)
+percentLabel.Font=Enum.Font.SourceSansBold
+percentLabel.TextSize=12
+percentLabel.TextXAlignment=Enum.TextXAlignment.Center
+percentLabel.ZIndex=305
+
+-- 黑客开场动画
+task.spawn(function()
+    local lines={
+        "> OS: ROBLOX_EXPLOIT v2.1",
+        "> Kernel: injected",
+        "> Memory: OK",
+        "> 目标服务器：ROBLOX_SERVER_01",
+        "> IP: 192.168.1.7",
+        "> 0x7F3A9C20 inject...",
+        "> bypass check...",
+        "> loading modules...",
+        "> hooking functions...",
+        "> decrypting data...",
+        "> preparing access...",
+        "> bypassing firewall...",
+        "> establishing connection...",
+        "> ACCESS DENIED",
+        "> RETRY...",
+        "> ACCESS GRANTED",
+        "> 加载完成",
+        "> 用户名："..player.Name,
+        "> 密码：*******",
+        "> 权限校验完成",
+        "> 作者：Dsfhy8",
+        "> 脚本版本：v2.1"
+    }
+    for i,line in ipairs(lines) do
+        termText.Text = table.concat(lines,"\n",1,i)
+        local percent = math.floor(i/#lines*100)
+        percentLabel.Text = "Loading... "..percent.."%"
+        progressFill.Size = UDim2.new(i/#lines,0,1,0)
+        task.wait(0.08)
+    end
+    percentLabel.Text = "Loading... 100%"
+    progressFill.Size = UDim2.new(1,0,1,0)
+    task.wait(0.5)
+
+    local fadeOut=TweenService:Create(hackOverlay,TweenInfo.new(0.5),{BackgroundTransparency=1})
+    fadeOut:Play()
+    task.wait(0.5)
+    hackOverlay.Visible=false
+    rainFrame.Visible=false
+end)
+
+-- 灵动岛
 local island=Instance.new("TextButton",gui)
 island.Size=UDim2.new(0,160,0,32)
 island.Position=UDim2.new(0.5,-80,0.02,0)
@@ -112,7 +259,7 @@ closeBtn.TextSize=12
 closeBtn.AutoButtonColor=false
 closeBtn.MouseButton1Click:Connect(function() panel.Visible=false end)
 
--- 页面容器9页
+-- 页面容器
 local pages={}
 local names={"自瞄合集","透视合集","武器合集","移动合集","生存合集","通用合集","娱乐合集","其他合集","更多合集"}
 for i=1,9 do
@@ -606,17 +753,16 @@ end)
 
 addButton(pages[9],"一键交互","fastInteract",10,70)
 
--- 自瞄圈UI
-local aimCircle = Instance.new("TextLabel",gui)
+-- 自瞄圈（圆形框）
+local aimCircle = Instance.new("Frame",gui)
 aimCircle.Size = UDim2.new(0,200,0,200)
 aimCircle.Position = UDim2.new(0.5,-100,0.5,-100)
 aimCircle.BackgroundTransparency = 1
-aimCircle.Text = "○"
-aimCircle.TextColor3 = Color3.new(1,1,1)
-aimCircle.Font = Enum.Font.SourceSansBold
-aimCircle.TextSize = st.aimCircleRadius
-aimCircle.ZIndex = 250
+aimCircle.BorderColor3 = Color3.new(1,1,1)
+aimCircle.BorderSizePixel = 2
 aimCircle.Visible = st.aimCircleEnabled
+aimCircle.ZIndex = 250
+Instance.new("UICorner",aimCircle).CornerRadius = UDim.new(1,0)
 
 -- 2D方框容器
 local boxContainer = Instance.new("Frame",gui)
@@ -670,7 +816,8 @@ RS.RenderStepped:Connect(function()
         if not hum then return end
 
         aimCircle.Visible = st.aimCircleEnabled
-        aimCircle.TextSize = st.aimCircleRadius
+        aimCircle.Size = UDim2.new(0, st.aimCircleRadius*2, 0, st.aimCircleRadius*2)
+        aimCircle.Position = UDim2.new(0.5, -st.aimCircleRadius, 0.5, -st.aimCircleRadius)
 
         if st.aim or st.silent then
             local targets=getEnemies()
