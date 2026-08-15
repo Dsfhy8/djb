@@ -20,8 +20,7 @@ savepos=false,tpto=false,
 swimBoost=false,waterWalk=false,invisible=false,fakeDeath=false,
 trackPlayer=false,
 spin=false,spinSpeed=50,
-fastInteract=false,
-psychic=false, psychicTarget=nil
+fastInteract=false
 }
 
 local aimSmooth = 0.12
@@ -129,7 +128,7 @@ termText.TextXAlignment=Enum.TextXAlignment.Left
 termText.TextYAlignment=Enum.TextYAlignment.Top
 termText.RichText=true
 
--- 灵动岛（胶囊形，可拖拽）
+-- 灵动岛
 local island=Instance.new("TextButton",gui)
 island.Size=UDim2.new(0,160,0,32)
 island.Position=UDim2.new(0.5,-80,0.02,0)
@@ -251,7 +250,7 @@ end
 prevBtn.MouseButton1Click:Connect(function() showPage(curPage-1) end)
 nextBtn.MouseButton1Click:Connect(function() showPage(curPage+1) end)
 
--- 飞行独立UI（正方形2x2，支持拖动）
+-- 飞行独立UI
 local flyControlUI=Instance.new("Frame",gui)
 flyControlUI.Size=UDim2.new(0,150,0,80)
 flyControlUI.Position=UDim2.new(0.7,-75,0.75,-40)
@@ -317,7 +316,7 @@ flyNoclipBtn.TextSize=14
 flyNoclipBtn.AutoButtonColor=false
 flyNoclipBtn.ZIndex=202
 
--- 移动加速独立UI
+-- 加速独立UI
 local speedControlUI=Instance.new("Frame",gui)
 speedControlUI.Size=UDim2.new(0,120,0,40)
 speedControlUI.Position=UDim2.new(0.02,0,0.75,0)
@@ -335,71 +334,6 @@ speedToggleUI.TextColor3=Color3.new(1,1,1)
 speedToggleUI.Font=Enum.Font.SourceSansBold
 speedToggleUI.TextSize=14
 speedToggleUI.AutoButtonColor=false
-
--- 意念操控UI（正方形2x2，带准星）
-local psychicUI=Instance.new("Frame",gui)
-psychicUI.Size=UDim2.new(0,150,0,80)
-psychicUI.Position=UDim2.new(0.3,-75,0.75,-40)
-psychicUI.BackgroundColor3=Color3.new(0,0,0)
-psychicUI.BackgroundTransparency=0.2
-psychicUI.BorderSizePixel=0
-psychicUI.Visible=false
-psychicUI.ZIndex=210
-
-local crosshair=Instance.new("TextLabel",gui)
-crosshair.Size=UDim2.new(0,20,0,20)
-crosshair.Position=UDim2.new(0.5,-10,0.5,-10)
-crosshair.BackgroundTransparency=1
-crosshair.Text="+"
-crosshair.TextColor3=Color3.new(1,0,0)
-crosshair.Font=Enum.Font.SourceSansBold
-crosshair.TextSize=20
-crosshair.ZIndex=220
-crosshair.Visible=false
-
-local psychicGrabBtn=Instance.new("TextButton",psychicUI)
-psychicGrabBtn.Size=UDim2.new(0,70,0,35)
-psychicGrabBtn.Position=UDim2.new(0,5,0,5)
-psychicGrabBtn.BackgroundColor3=Color3.new(80/255,130/255,200/255)
-psychicGrabBtn.Text="拖拽"
-psychicGrabBtn.TextColor3=Color3.new(1,1,1)
-psychicGrabBtn.Font=Enum.Font.SourceSansBold
-psychicGrabBtn.TextSize=14
-psychicGrabBtn.AutoButtonColor=false
-psychicGrabBtn.ZIndex=211
-
-local psychicThrowBtn=Instance.new("TextButton",psychicUI)
-psychicThrowBtn.Size=UDim2.new(0,70,0,35)
-psychicThrowBtn.Position=UDim2.new(0,75,0,5)
-psychicThrowBtn.BackgroundColor3=Color3.new(200/255,80/255,80/255)
-psychicThrowBtn.Text="扔出"
-psychicThrowBtn.TextColor3=Color3.new(1,1,1)
-psychicThrowBtn.Font=Enum.Font.SourceSansBold
-psychicThrowBtn.TextSize=14
-psychicThrowBtn.AutoButtonColor=false
-psychicThrowBtn.ZIndex=211
-
-local psychicDropBtn=Instance.new("TextButton",psychicUI)
-psychicDropBtn.Size=UDim2.new(0,70,0,35)
-psychicDropBtn.Position=UDim2.new(0,5,0,40)
-psychicDropBtn.BackgroundColor3=Color3.new(255/255,150/255,50/255)
-psychicDropBtn.Text="放下"
-psychicDropBtn.TextColor3=Color3.new(1,1,1)
-psychicDropBtn.Font=Enum.Font.SourceSansBold
-psychicDropBtn.TextSize=14
-psychicDropBtn.AutoButtonColor=false
-psychicDropBtn.ZIndex=211
-
-local psychicCloseBtn=Instance.new("TextButton",psychicUI)
-psychicCloseBtn.Size=UDim2.new(0,70,0,35)
-psychicCloseBtn.Position=UDim2.new(0,75,0,40)
-psychicCloseBtn.BackgroundColor3=Color3.new(255/255,100/255,100/255)
-psychicCloseBtn.Text="关闭"
-psychicCloseBtn.TextColor3=Color3.new(1,1,1)
-psychicCloseBtn.Font=Enum.Font.SourceSansBold
-psychicCloseBtn.TextSize=14
-psychicCloseBtn.AutoButtonColor=false
-psychicCloseBtn.ZIndex=211
 
 -- 生成开关按钮
 local function addButton(parent,text,key,x,y)
@@ -419,7 +353,6 @@ local function addButton(parent,text,key,x,y)
         b.Text=text.."："..(st[key] and "开" or "关")
         if key=="fly" then flyControlUI.Visible=st.fly end
         if key=="speed" then speedControlUI.Visible=st.speed end
-        if key=="psychic" then psychicUI.Visible=st.psychic; crosshair.Visible=st.psychic end
     end)
 end
 
@@ -584,10 +517,8 @@ spinPlus.MouseButton1Click:Connect(function()
 end)
 
 addButton(pages[9],"一键交互","fastInteract",10,70)
-addButton(pages[9],"意念操控","psychic",120,70)
 
--- 事件绑定（所有UI创建完成后统一绑定）
--- 飞行按钮
+-- 事件绑定
 flyAccelBtn.MouseButton1Click:Connect(function()
     st.flyspeed=math.min(200,st.flyspeed+10)
     flySpeedLabel.Text=tostring(st.flyspeed)
@@ -611,72 +542,10 @@ flyNoclipBtn.MouseButton1Click:Connect(function()
     flyNoclipBtn.BackgroundColor3=st.flyNoclip and Color3.new(0,200/255,0) or Color3.new(110/255,110/255,110/255)
 end)
 
--- 加速UI按钮
 speedToggleUI.MouseButton1Click:Connect(function()
     st.speed=not st.speed
     speedToggleUI.Text=st.speed and "加速：开" or "加速：关"
     speedToggleUI.BackgroundColor3=st.speed and Color3.new(0,200/255,0) or Color3.new(80/255,130/255,200/255)
-end)
-
--- 意念操控按钮
-psychicGrabBtn.MouseButton1Click:Connect(function()
-    if not st.psychic then return end
-    local target = getPsychicTarget()
-    if target then
-        st.psychicTarget = target
-        local pos = cam.CFrame.Position + cam.CFrame.LookVector * 10
-        if target:IsA("BasePart") then
-            target.Anchored = false
-            target.AssemblyLinearVelocity = Vector3.zero
-            target.Position = pos
-        elseif target:IsA("Model") then
-            local root = target:FindFirstChild("HumanoidRootPart") or target:FindFirstChild("Torso")
-            if root then
-                root.Anchored = false
-                root.AssemblyLinearVelocity = Vector3.zero
-                root.Position = pos
-            end
-        end
-        notif("已抓起")
-    else
-        notif("没有对准目标")
-    end
-end)
-psychicThrowBtn.MouseButton1Click:Connect(function()
-    if not st.psychicTarget then return end
-    local dir = cam.CFrame.LookVector * 80
-    if st.psychicTarget:IsA("BasePart") then
-        st.psychicTarget.AssemblyLinearVelocity = dir
-    elseif st.psychicTarget:IsA("Model") then
-        local root = st.psychicTarget:FindFirstChild("HumanoidRootPart") or st.psychicTarget:FindFirstChild("Torso")
-        if root then root.AssemblyLinearVelocity = dir end
-    end
-    st.psychicTarget = nil
-    notif("已扔出")
-end)
-psychicDropBtn.MouseButton1Click:Connect(function()
-    if st.psychicTarget then
-        if st.psychicTarget:IsA("BasePart") then
-            st.psychicTarget.AssemblyLinearVelocity = Vector3.zero
-        elseif st.psychicTarget:IsA("Model") then
-            local root = st.psychicTarget:FindFirstChild("HumanoidRootPart") or st.psychicTarget:FindFirstChild("Torso")
-            if root then root.AssemblyLinearVelocity = Vector3.zero end
-        end
-        st.psychicTarget = nil
-        notif("已放下")
-    end
-end)
-psychicCloseBtn.MouseButton1Click:Connect(function()
-    st.psychic=false
-    psychicUI.Visible=false
-    crosshair.Visible=false
-    st.psychicTarget=nil
-    for _,btn in ipairs(pages[9]:GetChildren()) do
-        if btn:IsA("TextButton") and string.find(btn.Text,"意念操控") then
-            btn.Text="意念操控：关"
-            btn.BackgroundColor3=Color3.new(110/255,110/255,110/255)
-        end
-    end
 end)
 
 -- 灵动岛事件
@@ -713,7 +582,7 @@ island.InputChanged:Connect(function(input)
     end
 end)
 
--- 飞行UI拖动
+-- 飞行UI拖拽
 local flyUIDragging=false
 local flyUIDragStart=nil
 local flyUIStartPos=nil
@@ -734,7 +603,7 @@ flyControlUI.InputEnded:Connect(function(input)
     if input.UserInputType==Enum.UserInputType.MouseButton1 or input.UserInputType==Enum.UserInputType.Touch then flyUIDragging=false end
 end)
 
--- 加速UI拖动
+-- 加速UI拖拽
 local speedUIDragging=false
 local speedUIDragStart=nil
 local speedUIStartPos=nil
@@ -755,27 +624,6 @@ speedControlUI.InputEnded:Connect(function(input)
     if input.UserInputType==Enum.UserInputType.MouseButton1 or input.UserInputType==Enum.UserInputType.Touch then speedUIDragging=false end
 end)
 
--- 意念操控UI拖动
-local psychicUIDragging=false
-local psychicUIDragStart=nil
-local psychicUIStartPos=nil
-psychicUI.InputBegan:Connect(function(input)
-    if input.UserInputType==Enum.UserInputType.MouseButton1 or input.UserInputType==Enum.UserInputType.Touch then
-        psychicUIDragging=true
-        psychicUIDragStart=input.Position
-        psychicUIStartPos=psychicUI.AbsolutePosition
-    end
-end)
-psychicUI.InputChanged:Connect(function(input)
-    if psychicUIDragging and (input.UserInputType==Enum.UserInputType.MouseMovement or input.UserInputType==Enum.UserInputType.Touch) then
-        local delta=input.Position-psychicUIDragStart
-        psychicUI.Position=UDim2.new(0,psychicUIStartPos.X+delta.X,0,psychicUIStartPos.Y+delta.Y)
-    end
-end)
-psychicUI.InputEnded:Connect(function(input)
-    if input.UserInputType==Enum.UserInputType.MouseButton1 or input.UserInputType==Enum.UserInputType.Touch then psychicUIDragging=false end
-end)
-
 -- Insert快捷键
 UIS.InputBegan:Connect(function(input,gameProcessed)
     if gameProcessed then return end
@@ -786,24 +634,6 @@ UIS.InputBegan:Connect(function(input,gameProcessed)
         end)
     end
 end)
-
--- 意念操控辅助函数
-local function getPsychicTarget()
-    local ray = cam:ScreenPointToRay(cam.ViewportSize.X/2, cam.ViewportSize.Y/2, 0)
-    local params = RaycastParams.new()
-    params.FilterType = Enum.RaycastFilterType.Blacklist
-    params.FilterDescendantsInstances = {player.Character}
-    local result = WS:Raycast(ray.Origin, ray.Direction * 100, params)
-    if result and result.Instance then
-        local obj = result.Instance
-        local model = obj:FindFirstAncestorOfClass("Model")
-        if model and Players:GetPlayerFromCharacter(model) then
-            return model
-        end
-        return obj
-    end
-    return nil
-end
 
 -- 透视循环
 task.spawn(function()
@@ -844,7 +674,6 @@ task.spawn(function()
                         end
                     end
                 end
-                -- 清理超出范围或死亡的标签
                 for _,p in ipairs(Players:GetPlayers()) do
                     if p~=player and p.Character and p.Character:FindFirstChild("ESPTag") then
                         local root=p.Character:FindFirstChild("HumanoidRootPart")
