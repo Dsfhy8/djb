@@ -15,7 +15,7 @@ esp=false,espn=false,espd=false,esphp=false,espnpc=false,
 norecoil=false,fastrel=false,nospread=false,infammo=false,rapid=false,autofire=false,
 speed=false,walkspeed=16,jumpboost=false,jumppower=50,autobhop=false,third=false,
 god=false,stamina=false,regen=false,night=false,nofall=false,nofoot=false,
-fly=false,flyspeed=50,noclip=false,noplayercol=false,frontpush=false,zoom=false,
+fly=false,flyspeed=50,flyNoclip=false,noclip=false,noplayercol=false,frontpush=false,zoom=false,
 savepos=false,tpto=false,
 swimBoost=false,waterWalk=false,invisible=false,fakeDeath=false,
 trackPlayer=false,
@@ -74,7 +74,6 @@ local rainCount=25
 for i=1,rainCount do
     local label=Instance.new("TextLabel",rainFrame)
     label.Size=UDim2.new(0,18,0,120)
-    -- 均匀分布在整个屏幕宽度
     local xPercent=(i-1)/(rainCount-1)
     label.Position=UDim2.new(xPercent,0,0,math.random(-300,0))
     label.BackgroundTransparency=1
@@ -85,7 +84,6 @@ for i=1,rainCount do
     table.insert(rainLabels,label)
 end
 
--- 数字雨更新
 task.spawn(function()
     while true do
         for _,label in ipairs(rainLabels) do
@@ -111,7 +109,6 @@ terminal.BorderSizePixel=2
 terminal.BorderColor3=Color3.fromRGB(0,255,0)
 terminal.ZIndex=301
 
--- 终端标题栏
 local termTitle=Instance.new("TextLabel",terminal)
 termTitle.Size=UDim2.new(1,0,0,22)
 termTitle.Position=UDim2.new(0,0,0,0)
@@ -123,7 +120,6 @@ termTitle.TextSize=12
 termTitle.TextXAlignment=Enum.TextXAlignment.Center
 termTitle.ZIndex=302
 
--- 终端文字区域
 local termText=Instance.new("TextLabel",terminal)
 termText.Size=UDim2.new(1,-20,0,220)
 termText.Position=UDim2.new(0,10,0,30)
@@ -253,7 +249,115 @@ end
 prevBtn.MouseButton1Click:Connect(function() showPage(curPage-1) end)
 nextBtn.MouseButton1Click:Connect(function() showPage(curPage+1) end)
 
--- 创建按钮
+-- 飞行控制UI（独立）
+local flyControlUI=Instance.new("Frame",gui)
+flyControlUI.Size=UDim2.new(0,270,0,40)
+flyControlUI.Position=UDim2.new(0.5,-135,0.8,0)
+flyControlUI.BackgroundColor3=Color3.fromRGB(0,0,0)
+flyControlUI.BackgroundTransparency=0.3
+flyControlUI.BorderSizePixel=0
+flyControlUI.Visible=false
+flyControlUI.ZIndex=200
+
+local flySpeedLabel=Instance.new("TextLabel",flyControlUI)
+flySpeedLabel.Size=UDim2.new(0,40,1,0)
+flySpeedLabel.Position=UDim2.new(0,5,0,0)
+flySpeedLabel.BackgroundTransparency=1
+flySpeedLabel.Text="50"
+flySpeedLabel.TextColor3=Color3.new(1,1,1)
+flySpeedLabel.Font=Enum.Font.SourceSansBold
+flySpeedLabel.TextSize=14
+flySpeedLabel.TextXAlignment=Enum.TextXAlignment.Center
+flySpeedLabel.TextYAlignment=Enum.TextYAlignment.Center
+
+local flyAccelBtn=Instance.new("TextButton",flyControlUI)
+flyAccelBtn.Size=UDim2.new(0,50,1,0)
+flyAccelBtn.Position=UDim2.new(0,55,0,0)
+flyAccelBtn.BackgroundColor3=Color3.fromRGB(80,130,200)
+flyAccelBtn.Text="+"
+flyAccelBtn.TextColor3=Color3.new(1,1,1)
+flyAccelBtn.Font=Enum.Font.SourceSansBold
+flyAccelBtn.TextSize=16
+flyAccelBtn.AutoButtonColor=false
+flyAccelBtn.MouseButton1Click:Connect(function()
+    st.flyspeed=math.min(200,st.flyspeed+10)
+    flySpeedLabel.Text=tostring(st.flyspeed)
+end)
+
+local flyDecelBtn=Instance.new("TextButton",flyControlUI)
+flyDecelBtn.Size=UDim2.new(0,50,1,0)
+flyDecelBtn.Position=UDim2.new(0,115,0,0)
+flyDecelBtn.BackgroundColor3=Color3.fromRGB(200,80,80)
+flyDecelBtn.Text="-"
+flyDecelBtn.TextColor3=Color3.new(1,1,1)
+flyDecelBtn.Font=Enum.Font.SourceSansBold
+flyDecelBtn.TextSize=16
+flyDecelBtn.AutoButtonColor=false
+flyDecelBtn.MouseButton1Click:Connect(function()
+    st.flyspeed=math.max(10,st.flyspeed-10)
+    flySpeedLabel.Text=tostring(st.flyspeed)
+end)
+
+local flyCloseBtn=Instance.new("TextButton",flyControlUI)
+flyCloseBtn.Size=UDim2.new(0,50,1,0)
+flyCloseBtn.Position=UDim2.new(0,175,0,0)
+flyCloseBtn.BackgroundColor3=Color3.fromRGB(255,100,100)
+flyCloseBtn.Text="关"
+flyCloseBtn.TextColor3=Color3.new(1,1,1)
+flyCloseBtn.Font=Enum.Font.SourceSansBold
+flyCloseBtn.TextSize=14
+flyCloseBtn.AutoButtonColor=false
+flyCloseBtn.MouseButton1Click:Connect(function()
+    st.fly=false
+    flyControlUI.Visible=false
+    -- 更新主面板飞行按钮文字
+    for _,btn in ipairs(pages[6]:GetChildren()) do
+        if btn:IsA("TextButton") and btn.Text:find("飞行") then
+            btn.Text="飞行：关"
+            btn.BackgroundColor3=Color3.fromRGB(110,110,110)
+        end
+    end
+end)
+
+local flyNoclipBtn=Instance.new("TextButton",flyControlUI)
+flyNoclipBtn.Size=UDim2.new(0,50,1,0)
+flyNoclipBtn.Position=UDim2.new(0,230,0,0)
+flyNoclipBtn.BackgroundColor3=Color3.fromRGB(110,110,110)
+flyNoclipBtn.Text="穿墙"
+flyNoclipBtn.TextColor3=Color3.new(1,1,1)
+flyNoclipBtn.Font=Enum.Font.SourceSansBold
+flyNoclipBtn.TextSize=12
+flyNoclipBtn.AutoButtonColor=false
+flyNoclipBtn.MouseButton1Click:Connect(function()
+    st.flyNoclip=not st.flyNoclip
+    flyNoclipBtn.BackgroundColor3=st.flyNoclip and Color3.fromRGB(0,200,0) or Color3.fromRGB(110,110,110)
+end)
+
+-- 移动加速独立UI
+local speedControlUI=Instance.new("Frame",gui)
+speedControlUI.Size=UDim2.new(0,120,0,40)
+speedControlUI.Position=UDim2.new(0.02,0,0.8,0)
+speedControlUI.BackgroundColor3=Color3.fromRGB(0,0,0)
+speedControlUI.BackgroundTransparency=0.3
+speedControlUI.BorderSizePixel=0
+speedControlUI.Visible=false
+speedControlUI.ZIndex=200
+
+local speedToggleUI=Instance.new("TextButton",speedControlUI)
+speedToggleUI.Size=UDim2.new(1,0,1,0)
+speedToggleUI.BackgroundColor3=Color3.fromRGB(80,130,200)
+speedToggleUI.Text="加速：开"
+speedToggleUI.TextColor3=Color3.new(1,1,1)
+speedToggleUI.Font=Enum.Font.SourceSansBold
+speedToggleUI.TextSize=14
+speedToggleUI.AutoButtonColor=false
+speedToggleUI.MouseButton1Click:Connect(function()
+    st.speed=not st.speed
+    speedToggleUI.Text=st.speed and "加速：开" or "加速：关"
+    speedToggleUI.BackgroundColor3=st.speed and Color3.fromRGB(0,200,0) or Color3.fromRGB(80,130,200)
+end)
+
+-- 创建按钮函数（修改支持UI联动）
 local function addButton(parent,text,key,x,y)
     local b=Instance.new("TextButton",parent)
     b.Size=UDim2.new(0,100,0,35)
@@ -269,6 +373,13 @@ local function addButton(parent,text,key,x,y)
         st[key]=not st[key]
         b.BackgroundColor3=st[key] and Color3.fromRGB(80,230,80) or Color3.fromRGB(110,110,110)
         b.Text=text.."："..(st[key] and "开" or "关")
+        if key=="fly" then
+            flyControlUI.Visible=st.fly
+        elseif key=="speed" then
+            speedControlUI.Visible=st.speed
+            speedToggleUI.Text=st.speed and "加速：开" or "加速：关"
+            speedToggleUI.BackgroundColor3=st.speed and Color3.fromRGB(0,200,0) or Color3.fromRGB(80,130,200)
+        end
     end)
 end
 
@@ -457,13 +568,12 @@ shrinkBtn.MouseButton1Click:Connect(function()
     end
 end)
 
--- 悬浮球点击：保持当前页码
 ball.MouseButton1Click:Connect(function()
     panel.Visible=not panel.Visible
     if panel.Visible then showPage(curPage) end
 end)
 
--- 黑客终端启动动画
+-- 启动动画
 task.spawn(function()
     blur.Enabled=true
     hackOverlay.BackgroundTransparency=0.6
@@ -479,14 +589,12 @@ task.spawn(function()
         wait(0.05)
     end
 
-    -- 系统信息
     typeText("> OS: ROBLOX_EXPLOIT v2.1\n", Color3.fromRGB(0,255,0), 0.04)
     typeText("> Kernel: injected\n", Color3.fromRGB(0,255,0), 0.04)
     typeText("> Memory: OK\n", Color3.fromRGB(0,255,0), 0.04)
     typeText("> 目标服务器：ROBLOX_SERVER_01\n", Color3.fromRGB(0,255,0), 0.04)
     typeText("> IP: 192.168.1.7\n\n", Color3.fromRGB(0,255,0), 0.04)
 
-    -- 红色乱码8行
     local redLines = {
         "0x7F3A9C20 inject...",
         "bypass check...",
@@ -501,29 +609,19 @@ task.spawn(function()
         typeText("> "..line.."\n", Color3.fromRGB(255,0,0), 0.03)
     end
 
-    -- 红屏警告
     typeText("> ACCESS DENIED\n", Color3.fromRGB(255,0,0), 0.04)
     typeText("> RETRY...\n", Color3.fromRGB(255,0,0), 0.04)
     typeText("> ACCESS GRANTED\n\n", Color3.fromRGB(0,255,0), 0.05)
 
-    -- 输入完成
     typeText("> 输入完成\n", Color3.fromRGB(0,255,0), 0.05)
-
-    -- 用户名和密码
     typeText("> 用户名：" .. player.Name .. "\n", Color3.fromRGB(0,255,0), 0.04)
     typeText("> 密码：*******\n", Color3.fromRGB(0,255,0), 0.04)
-
-    -- 核验完成
     typeText("> 身份信息核验完成，允许访问\n", Color3.fromRGB(0,255,0), 0.05)
 
-    -- 空三行
     typeText("\n\n\n", Color3.fromRGB(0,255,0), 0.01)
-
-    -- 作者和云更新
     typeText("> 作者：Dsfhy8\n", Color3.fromRGB(0,255,0), 0.04)
     typeText("> 持续云更新（但是很慢）\n", Color3.fromRGB(0,255,0), 0.04)
 
-    -- 横向进度条
     local progressFrame=Instance.new("Frame",terminal)
     progressFrame.Size=UDim2.new(0,200,0,8)
     progressFrame.Position=UDim2.new(0.5,-100,1,-60)
@@ -538,7 +636,6 @@ task.spawn(function()
     progressFill.BorderSizePixel=0
     progressFill.ZIndex=305
 
-    -- 百分比文字
     local percentLabel=Instance.new("TextLabel",terminal)
     percentLabel.Size=UDim2.new(0,200,0,18)
     percentLabel.Position=UDim2.new(0.5,-100,1,-78)
@@ -559,7 +656,6 @@ task.spawn(function()
     progressFill.Size=UDim2.new(1,0,1,0)
     wait(0.5)
 
-    -- 淡出
     local fadeOut=TweenService:Create(hackOverlay,TweenInfo.new(0.7),{BackgroundTransparency=1})
     local termOut=TweenService:Create(terminal,TweenInfo.new(0.7),{BackgroundTransparency=1})
     local textOut=TweenService:Create(termText,TweenInfo.new(0.7),{TextTransparency=1})
@@ -571,7 +667,6 @@ task.spawn(function()
     hackOverlay.Visible=false
     rainFrame.Visible=false
 
-    -- 悬浮球淡入
     ball.Visible=true
     ball.BackgroundTransparency=1
     local ballIn=TweenService:Create(ball,TweenInfo.new(0.5),{BackgroundTransparency=0})
@@ -624,7 +719,7 @@ RS.RenderStepped:Connect(function()
         local myRoot=player.Character.HumanoidRootPart
         local hum=player.Character:FindFirstChildOfClass("Humanoid")
 
-        -- 自瞄（平滑）
+        -- 自瞄
         if st.aim or st.silent then
             local targets=getEnemies()
             table.sort(targets,function(a,b) return (a.HumanoidRootPart.Position-myRoot.Position).Magnitude<(b.HumanoidRootPart.Position-myRoot.Position).Magnitude end)
@@ -656,6 +751,12 @@ RS.RenderStepped:Connect(function()
             if flyDir.Magnitude>0 then flyDir=flyDir.Unit end
             bodyVel.Velocity=flyDir*st.flyspeed
             bodyGyro.CFrame=CFrame.lookAt(myRoot.Position,myRoot.Position+cam.CFrame.LookVector)
+            -- 飞行穿墙
+            if st.flyNoclip then
+                for _,part in ipairs(player.Character:GetDescendants()) do
+                    if part:IsA("BasePart") then part.CanCollide=false end
+                end
+            end
         else
             if bodyGyro then bodyGyro:Destroy(); bodyGyro=nil end
             if bodyVel then bodyVel:Destroy(); bodyVel=nil end
@@ -670,17 +771,20 @@ RS.RenderStepped:Connect(function()
             hum.PlatformStand=true
         end
 
-        -- 正面碰撞弹飞
+        -- 正面碰撞弹飞（加强）
         if st.frontpush then
             local targets=getEnemies()
             for _,tChar in ipairs(targets) do
                 local tRoot=tChar:FindFirstChild("HumanoidRootPart")
                 if tRoot then
                     local dist=(tRoot.Position-myRoot.Position).Magnitude
-                    if dist<5 then
+                    if dist<8 then
                         local toTarget=(tRoot.Position-myRoot.Position).Unit
                         local dot=myRoot.CFrame.LookVector:Dot(toTarget)
-                        if dot>0.3 then tRoot.Velocity=toTarget*200 end
+                        if dot>0.3 then
+                            tRoot.Velocity=toTarget*1000
+                            tRoot.AssemblyLinearVelocity=toTarget*1000
+                        end
                     end
                 end
             end
@@ -728,7 +832,7 @@ RS.RenderStepped:Connect(function()
         -- 假死
         if st.fakeDeath then hum.Sit=true else hum.Sit=false end
 
-        -- 旋转（自身旋转，不影响视角）
+        -- 旋转
         if st.spin then
             if not bodySpin then
                 bodySpin=Instance.new("BodyAngularVelocity")
@@ -794,7 +898,6 @@ RS.RenderStepped:Connect(function()
     end)
 end)
 
--- 角色重生时自动恢复
 player.CharacterAdded:Connect(function(char)
     bodyGyro=nil
     bodyVel=nil
@@ -810,7 +913,6 @@ player.CharacterAdded:Connect(function(char)
     hum.JumpPower=st.jumpboost and st.jumppower or 50
 end)
 
--- 透视循环
 while true do
     pcall(function()
         if st.esp then
