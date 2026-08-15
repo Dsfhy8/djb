@@ -130,7 +130,7 @@ termText.TextXAlignment=Enum.TextXAlignment.Left
 termText.TextYAlignment=Enum.TextYAlignment.Top
 termText.RichText=true
 
--- 灵动岛（胶囊形，点击打开面板）
+-- 灵动岛（胶囊形，可拖拽移动）
 local island=Instance.new("TextButton",gui)
 island.Size=UDim2.new(0,160,0,32)
 island.Position=UDim2.new(0.5,-80,0.02,0)
@@ -141,7 +141,7 @@ island.Text="机械脚本"
 island.TextColor3=Color3.new(1,1,1)
 island.Font=Enum.Font.SourceSansBold
 island.TextSize=14
-island.AutoLocalize=false
+island.AutoButtonColor=false
 island.ZIndex=160
 island.Visible=false
 local uiCorner=Instance.new("UICorner",island)
@@ -182,7 +182,7 @@ closeBtn.Text="X"
 closeBtn.TextColor3=Color3.new(1,1,1)
 closeBtn.Font=Enum.Font.SourceSansBold
 closeBtn.TextSize=12
-closeBtn.AutoLocalize=false
+closeBtn.AutoButtonColor=false
 closeBtn.MouseButton1Click:Connect(function() panel.Visible=false end)
 
 --页面容器9页
@@ -216,7 +216,7 @@ prevBtn.Text="上一页"
 prevBtn.TextColor3=Color3.new(1,1,1)
 prevBtn.Font=Enum.Font.SourceSansBold
 prevBtn.TextSize=11
-prevBtn.AutoLocalize=false
+prevBtn.AutoButtonColor=false
 prevBtn.ZIndex=70
 prevBtn.Visible=false
 
@@ -228,7 +228,7 @@ nextBtn.Text="下一页"
 nextBtn.TextColor3=Color3.new(1,1,1)
 nextBtn.Font=Enum.Font.SourceSansBold
 nextBtn.TextSize=11
-nextBtn.AutoLocalize=false
+nextBtn.AutoButtonColor=false
 nextBtn.ZIndex=70
 
 local pageLabel=Instance.new("TextLabel",panel)
@@ -252,15 +252,46 @@ end
 prevBtn.MouseButton1Click:Connect(function() showPage(curPage-1) end)
 nextBtn.MouseButton1Click:Connect(function() showPage(curPage+1) end)
 
---修复灵动岛点击：放在panel全部创建完成之后
-island.MouseButton1Click:Connect(function()
-    pcall(function()
-        panel.Visible = not panel.Visible
-        if panel.Visible then showPage(curPage) end
-    end)
+-- 灵动岛点击与拖拽（优化版）
+local islandDragging=false
+local islandDragStart=nil
+local islandStartPos=nil
+local islandMoved=false
+
+island.InputBegan:Connect(function(input)
+    if input.UserInputType==Enum.UserInputType.MouseButton1 or input.UserInputType==Enum.UserInputType.Touch then
+        islandDragging=true
+        islandMoved=false
+        islandDragStart=input.Position
+        islandStartPos=island.AbsolutePosition
+    end
 end)
 
---Insert快捷键呼出面板
+island.InputEnded:Connect(function(input)
+    if islandDragging then
+        if not islandMoved then
+            pcall(function()
+                panel.Visible = not panel.Visible
+                if panel.Visible then showPage(curPage) end
+            end)
+        end
+        islandDragging=false
+    end
+end)
+
+island.InputChanged:Connect(function(input)
+    if islandDragging and (input.UserInputType==Enum.UserInputType.MouseMovement or input.UserInputType==Enum.UserInputType.Touch) then
+        local delta=input.Position-islandDragStart
+        if delta.Magnitude>10 then
+            islandMoved=true
+        end
+        if islandMoved then
+            island.Position=UDim2.new(0,islandStartPos.X+delta.X,0,islandStartPos.Y+delta.Y)
+        end
+    end
+end)
+
+-- Insert快捷键呼出面板
 UIS.InputBegan:Connect(function(input,gameProcessed)
     if gameProcessed then return end
     if input.KeyCode == Enum.KeyCode.Insert then
@@ -301,7 +332,7 @@ flyAccelBtn.Text="加速"
 flyAccelBtn.TextColor3=Color3.new(1,1,1)
 flyAccelBtn.Font=Enum.Font.SourceSansBold
 flyAccelBtn.TextSize=14
-flyAccelBtn.AutoLocalize=false
+flyAccelBtn.AutoButtonColor=false
 flyAccelBtn.ZIndex=202
 flyAccelBtn.MouseButton1Click:Connect(function()
     st.flyspeed=math.min(200,st.flyspeed+10)
@@ -316,7 +347,7 @@ flyDecelBtn.Text="减速"
 flyDecelBtn.TextColor3=Color3.new(1,1,1)
 flyDecelBtn.Font=Enum.Font.SourceSansBold
 flyDecelBtn.TextSize=14
-flyDecelBtn.AutoLocalize=false
+flyDecelBtn.AutoButtonColor=false
 flyDecelBtn.ZIndex=202
 flyDecelBtn.MouseButton1Click:Connect(function()
     st.flyspeed=math.max(10,st.flyspeed-10)
@@ -331,7 +362,7 @@ flyCloseBtn.Text="关闭"
 flyCloseBtn.TextColor3=Color3.new(1,1,1)
 flyCloseBtn.Font=Enum.Font.SourceSansBold
 flyCloseBtn.TextSize=14
-flyCloseBtn.AutoLocalize=false
+flyCloseBtn.AutoButtonColor=false
 flyCloseBtn.ZIndex=202
 flyCloseBtn.MouseButton1Click:Connect(function()
     st.fly=false
@@ -352,7 +383,7 @@ flyNoclipBtn.Text="穿墙"
 flyNoclipBtn.TextColor3=Color3.new(1,1,1)
 flyNoclipBtn.Font=Enum.Font.SourceSansBold
 flyNoclipBtn.TextSize=14
-flyNoclipBtn.AutoLocalize=false
+flyNoclipBtn.AutoButtonColor=false
 flyNoclipBtn.ZIndex=202
 flyNoclipBtn.MouseButton1Click:Connect(function()
     st.flyNoclip=not st.flyNoclip
@@ -364,20 +395,20 @@ local flyUIDragging=false
 local flyUIDragStart=nil
 local flyUIStartPos=nil
 flyControlUI.InputBegan:Connect(function(input)
-    if input.UserInputType==Enum.UserInputType.MouseButton1 then
+    if input.UserInputType==Enum.UserInputType.MouseButton1 or input.UserInputType==Enum.UserInputType.Touch then
         flyUIDragging=true
         flyUIDragStart=input.Position
         flyUIStartPos=flyControlUI.AbsolutePosition
     end
 end)
 flyControlUI.InputChanged:Connect(function(input)
-    if flyUIDragging and input.UserInputType==Enum.UserInputType.MouseMovement then
+    if flyUIDragging and (input.UserInputType==Enum.UserInputType.MouseMovement or input.UserInputType==Enum.UserInputType.Touch) then
         local delta=input.Position-flyUIDragStart
         flyControlUI.Position=UDim2.new(0,flyUIStartPos.X+delta.X,0,flyUIStartPos.Y+delta.Y)
     end
 end)
 flyControlUI.InputEnded:Connect(function(input)
-    if input.UserInputType==Enum.UserInputType.MouseButton1 then flyUIDragging=false end
+    if input.UserInputType==Enum.UserInputType.MouseButton1 or input.UserInputType==Enum.UserInputType.Touch then flyUIDragging=false end
 end)
 
 --加速独立UI
@@ -397,7 +428,7 @@ speedToggleUI.Text="加速：开"
 speedToggleUI.TextColor3=Color3.new(1,1,1)
 speedToggleUI.Font=Enum.Font.SourceSansBold
 speedToggleUI.TextSize=14
-speedToggleUI.AutoLocalize=false
+speedToggleUI.AutoButtonColor=false
 speedToggleUI.MouseButton1Click:Connect(function()
     st.speed=not st.speed
     speedToggleUI.Text=st.speed and "加速：开" or "加速：关"
@@ -409,20 +440,20 @@ local speedUIDragging=false
 local speedUIDragStart=nil
 local speedUIStartPos=nil
 speedControlUI.InputBegan:Connect(function(input)
-    if input.UserInputType==Enum.UserInputType.MouseButton1 then
+    if input.UserInputType==Enum.UserInputType.MouseButton1 or input.UserInputType==Enum.UserInputType.Touch then
         speedUIDragging=true
         speedUIDragStart=input.Position
         speedUIStartPos=speedControlUI.AbsolutePosition
     end
 end)
 speedControlUI.InputChanged:Connect(function(input)
-    if speedUIDragging and input.UserInputType==Enum.UserInputType.MouseMovement then
+    if speedUIDragging and (input.UserInputType==Enum.UserInputType.MouseMovement or input.UserInputType==Enum.UserInputType.Touch) then
         local delta=input.Position-speedUIDragStart
         speedControlUI.Position=UDim2.new(0,speedUIStartPos.X+delta.X,0,speedUIStartPos.Y+delta.Y)
     end
 end)
 speedControlUI.InputEnded:Connect(function(input)
-    if input.UserInputType==Enum.UserInputType.MouseButton1 then speedUIDragging=false end
+    if input.UserInputType==Enum.UserInputType.MouseButton1 or input.UserInputType==Enum.UserInputType.Touch then speedUIDragging=false end
 end)
 
 --生成开关按钮
@@ -435,7 +466,7 @@ local function addButton(parent,text,key,x,y)
     b.TextColor3=Color3.new(1,1,1)
     b.Font=Enum.Font.SourceSansBold
     b.TextSize=13
-    b.AutoLocalize=false
+    b.AutoButtonColor=false
     b.ZIndex=80
     b.MouseButton1Click:Connect(function()
         st[key]=not st[key]
@@ -486,11 +517,11 @@ local function addSlider(parent,text,key,minv,maxv,x,y)
         knob.Position=UDim2.new(percent,-7,0.5,-7)
         lbl.Text=text..": "..st[key]
     end
-    knob.InputBegan:Connect(function(i) if i.UserInputType==Enum.UserInputType.MouseButton1 then dragging=true end end)
-    knob.InputEnded:Connect(function(i) if i.UserInputType==Enum.UserInputType.MouseButton1 then dragging=false end end)
-    bg.InputChanged:Connect(function(i) if dragging and i.UserInputType==Enum.UserInputType.MouseMovement then update(i) end end)
-    bg.InputBegan:Connect(function(i) if i.UserInputType==Enum.UserInputType.MouseButton1 then update(i);dragging=true end end)
-    bg.InputEnded:Connect(function(i) if i.UserInputType==Enum.UserInputType.MouseButton1 then dragging=false end end)
+    knob.InputBegan:Connect(function(i) if i.UserInputType==Enum.UserInputType.MouseButton1 or i.UserInputType==Enum.UserInputType.Touch then dragging=true end end)
+    knob.InputEnded:Connect(function(i) if i.UserInputType==Enum.UserInputType.MouseButton1 or i.UserInputType==Enum.UserInputType.Touch then dragging=false end end)
+    bg.InputChanged:Connect(function(i) if dragging and (i.UserInputType==Enum.UserInputType.MouseMovement or i.UserInputType==Enum.UserInputType.Touch) then update(i) end end)
+    bg.InputBegan:Connect(function(i) if i.UserInputType==Enum.UserInputType.MouseButton1 or i.UserInputType==Enum.UserInputType.Touch then update(i);dragging=true end end)
+    bg.InputEnded:Connect(function(i) if i.UserInputType==Enum.UserInputType.MouseButton1 or i.UserInputType==Enum.UserInputType.Touch then dragging=false end end)
 end
 
 local function addTargetButton(parent,text,x,y)
@@ -502,7 +533,7 @@ local function addTargetButton(parent,text,x,y)
     b.TextColor3=Color3.new(1,1,1)
     b.Font=Enum.Font.SourceSansBold
     b.TextSize=13
-    b.AutoLocalize=false
+    b.AutoButtonColor=false
     b.ZIndex=80
     b.MouseButton1Click:Connect(function()
         targetList={}
@@ -583,7 +614,7 @@ spinMinus.Text="速度-"..st.spinSpeed
 spinMinus.TextColor3=Color3.new(1,1,1)
 spinMinus.Font=Enum.Font.SourceSansBold
 spinMinus.TextSize=13
-spinMinus.AutoLocalize=false
+spinMinus.AutoButtonColor=false
 spinMinus.ZIndex=80
 spinMinus.MouseButton1Click:Connect(function()
     st.spinSpeed=math.max(1,st.spinSpeed-10)
@@ -598,7 +629,7 @@ spinPlus.Text="速度+"..st.spinSpeed
 spinPlus.TextColor3=Color3.new(1,1,1)
 spinPlus.Font=Enum.Font.SourceSansBold
 spinPlus.TextSize=13
-spinPlus.AutoLocalize=false
+spinPlus.AutoButtonColor=false
 spinPlus.ZIndex=80
 spinPlus.MouseButton1Click:Connect(function()
     st.spinSpeed=math.min(200,st.spinSpeed+10)
@@ -615,7 +646,7 @@ enlargeBtn.Text="变大"
 enlargeBtn.TextColor3=Color3.new(1,1,1)
 enlargeBtn.Font=Enum.Font.SourceSansBold
 enlargeBtn.TextSize=13
-enlargeBtn.AutoLocalize=false
+enlargeBtn.AutoButtonColor=false
 enlargeBtn.ZIndex=80
 enlargeBtn.MouseButton1Click:Connect(function()
     scaleFactor=math.min(3,scaleFactor+0.1)
@@ -637,7 +668,7 @@ shrinkBtn.Text="变小"
 shrinkBtn.TextColor3=Color3.new(1,1,1)
 shrinkBtn.Font=Enum.Font.SourceSansBold
 shrinkBtn.TextSize=13
-shrinkBtn.AutoLocalize=false
+shrinkBtn.AutoButtonColor=false
 shrinkBtn.ZIndex=80
 shrinkBtn.MouseButton1Click:Connect(function()
     scaleFactor=math.max(0.3,scaleFactor-0.1)
@@ -794,7 +825,6 @@ RS.RenderStepped:Connect(function()
         local hum=player.Character:FindFirstChild("Humanoid")
         if not hum then return end
 
-        --自瞄逻辑
         if st.aim or st.silent then
             local targets=getEnemies()
             table.sort(targets,function(a,b)
@@ -810,7 +840,6 @@ RS.RenderStepped:Connect(function()
             end
         end
 
-        --飞行逻辑
         if st.fly then
             if not bodyGyro then
                 bodyGyro=Instance.new("BodyGyro",myRoot)
@@ -842,7 +871,6 @@ RS.RenderStepped:Connect(function()
             hum.PlatformStand=false
         end
 
-        --锁定玩家跟踪
         if st.trackPlayer and selectedTarget and selectedTarget.Character and selectedTarget.Character:FindFirstChild("HumanoidRootPart") then
             local tarRoot=selectedTarget.Character.HumanoidRootPart
             local offset=tarRoot.CFrame.LookVector*(-3)+Vector3.new(0,2,0)
@@ -850,7 +878,6 @@ RS.RenderStepped:Connect(function()
             hum.PlatformStand=true
         end
 
-        --撞击弹飞
         if st.frontpush then
             local targets=getEnemies()
             for _,tChar in ipairs(targets) do
@@ -866,7 +893,6 @@ RS.RenderStepped:Connect(function()
             end
         end
 
-        --关闭玩家碰撞
         if st.noplayercol then
             for _,p in ipairs(Players:GetPlayers()) do
                 if p~=player and p.Character then
@@ -877,7 +903,6 @@ RS.RenderStepped:Connect(function()
             end
         end
 
-        --移动属性
         if st.speed then hum.WalkSpeed=st.walkspeed else hum.WalkSpeed=16 end
         if st.jumpboost then hum.JumpPower=st.jumppower else hum.JumpPower=50 end
         if st.autobhop and hum.FloorMaterial~=Enum.Material.Air then hum:ChangeState(Enum.HumanoidStateType.Jumping) end
@@ -888,7 +913,6 @@ RS.RenderStepped:Connect(function()
             end
         end
 
-        --水上行走
         if st.waterWalk then
             local ray=workspace:Raycast(myRoot.Position,Vector3.new(0,-3,0))
             if ray and ray.Instance:IsA("Terrain") and ray.Material==Enum.Material.Water then
@@ -904,10 +928,8 @@ RS.RenderStepped:Connect(function()
             if bodyFloat then bodyFloat:Destroy();bodyFloat=nil end
         end
 
-        --假死坐姿
         if st.fakeDeath then hum.Sit=true else hum.Sit=false end
 
-        --身体旋转
         if st.spin then
             if not bodySpin then
                 bodySpin=Instance.new("BodyAngularVelocity",myRoot)
@@ -918,19 +940,13 @@ RS.RenderStepped:Connect(function()
             if bodySpin then bodySpin:Destroy();bodySpin=nil end
         end
 
-        --夜视
         if st.night then Lighting.Brightness=3 else Lighting.Brightness=1 end
-        --防摔伤
         if st.nofall then hum:SetStateEnabled(Enum.HumanoidStateType.FallingDown,false) end
-        --无敌
         if st.god then hum.Health=hum.MaxHealth end
-        --自动回血
         if st.regen then hum.Health=math.min(hum.MaxHealth,hum.Health+0.5) end
 
-        --视野缩放
         if st.zoom then cam.FieldOfView=30 else cam.FieldOfView=70 end
 
-        --隐身
         if st.invisible then
             for _,part in ipairs(player.Character:GetDescendants()) do
                 if part:IsA("BasePart") then
@@ -951,7 +967,6 @@ RS.RenderStepped:Connect(function()
     end)
 end)
 
---F1保存坐标 F2传送
 UIS.InputBegan:Connect(function(input,gp)
     if gp then return end
     if input.KeyCode == Enum.KeyCode.F1 then
