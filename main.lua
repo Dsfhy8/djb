@@ -1,6 +1,6 @@
 local player=game.Players.LocalPlayer
 local cam=workspace.CurrentCamera
-local Players=game.Players
+local Players=game:GetService("Players")
 local RS=game:GetService("RunService")
 local WS=workspace
 local UIS=game:GetService("UserInputService")
@@ -55,7 +55,7 @@ blur.Enabled=false
 local hackOverlay=Instance.new("Frame",gui)
 hackOverlay.Size=UDim2.new(3,0,3,0)
 hackOverlay.Position=UDim2.new(-1,0,-1,0)
-hackOverlay.BackgroundColor3=Color3.fromRGB(0,0,0)
+hackOverlay.BackgroundColor3=Color3.new(0,0,0)
 hackOverlay.BackgroundTransparency=0.6
 hackOverlay.BorderSizePixel=0
 hackOverlay.ZIndex=300
@@ -75,7 +75,7 @@ for i=1,25 do
     label.Size=UDim2.new(0,18,0,120)
     label.Position=UDim2.new((i-1)/24,0,0,math.random(-300,0))
     label.BackgroundTransparency=1
-    label.TextColor3=Color3.fromRGB(0,255,0)
+    label.TextColor3=Color3.new(0,1,0)
     label.Font=Enum.Font.SourceSansBold
     label.TextSize=14
     label.Text=""
@@ -87,13 +87,13 @@ task.spawn(function()
         for _,label in ipairs(rainLabels) do
             local y=label.Position.Y.Offset
             y=y+8
-            if y>500 then y=-150; label.Position=UDim2.new(label.Position.X.Scale,label.Position.X.Offset,0,math.random(-200,0)) end
+            if y>500 then y=-150;label.Position=UDim2.new(label.Position.X.Scale,label.Position.X.Offset,0,math.random(-200,0)) end
             label.Position=UDim2.new(label.Position.X.Scale,label.Position.X.Offset,0,y)
             local str=""
             for _=1,10 do str=str..string.char(math.random(48,57)).."\n" end
             label.Text=str
         end
-        wait(0.1)
+        task.wait(0.1)
     end
 end)
 
@@ -101,18 +101,18 @@ end)
 local terminal=Instance.new("Frame",hackOverlay)
 terminal.Size=UDim2.new(0,380,0,320)
 terminal.Position=UDim2.new(0.5,-190,0.5,-160)
-terminal.BackgroundColor3=Color3.fromRGB(10,12,14)
+terminal.BackgroundColor3=Color3.new(10/255,12/255,14/255)
 terminal.BackgroundTransparency=0
 terminal.BorderSizePixel=2
-terminal.BorderColor3=Color3.fromRGB(0,255,0)
+terminal.BorderColor3=Color3.new(0,1,0)
 terminal.ZIndex=301
 
 local termTitle=Instance.new("TextLabel",terminal)
 termTitle.Size=UDim2.new(1,0,0,22)
 termTitle.Position=UDim2.new(0,0,0,0)
-termTitle.BackgroundColor3=Color3.fromRGB(0,30,0)
+termTitle.BackgroundColor3=Color3.new(0,30/255,0)
 termTitle.Text="ROBLOX_EXPLOIT_CONSOLE"
-termTitle.TextColor3=Color3.fromRGB(0,255,0)
+termTitle.TextColor3=Color3.new(0,1,0)
 termTitle.Font=Enum.Font.SourceSansBold
 termTitle.TextSize=12
 termTitle.TextXAlignment=Enum.TextXAlignment.Center
@@ -123,52 +123,53 @@ termText.Size=UDim2.new(1,-20,0,220)
 termText.Position=UDim2.new(0,10,0,30)
 termText.BackgroundTransparency=1
 termText.Text=""
-termText.TextColor3=Color3.fromRGB(255,0,0)
+termText.TextColor3=Color3.new(1,0,0)
 termText.Font=Enum.Font.SourceSansBold
 termText.TextSize=14
 termText.TextXAlignment=Enum.TextXAlignment.Left
 termText.TextYAlignment=Enum.TextYAlignment.Top
 termText.RichText=true
 
--- 灵动岛（胶囊形，无拖拽，点击打开面板）
+-- 灵动岛（胶囊形，点击打开面板）
 local island=Instance.new("TextButton",gui)
 island.Size=UDim2.new(0,160,0,32)
 island.Position=UDim2.new(0.5,-80,0.02,0)
-island.BackgroundColor3=Color3.fromRGB(30,0,40)  -- 紫黑
+island.BackgroundColor3=Color3.new(30/255,0,40/255)
 island.BorderSizePixel=2
-island.BorderColor3=Color3.fromRGB(255,0,0)
+island.BorderColor3=Color3.new(1,0,0)
 island.Text="机械脚本"
-island.TextColor3=Color3.fromRGB(255,255,255)
+island.TextColor3=Color3.new(1,1,1)
 island.Font=Enum.Font.SourceSansBold
 island.TextSize=14
-island.AutoButtonColor=false
+island.AutoLocalize=false
 island.ZIndex=160
 island.Visible=false
-Instance.new("UICorner",island).CornerRadius=UDim.new(1,0)
--- !!!原来这里的MouseButton1Click绑定删掉了!!!
+local uiCorner=Instance.new("UICorner",island)
+uiCorner.CornerRadius=UDim.new(1,0)
 
 -- 主面板
 local panel=Instance.new("Frame",gui)
 panel.Size=UDim2.new(0,340,0,260)
 panel.Position=UDim2.new(0.5,-170,0.5,-130)
-panel.BackgroundColor3=Color3.fromRGB(22,22,22)
+panel.BackgroundColor3=Color3.new(22/255,22/255,22/255)
 panel.BackgroundTransparency=0
 panel.BorderSizePixel=3
-panel.BorderColor3=Color3.fromRGB(255,0,0)
+panel.BorderColor3=Color3.new(1,0,0)
 panel.Visible=false
 panel.ZIndex=50
 
--- 标题栏
+--标题栏
 local titleBar=Instance.new("Frame",panel)
 titleBar.Size=UDim2.new(1,0,0,30)
-titleBar.BackgroundColor3=Color3.fromRGB(35,35,35)
+titleBar.BackgroundColor3=Color3.new(35/255,35/255,35/255)
 titleBar.BorderSizePixel=0
+
 local titleText=Instance.new("TextLabel",titleBar)
 titleText.Size=UDim2.new(1,-30,1,0)
 titleText.Position=UDim2.new(0,10,0,0)
 titleText.BackgroundTransparency=1
 titleText.Text="机械脚本"
-titleText.TextColor3=Color3.fromRGB(255,255,255)
+titleText.TextColor3=Color3.new(1,1,1)
 titleText.Font=Enum.Font.SourceSansBold
 titleText.TextSize=17
 titleText.TextXAlignment=Enum.TextXAlignment.Left
@@ -176,15 +177,15 @@ titleText.TextXAlignment=Enum.TextXAlignment.Left
 local closeBtn=Instance.new("TextButton",titleBar)
 closeBtn.Size=UDim2.new(0,24,0,24)
 closeBtn.Position=UDim2.new(1,-28,0,3)
-closeBtn.BackgroundColor3=Color3.fromRGB(220,50,50)
+closeBtn.BackgroundColor3=Color3.new(220/255,50/255,50/255)
 closeBtn.Text="X"
 closeBtn.TextColor3=Color3.new(1,1,1)
 closeBtn.Font=Enum.Font.SourceSansBold
 closeBtn.TextSize=12
-closeBtn.AutoButtonColor=false
+closeBtn.AutoLocalize=false
 closeBtn.MouseButton1Click:Connect(function() panel.Visible=false end)
 
--- 页面容器（9页）
+--页面容器9页
 local pages={}
 local names={"自瞄合集","透视合集","武器合集","移动合集","生存合集","通用合集","娱乐合集","其他合集","更多合集"}
 for i=1,9 do
@@ -199,7 +200,7 @@ for i=1,9 do
     h.Position=UDim2.new(0,0,0,0)
     h.BackgroundTransparency=1
     h.Text=names[i]
-    h.TextColor3=Color3.fromRGB(255,225,90)
+    h.TextColor3=Color3.new(255/255,225/255,90/255)
     h.Font=Enum.Font.SourceSansBold
     h.TextSize=14
     h.TextXAlignment=Enum.TextXAlignment.Left
@@ -210,24 +211,24 @@ local curPage=1
 local prevBtn=Instance.new("TextButton",panel)
 prevBtn.Size=UDim2.new(0,60,0,24)
 prevBtn.Position=UDim2.new(0,10,1,-30)
-prevBtn.BackgroundColor3=Color3.fromRGB(100,100,100)
+prevBtn.BackgroundColor3=Color3.new(100/255,100/255,100/255)
 prevBtn.Text="上一页"
 prevBtn.TextColor3=Color3.new(1,1,1)
 prevBtn.Font=Enum.Font.SourceSansBold
 prevBtn.TextSize=11
-prevBtn.AutoButtonColor=false
+prevBtn.AutoLocalize=false
 prevBtn.ZIndex=70
 prevBtn.Visible=false
 
 local nextBtn=Instance.new("TextButton",panel)
 nextBtn.Size=UDim2.new(0,60,0,24)
 nextBtn.Position=UDim2.new(0,270,1,-30)
-nextBtn.BackgroundColor3=Color3.fromRGB(100,100,100)
+nextBtn.BackgroundColor3=Color3.new(100/255,100/255,100/255)
 nextBtn.Text="下一页"
 nextBtn.TextColor3=Color3.new(1,1,1)
 nextBtn.Font=Enum.Font.SourceSansBold
 nextBtn.TextSize=11
-nextBtn.AutoButtonColor=false
+nextBtn.AutoLocalize=false
 nextBtn.ZIndex=70
 
 local pageLabel=Instance.new("TextLabel",panel)
@@ -251,17 +252,15 @@ end
 prevBtn.MouseButton1Click:Connect(function() showPage(curPage-1) end)
 nextBtn.MouseButton1Click:Connect(function() showPage(curPage+1) end)
 
--- ======================【修复：灵动岛点击绑定放到这里】======================
+--修复灵动岛点击：放在panel全部创建完成之后
 island.MouseButton1Click:Connect(function()
     pcall(function()
         panel.Visible = not panel.Visible
-        if panel.Visible then
-            showPage(curPage)
-        end
+        if panel.Visible then showPage(curPage) end
     end)
 end)
 
--- 备用热键 Insert按键开关UI，灵动岛点不动就按键盘Insert
+--Insert快捷键呼出面板
 UIS.InputBegan:Connect(function(input,gameProcessed)
     if gameProcessed then return end
     if input.KeyCode == Enum.KeyCode.Insert then
@@ -271,13 +270,12 @@ UIS.InputBegan:Connect(function(input,gameProcessed)
         end)
     end
 end)
--- =========================================================================
 
--- 飞行控制UI（独立正方形2x2）
+--飞行独立UI
 local flyControlUI=Instance.new("Frame",gui)
 flyControlUI.Size=UDim2.new(0,150,0,80)
 flyControlUI.Position=UDim2.new(0.7,-75,0.75,-40)
-flyControlUI.BackgroundColor3=Color3.fromRGB(0,0,0)
+flyControlUI.BackgroundColor3=Color3.new(0,0,0)
 flyControlUI.BackgroundTransparency=0.2
 flyControlUI.BorderSizePixel=0
 flyControlUI.Visible=false
@@ -298,12 +296,12 @@ flySpeedLabel.ZIndex=201
 local flyAccelBtn=Instance.new("TextButton",flyControlUI)
 flyAccelBtn.Size=UDim2.new(0,70,0,35)
 flyAccelBtn.Position=UDim2.new(0,5,0,5)
-flyAccelBtn.BackgroundColor3=Color3.fromRGB(80,130,200)
+flyAccelBtn.BackgroundColor3=Color3.new(80/255,130/255,200/255)
 flyAccelBtn.Text="加速"
 flyAccelBtn.TextColor3=Color3.new(1,1,1)
 flyAccelBtn.Font=Enum.Font.SourceSansBold
 flyAccelBtn.TextSize=14
-flyAccelBtn.AutoButtonColor=false
+flyAccelBtn.AutoLocalize=false
 flyAccelBtn.ZIndex=202
 flyAccelBtn.MouseButton1Click:Connect(function()
     st.flyspeed=math.min(200,st.flyspeed+10)
@@ -313,12 +311,12 @@ end)
 local flyDecelBtn=Instance.new("TextButton",flyControlUI)
 flyDecelBtn.Size=UDim2.new(0,70,0,35)
 flyDecelBtn.Position=UDim2.new(0,75,0,5)
-flyDecelBtn.BackgroundColor3=Color3.fromRGB(200,80,80)
+flyDecelBtn.BackgroundColor3=Color3.new(200/255,80/255,80/255)
 flyDecelBtn.Text="减速"
 flyDecelBtn.TextColor3=Color3.new(1,1,1)
 flyDecelBtn.Font=Enum.Font.SourceSansBold
 flyDecelBtn.TextSize=14
-flyDecelBtn.AutoButtonColor=false
+flyDecelBtn.AutoLocalize=false
 flyDecelBtn.ZIndex=202
 flyDecelBtn.MouseButton1Click:Connect(function()
     st.flyspeed=math.max(10,st.flyspeed-10)
@@ -328,20 +326,20 @@ end)
 local flyCloseBtn=Instance.new("TextButton",flyControlUI)
 flyCloseBtn.Size=UDim2.new(0,70,0,35)
 flyCloseBtn.Position=UDim2.new(0,5,0,40)
-flyCloseBtn.BackgroundColor3=Color3.fromRGB(255,100,100)
+flyCloseBtn.BackgroundColor3=Color3.new(255/255,100/255,100/255)
 flyCloseBtn.Text="关闭"
 flyCloseBtn.TextColor3=Color3.new(1,1,1)
 flyCloseBtn.Font=Enum.Font.SourceSansBold
 flyCloseBtn.TextSize=14
-flyCloseBtn.AutoButtonColor=false
+flyCloseBtn.AutoLocalize=false
 flyCloseBtn.ZIndex=202
 flyCloseBtn.MouseButton1Click:Connect(function()
     st.fly=false
     flyControlUI.Visible=false
     for _,btn in ipairs(pages[6]:GetChildren()) do
-        if btn:IsA("TextButton") and btn.Text:find("飞行") then
+        if btn:IsA("TextButton") and string.find(btn.Text,"飞行") then
             btn.Text="飞行：关"
-            btn.BackgroundColor3=Color3.fromRGB(110,110,110)
+            btn.BackgroundColor3=Color3.new(110/255,110/255,110/255)
         end
     end
 end)
@@ -349,42 +347,44 @@ end)
 local flyNoclipBtn=Instance.new("TextButton",flyControlUI)
 flyNoclipBtn.Size=UDim2.new(0,70,0,35)
 flyNoclipBtn.Position=UDim2.new(0,75,0,40)
-flyNoclipBtn.BackgroundColor3=Color3.fromRGB(110,110,110)
+flyNoclipBtn.BackgroundColor3=Color3.new(110/255,110/255,110/255)
 flyNoclipBtn.Text="穿墙"
 flyNoclipBtn.TextColor3=Color3.new(1,1,1)
 flyNoclipBtn.Font=Enum.Font.SourceSansBold
 flyNoclipBtn.TextSize=14
-flyNoclipBtn.AutoButtonColor=false
+flyNoclipBtn.AutoLocalize=false
 flyNoclipBtn.ZIndex=202
 flyNoclipBtn.MouseButton1Click:Connect(function()
     st.flyNoclip=not st.flyNoclip
-    flyNoclipBtn.BackgroundColor3=st.flyNoclip and Color3.fromRGB(0,200,0) or Color3.fromRGB(110,110,110)
+    flyNoclipBtn.BackgroundColor3=st.flyNoclip and Color3.new(0,200/255,0) or Color3.new(110/255,110/255,110/255)
 end)
 
--- 飞行UI拖动
+--飞行UI拖拽
 local flyUIDragging=false
 local flyUIDragStart=nil
 local flyUIStartPos=nil
 flyControlUI.InputBegan:Connect(function(input)
-    if input.UserInputType==Enum.UserInputType.Touch or input.UserInputType==Enum.UserInputType.MouseButton1 then
+    if input.UserInputType==Enum.UserInputType.MouseButton1 then
         flyUIDragging=true
         flyUIDragStart=input.Position
-        flyUIStartPos=flyControlUI.Position
+        flyUIStartPos=flyControlUI.AbsolutePosition
     end
 end)
-flyControlUI.InputEnded:Connect(function() flyUIDragging=false end)
-UIS.InputChanged:Connect(function(input)
-    if flyUIDragging and flyUIDragStart and flyUIStartPos and (input.UserInputType==Enum.UserInputType.Touch or input.UserInputType==Enum.UserInputType.MouseMovement) then
+flyControlUI.InputChanged:Connect(function(input)
+    if flyUIDragging and input.UserInputType==Enum.UserInputType.MouseMovement then
         local delta=input.Position-flyUIDragStart
-        flyControlUI.Position=UDim2.new(flyUIStartPos.X.Scale,flyUIStartPos.X.Offset+delta.X,flyUIStartPos.Y.Scale,flyUIStartPos.Y.Offset+delta.Y)
+        flyControlUI.Position=UDim2.new(0,flyUIStartPos.X+delta.X,0,flyUIStartPos.Y+delta.Y)
     end
+end)
+flyControlUI.InputEnded:Connect(function(input)
+    if input.UserInputType==Enum.UserInputType.MouseButton1 then flyUIDragging=false end
 end)
 
--- 移动加速独立UI
+--加速独立UI
 local speedControlUI=Instance.new("Frame",gui)
 speedControlUI.Size=UDim2.new(0,120,0,40)
 speedControlUI.Position=UDim2.new(0.02,0,0.75,0)
-speedControlUI.BackgroundColor3=Color3.fromRGB(0,0,0)
+speedControlUI.BackgroundColor3=Color3.new(0,0,0)
 speedControlUI.BackgroundTransparency=0.2
 speedControlUI.BorderSizePixel=0
 speedControlUI.Visible=false
@@ -392,60 +392,57 @@ speedControlUI.ZIndex=200
 
 local speedToggleUI=Instance.new("TextButton",speedControlUI)
 speedToggleUI.Size=UDim2.new(1,0,1,0)
-speedToggleUI.BackgroundColor3=Color3.fromRGB(80,130,200)
+speedToggleUI.BackgroundColor3=Color3.new(80/255,130/255,200/255)
 speedToggleUI.Text="加速：开"
 speedToggleUI.TextColor3=Color3.new(1,1,1)
 speedToggleUI.Font=Enum.Font.SourceSansBold
 speedToggleUI.TextSize=14
-speedToggleUI.AutoButtonColor=false
+speedToggleUI.AutoLocalize=false
 speedToggleUI.MouseButton1Click:Connect(function()
     st.speed=not st.speed
     speedToggleUI.Text=st.speed and "加速：开" or "加速：关"
-    speedToggleUI.BackgroundColor3=st.speed and Color3.fromRGB(0,200,0) or Color3.fromRGB(80,130,200)
+    speedToggleUI.BackgroundColor3=st.speed and Color3.new(0,200/255,0) or Color3.new(80/255,130/255,200/255)
 end)
 
--- 加速UI拖动
+--加速UI拖拽
 local speedUIDragging=false
 local speedUIDragStart=nil
 local speedUIStartPos=nil
 speedControlUI.InputBegan:Connect(function(input)
-    if input.UserInputType==Enum.UserInputType.Touch or input.UserInputType==Enum.UserInputType.MouseButton1 then
+    if input.UserInputType==Enum.UserInputType.MouseButton1 then
         speedUIDragging=true
         speedUIDragStart=input.Position
-        speedUIStartPos=speedControlUI.Position
+        speedUIStartPos=speedControlUI.AbsolutePosition
     end
 end)
-speedControlUI.InputEnded:Connect(function() speedUIDragging=false end)
-UIS.InputChanged:Connect(function(input)
-    if speedUIDragging and speedUIDragStart and speedUIStartPos and (input.UserInputType==Enum.UserInputType.Touch or input.UserInputType==Enum.UserInputType.MouseMovement) then
+speedControlUI.InputChanged:Connect(function(input)
+    if speedUIDragging and input.UserInputType==Enum.UserInputType.MouseMovement then
         local delta=input.Position-speedUIDragStart
-        speedControlUI.Position=UDim2.new(speedUIStartPos.X.Scale,speedUIStartPos.X.Offset+delta.X,speedUIStartPos.Y.Scale,speedUIStartPos.Y.Offset+delta.Y)
+        speedControlUI.Position=UDim2.new(0,speedUIStartPos.X+delta.X,0,speedUIStartPos.Y+delta.Y)
     end
+end)
+speedControlUI.InputEnded:Connect(function(input)
+    if input.UserInputType==Enum.UserInputType.MouseButton1 then speedUIDragging=false end
 end)
 
--- 创建按钮函数
+--生成开关按钮
 local function addButton(parent,text,key,x,y)
     local b=Instance.new("TextButton",parent)
     b.Size=UDim2.new(0,100,0,35)
     b.Position=UDim2.new(0,x,0,y)
-    b.BackgroundColor3=st[key] and Color3.fromRGB(80,230,80) or Color3.fromRGB(110,110,110)
+    b.BackgroundColor3=st[key] and Color3.new(80/255,230/255,80/255) or Color3.new(110/255,110/255,110/255)
     b.Text=text.."："..(st[key] and "开" or "关")
     b.TextColor3=Color3.new(1,1,1)
     b.Font=Enum.Font.SourceSansBold
     b.TextSize=13
-    b.AutoButtonColor=false
+    b.AutoLocalize=false
     b.ZIndex=80
     b.MouseButton1Click:Connect(function()
         st[key]=not st[key]
-        b.BackgroundColor3=st[key] and Color3.fromRGB(80,230,80) or Color3.fromRGB(110,110,110)
+        b.BackgroundColor3=st[key] and Color3.new(80/255,230/255,80/255) or Color3.new(110/255,110/255,110/255)
         b.Text=text.."："..(st[key] and "开" or "关")
-        if key=="fly" then
-            flyControlUI.Visible=st.fly
-        elseif key=="speed" then
-            speedControlUI.Visible=st.speed
-            speedToggleUI.Text=st.speed and "加速：开" or "加速：关"
-            speedToggleUI.BackgroundColor3=st.speed and Color3.fromRGB(0,200,0) or Color3.fromRGB(80,130,200)
-        end
+        if key=="fly" then flyControlUI.Visible=st.fly end
+        if key=="speed" then speedControlUI.Visible=st.speed end
     end)
 end
 
@@ -467,11 +464,12 @@ local function addSlider(parent,text,key,minv,maxv,x,y)
     local bg=Instance.new("Frame",frame)
     bg.Size=UDim2.new(1,0,0,6)
     bg.Position=UDim2.new(0,0,0,22)
-    bg.BackgroundColor3=Color3.fromRGB(70,70,70)
+    bg.BackgroundColor3=Color3.new(70/255,70/255,70/255)
     bg.BorderSizePixel=0
     local fill=Instance.new("Frame",bg)
     fill.Size=UDim2.new((st[key]-minv)/(maxv-minv),0,1,0)
-    fill.BackgroundColor3=Color3.fromRGB(80,160,240)
+    fill.Position=UDim2.new(0,0,0,0)
+    fill.BackgroundColor3=Color3.new(80/255,160/255,240/255)
     fill.BorderSizePixel=0
     local knob=Instance.new("TextButton",bg)
     knob.Size=UDim2.new(0,14,0,14)
@@ -488,24 +486,23 @@ local function addSlider(parent,text,key,minv,maxv,x,y)
         knob.Position=UDim2.new(percent,-7,0.5,-7)
         lbl.Text=text..": "..st[key]
     end
-    knob.InputBegan:Connect(function(i) if i.UserInputType==Enum.UserInputType.Touch or i.UserInputType==Enum.UserInputType.MouseButton1 then dragging=true end end)
-    knob.InputEnded:Connect(function() dragging=false end)
-    UIS.InputChanged:Connect(function(i) if dragging and (i.UserInputType==Enum.UserInputType.Touch or i.UserInputType==Enum.UserInputType.MouseMovement) then update(i) end end)
-    bg.InputBegan:Connect(function(i) if i.UserInputType==Enum.UserInputType.Touch or i.UserInputType==Enum.UserInputType.MouseButton1 then update(i); dragging=true end end)
-    bg.InputEnded:Connect(function() dragging=false end)
+    knob.InputBegan:Connect(function(i) if i.UserInputType==Enum.UserInputType.MouseButton1 then dragging=true end end)
+    knob.InputEnded:Connect(function(i) if i.UserInputType==Enum.UserInputType.MouseButton1 then dragging=false end end)
+    bg.InputChanged:Connect(function(i) if dragging and i.UserInputType==Enum.UserInputType.MouseMovement then update(i) end end)
+    bg.InputBegan:Connect(function(i) if i.UserInputType==Enum.UserInputType.MouseButton1 then update(i);dragging=true end end)
+    bg.InputEnded:Connect(function(i) if i.UserInputType==Enum.UserInputType.MouseButton1 then dragging=false end end)
 end
 
--- 切换目标按钮
 local function addTargetButton(parent,text,x,y)
     local b=Instance.new("TextButton",parent)
     b.Size=UDim2.new(0,100,0,35)
     b.Position=UDim2.new(0,x,0,y)
-    b.BackgroundColor3=Color3.fromRGB(110,110,110)
+    b.BackgroundColor3=Color3.new(110/255,110/255,110/255)
     b.Text=text
     b.TextColor3=Color3.new(1,1,1)
     b.Font=Enum.Font.SourceSansBold
     b.TextSize=13
-    b.AutoButtonColor=false
+    b.AutoLocalize=false
     b.ZIndex=80
     b.MouseButton1Click:Connect(function()
         targetList={}
@@ -523,50 +520,70 @@ local function addTargetButton(parent,text,x,y)
     end)
 end
 
--- 第1页 自瞄
-addButton(pages[1],"自瞄","aim",10,25); addButton(pages[1],"锁头","lockh",120,25); addButton(pages[1],"静默自瞄","silent",230,25)
-addButton(pages[1],"墙壁检测","wallcheck",10,70); addButton(pages[1],"队伍检测","teamcheck",120,70); addSlider(pages[1],"自瞄范围","aimrange",50,500,230,70)
+addButton(pages[1],"自瞄","aim",10,25)
+addButton(pages[1],"锁头","lockh",120,25)
+addButton(pages[1],"静默自瞄","silent",230,25)
+addButton(pages[1],"墙体检测","wallcheck",10,70)
+addButton(pages[1],"队伍过滤","teamcheck",120,70)
+addSlider(pages[1],"自瞄范围","aimrange",50,500,230,70)
 
--- 第2页 透视
-addButton(pages[2],"透视","esp",10,25); addButton(pages[2],"显示名字","espn",120,25); addButton(pages[2],"显示距离","espd",230,25)
-addButton(pages[2],"显示血量","esphp",10,70); addButton(pages[2],"检测人机","espnpc",120,70)
+addButton(pages[2],"透视","esp",10,25)
+addButton(pages[2],"显示名字","espn",120,25)
+addButton(pages[2],"显示距离","espd",230,25)
+addButton(pages[2],"显示血量","esphp",10,70)
+addButton(pages[2],"检测NPC","espnpc",120,70)
 
--- 第3页 武器
-addButton(pages[3],"无后坐力","norecoil",10,25); addButton(pages[3],"快速换弹","fastrel",120,25); addButton(pages[3],"无扩散","nospread",230,25)
-addButton(pages[3],"无限子弹","infammo",10,70); addButton(pages[3],"快速射速","rapid",120,70); addButton(pages[3],"自动射击","autofire",230,70)
+addButton(pages[3],"无后坐","norecoil",10,25)
+addButton(pages[3],"快速换弹","fastrel",120,25)
+addButton(pages[3],"无散布","nospread",230,25)
+addButton(pages[3],"无限弹药","infammo",10,70)
+addButton(pages[3],"射速增强","rapid",120,70)
+addButton(pages[3],"自动开火","autofire",230,70)
 
--- 第4页 移动
-addButton(pages[4],"移动加速","speed",10,25); addSlider(pages[4],"走路速度","walkspeed",16,100,120,25); addButton(pages[4],"跳跃增强","jumpboost",230,25)
-addSlider(pages[4],"跳跃高度","jumppower",50,200,10,70); addButton(pages[4],"自动连跳","autobhop",120,70); addButton(pages[4],"第三人称","third",230,70)
+addButton(pages[4],"速度","speed",10,25)
+addSlider(pages[4],"移速数值","walkspeed",16,100,120,25)
+addButton(pages[4],"高跳","jumpboost",230,25)
+addSlider(pages[4],"跳跃力度","jumppower",50,200,10,70)
+addButton(pages[4],"自动连跳","autobhop",120,70)
+addButton(pages[4],"第三人称","third",230,70)
 
--- 第5页 生存
-addButton(pages[5],"无敌","god",10,25); addButton(pages[5],"无限体力","stamina",120,25); addButton(pages[5],"快速回血","regen",230,25)
-addButton(pages[5],"夜视","night",10,70); addButton(pages[5],"防摔落","nofall",120,70); addButton(pages[5],"消除脚步声","nofoot",230,70)
+addButton(pages[5],"无敌","god",10,25)
+addButton(pages[5],"无限体力","stamina",120,25)
+addButton(pages[5],"自动回血","regen",230,25)
+addButton(pages[5],"夜视","night",10,70)
+addButton(pages[5],"防摔伤","nofall",120,70)
+addButton(pages[5],"消脚步声","nofoot",230,70)
 
--- 第6页 通用
-addButton(pages[6],"飞行","fly",10,25); addSlider(pages[6],"飞行速度","flyspeed",10,200,120,25); addButton(pages[6],"穿墙","noclip",230,25)
-addButton(pages[6],"关闭玩家碰撞","noplayercol",10,70); addButton(pages[6],"正面碰撞弹飞","frontpush",120,70); addButton(pages[6],"倍镜缩放","zoom",230,70)
+addButton(pages[6],"飞行","fly",10,25)
+addSlider(pages[6],"飞行速度","flyspeed",10,200,120,25)
+addButton(pages[6],"穿墙","noclip",230,25)
+addButton(pages[6],"关闭玩家碰撞","noplayercol",10,70)
+addButton(pages[6],"撞击弹飞","frontpush",120,70)
+addButton(pages[6],"视野缩放","zoom",230,70)
 
--- 第7页 娱乐
-addButton(pages[7],"游泳加速","swimBoost",10,25); addButton(pages[7],"水上行走","waterWalk",120,25); addButton(pages[7],"隐身","invisible",230,25)
-addButton(pages[7],"假死","fakeDeath",10,70); addButton(pages[7],"跟踪玩家","trackPlayer",120,70); addTargetButton(pages[7],"切换目标",230,70)
+addButton(pages[7],"游泳加速","swimBoost",10,25)
+addButton(pages[7],"水上行走","waterWalk",120,25)
+addButton(pages[7],"人物隐身","invisible",230,25)
+addButton(pages[7],"假死坐姿","fakeDeath",10,70)
+addButton(pages[7],"锁定目标","trackPlayer",120,70)
+addTargetButton(pages[7],"切换目标",230,70)
 
--- 第8页 其他
-addButton(pages[8],"保存位置","savepos",10,25); addButton(pages[8],"传送到保存点","tpto",120,25)
-addButton(pages[8],"防闪光","antiflash",230,25); addButton(pages[8],"防烟雾","antismoke",10,70); addButton(pages[8],"防震屏","antishake",120,70)
+addButton(pages[8],"坐标保存","savepos",10,25)
+addButton(pages[8],"传送过去","tpto",120,25)
+addButton(pages[8],"屏蔽闪光","antiflash",230,25)
+addButton(pages[8],"屏蔽烟雾","antismoke",10,70)
+addButton(pages[8],"防抖画面","antishake",120,70)
 
--- 第9页 更多合集
-addButton(pages[9],"旋转","spin",10,25)
-
+addButton(pages[9],"身体旋转","spin",10,25)
 local spinMinus=Instance.new("TextButton",pages[9])
 spinMinus.Size=UDim2.new(0,100,0,35)
 spinMinus.Position=UDim2.new(0,120,0,25)
-spinMinus.BackgroundColor3=Color3.fromRGB(110,110,110)
+spinMinus.BackgroundColor3=Color3.new(110/255,110/255,110/255)
 spinMinus.Text="速度-"..st.spinSpeed
 spinMinus.TextColor3=Color3.new(1,1,1)
 spinMinus.Font=Enum.Font.SourceSansBold
 spinMinus.TextSize=13
-spinMinus.AutoButtonColor=false
+spinMinus.AutoLocalize=false
 spinMinus.ZIndex=80
 spinMinus.MouseButton1Click:Connect(function()
     st.spinSpeed=math.max(1,st.spinSpeed-10)
@@ -576,32 +593,32 @@ end)
 local spinPlus=Instance.new("TextButton",pages[9])
 spinPlus.Size=UDim2.new(0,100,0,35)
 spinPlus.Position=UDim2.new(0,230,0,25)
-spinPlus.BackgroundColor3=Color3.fromRGB(110,110,110)
+spinPlus.BackgroundColor3=Color3.new(110/255,110/255,110/255)
 spinPlus.Text="速度+"..st.spinSpeed
 spinPlus.TextColor3=Color3.new(1,1,1)
 spinPlus.Font=Enum.Font.SourceSansBold
 spinPlus.TextSize=13
-spinPlus.AutoButtonColor=false
+spinPlus.AutoLocalize=false
 spinPlus.ZIndex=80
 spinPlus.MouseButton1Click:Connect(function()
     st.spinSpeed=math.min(200,st.spinSpeed+10)
     spinPlus.Text="速度+"..st.spinSpeed
 end)
 
-addButton(pages[9],"快速互动","fastInteract",10,70)
+addButton(pages[9],"一键交互","fastInteract",10,70)
 
 local enlargeBtn=Instance.new("TextButton",pages[9])
 enlargeBtn.Size=UDim2.new(0,100,0,35)
 enlargeBtn.Position=UDim2.new(0,120,0,70)
-enlargeBtn.BackgroundColor3=Color3.fromRGB(110,110,110)
+enlargeBtn.BackgroundColor3=Color3.new(110/255,110/255,110/255)
 enlargeBtn.Text="变大"
 enlargeBtn.TextColor3=Color3.new(1,1,1)
 enlargeBtn.Font=Enum.Font.SourceSansBold
 enlargeBtn.TextSize=13
-enlargeBtn.AutoButtonColor=false
+enlargeBtn.AutoLocalize=false
 enlargeBtn.ZIndex=80
 enlargeBtn.MouseButton1Click:Connect(function()
-    scaleFactor=math.min(3, scaleFactor+0.1)
+    scaleFactor=math.min(3,scaleFactor+0.1)
     if player.Character then
         for _,obj in ipairs(player.Character:GetDescendants()) do
             if obj:IsA("BasePart") then
@@ -615,15 +632,15 @@ end)
 local shrinkBtn=Instance.new("TextButton",pages[9])
 shrinkBtn.Size=UDim2.new(0,100,0,35)
 shrinkBtn.Position=UDim2.new(0,230,0,70)
-shrinkBtn.BackgroundColor3=Color3.fromRGB(110,110,110)
+shrinkBtn.BackgroundColor3=Color3.new(110/255,110/255,110/255)
 shrinkBtn.Text="变小"
 shrinkBtn.TextColor3=Color3.new(1,1,1)
 shrinkBtn.Font=Enum.Font.SourceSansBold
 shrinkBtn.TextSize=13
-shrinkBtn.AutoButtonColor=false
+shrinkBtn.AutoLocalize=false
 shrinkBtn.ZIndex=80
 shrinkBtn.MouseButton1Click:Connect(function()
-    scaleFactor=math.max(0.3, scaleFactor-0.1)
+    scaleFactor=math.max(0.3,scaleFactor-0.1)
     if player.Character then
         for _,obj in ipairs(player.Character:GetDescendants()) do
             if obj:IsA("BasePart") then
@@ -634,27 +651,27 @@ shrinkBtn.MouseButton1Click:Connect(function()
     end
 end)
 
--- 启动动画
+--开机动画
 task.spawn(function()
     blur.Enabled=true
     hackOverlay.BackgroundTransparency=0.6
     termText.Text=""
 
-    local function typeText(text, color, speed)
+    local function typeText(text,color,speed)
         termText.TextColor3=color
         for i=1,#text do
             termText.Text = string.sub(text,1,i) .. "█"
-            wait(speed)
+            task.wait(speed)
         end
         termText.Text = string.sub(text,1,#text)
-        wait(0.05)
+        task.wait(0.05)
     end
 
-    typeText("> OS: ROBLOX_EXPLOIT v2.1\n", Color3.fromRGB(0,255,0), 0.04)
-    typeText("> Kernel: injected\n", Color3.fromRGB(0,255,0), 0.04)
-    typeText("> Memory: OK\n", Color3.fromRGB(0,255,0), 0.04)
-    typeText("> 目标服务器：ROBLOX_SERVER_01\n", Color3.fromRGB(0,255,0), 0.04)
-    typeText("> IP: 192.168.1.7\n\n", Color3.fromRGB(0,255,0), 0.04)
+    typeText("> OS: ROBLOX_EXPLOIT v2.1\n",Color3.new(0,1,0),0.04)
+    typeText("> Kernel: injected\n",Color3.new(0,1,0),0.04)
+    typeText("> Memory: OK\n",Color3.new(0,1,0),0.04)
+    typeText("> 目标服务器：ROBLOX_SERVER_01\n",Color3.new(0,1,0),0.04)
+    typeText("> IP: 192.168.1.7\n\n",Color3.new(0,1,0),0.04)
 
     local redLines = {
         "0x7F3A9C20 inject...",
@@ -666,34 +683,34 @@ task.spawn(function()
         "bypassing firewall...",
         "establishing connection..."
     }
-    for _, line in ipairs(redLines) do
-        typeText("> "..line.."\n", Color3.fromRGB(255,0,0), 0.03)
+    for _,line in ipairs(redLines) do
+        typeText("> "..line.."\n",Color3.new(1,0,0),0.03)
     end
 
-    typeText("> ACCESS DENIED\n", Color3.fromRGB(255,0,0), 0.04)
-    typeText("> RETRY...\n", Color3.fromRGB(255,0,0), 0.04)
-    typeText("> ACCESS GRANTED\n\n", Color3.fromRGB(0,255,0), 0.05)
+    typeText("> ACCESS DENIED\n",Color3.new(1,0,0),0.04)
+    typeText("> RETRY...\n",Color3.new(1,0,0),0.04)
+    typeText("> ACCESS GRANTED\n\n",Color3.new(0,1,0),0.05)
 
-    typeText("> 输入完成\n", Color3.fromRGB(0,255,0), 0.05)
-    typeText("> 用户名：" .. player.Name .. "\n", Color3.fromRGB(0,255,0), 0.04)
-    typeText("> 密码：*******\n", Color3.fromRGB(0,255,0), 0.04)
-    typeText("> 身份信息核验完成，允许访问\n", Color3.fromRGB(0,255,0), 0.05)
+    typeText("> 加载完成\n",Color3.new(0,1,0),0.05)
+    typeText("> 用户名：" .. player.Name .. "\n",Color3.new(0,1,0),0.04)
+    typeText("> 密码：*******\n",Color3.new(0,1,0),0.04)
+    typeText("> 权限校验完成\n",Color3.new(0,1,0),0.05)
 
-    typeText("\n\n\n", Color3.fromRGB(0,255,0), 0.01)
-    typeText("> 作者：Dsfhy8\n", Color3.fromRGB(0,255,0), 0.04)
-    typeText("> 持续云更新（但是很慢）\n", Color3.fromRGB(0,255,0), 0.04)
+    typeText("\n\n\n",Color3.new(0,1,0),0.01)
+    typeText("> 作者：Dsfhy8\n",Color3.new(0,1,0),0.04)
+    typeText("> 脚本版本：v2.1\n",Color3.new(0,1,0),0.04)
 
     local progressFrame=Instance.new("Frame",terminal)
     progressFrame.Size=UDim2.new(0,200,0,8)
     progressFrame.Position=UDim2.new(0.5,-100,1,-60)
-    progressFrame.BackgroundColor3=Color3.fromRGB(0,40,0)
+    progressFrame.BackgroundColor3=Color3.new(0,40/255,0)
     progressFrame.BorderSizePixel=0
     progressFrame.ZIndex=304
 
     local progressFill=Instance.new("Frame",progressFrame)
     progressFill.Size=UDim2.new(0,0,1,0)
     progressFill.Position=UDim2.new(0,0,0,0)
-    progressFill.BackgroundColor3=Color3.fromRGB(0,255,0)
+    progressFill.BackgroundColor3=Color3.new(0,1,0)
     progressFill.BorderSizePixel=0
     progressFill.ZIndex=305
 
@@ -702,7 +719,7 @@ task.spawn(function()
     percentLabel.Position=UDim2.new(0.5,-100,1,-78)
     percentLabel.BackgroundTransparency=1
     percentLabel.Text="Loading... 0%"
-    percentLabel.TextColor3=Color3.fromRGB(0,255,0)
+    percentLabel.TextColor3=Color3.new(0,1,0)
     percentLabel.Font=Enum.Font.SourceSansBold
     percentLabel.TextSize=12
     percentLabel.TextXAlignment=Enum.TextXAlignment.Center
@@ -711,11 +728,11 @@ task.spawn(function()
     for i=0,100,2 do
         percentLabel.Text="Loading... "..i.."%"
         progressFill.Size=UDim2.new(i/100,0,1,0)
-        wait(0.04)
+        task.wait(0.04)
     end
     percentLabel.Text="Loading... 100%"
     progressFill.Size=UDim2.new(1,0,1,0)
-    wait(0.5)
+    task.wait(0.5)
 
     local fadeOut=TweenService:Create(hackOverlay,TweenInfo.new(0.7),{BackgroundTransparency=1})
     local termOut=TweenService:Create(terminal,TweenInfo.new(0.7),{BackgroundTransparency=1})
@@ -724,38 +741,39 @@ task.spawn(function()
     termOut:Play()
     textOut:Play()
     blur.Enabled=false
-    wait(0.7)
+    task.wait(0.7)
     hackOverlay.Visible=false
     rainFrame.Visible=false
 
     island.Visible=true
 end)
 
--- 彩虹边框和字体（灵动岛）
+--灵动岛彩虹闪烁边框
 local hue2=0
 task.spawn(function()
     while true do
         hue2=(hue2+0.02)%1
         island.BorderColor3=Color3.fromHSV(hue2,1,1)
         island.TextColor3=Color3.fromHSV(hue2,1,1)
-        wait(0.1)
+        task.wait(0.1)
     end
 end)
 
--- 功能逻辑
 local function getEnemies()
     local list={}
     for _,p in ipairs(Players:GetPlayers()) do
-        if p~=player and p.Character and p.Character:FindFirstChild("HumanoidRootPart") and p.Character:FindFirstChildOfClass("Humanoid") and p.Character.Humanoid.Health>0 then
-            if not st.teamcheck or (not player.Team or not p.Team or player.Team~=p.Team) then table.insert(list,p.Character) end
+        if p~=player and p.Character and p.Character:FindFirstChild("HumanoidRootPart") and p.Character:FindFirstChild("Humanoid") and p.Character.Humanoid.Health>0 then
+            if not st.teamcheck or (player.Team~=p.Team) then
+                table.insert(list,p.Character)
+            end
         end
     end
     if st.espnpc then
         for _,obj in ipairs(WS:GetDescendants()) do
             if obj:IsA("Model") and obj:FindFirstChild("Humanoid") and obj:FindFirstChild("HumanoidRootPart") and not Players:GetPlayerFromCharacter(obj) then
-                local hum=obj:FindFirstChildOfClass("Humanoid")
-                if hum and hum.Health>0 then
-                    if not st.teamcheck or (not player.Team or not obj:FindFirstChild("Team") or obj.Team~=player.Team) then table.insert(list,obj) end
+                local hum=obj.Humanoid
+                if hum.Health>0 then
+                    table.insert(list,obj)
                 end
             end
         end
@@ -763,38 +781,43 @@ local function getEnemies()
     return list
 end
 
-local function los(origin,targetPos,targetChar)
+local function losCheck(origin,targetPos,targetChar)
     if not st.wallcheck then return true end
-    local ray=Ray.new(origin,(targetPos-origin).Unit*500)
-    local hit=WS:FindPartOnRayWithIgnoreList(ray,{player.Character,targetChar})
-    return not hit
+    local ray=workspace:Raycast(origin,(targetPos-origin).Unit*500,{IgnoreList={player.Character,targetChar}})
+    return ray==nil
 end
 
 RS.RenderStepped:Connect(function()
     pcall(function()
         if not player.Character or not player.Character:FindFirstChild("HumanoidRootPart") then return end
         local myRoot=player.Character.HumanoidRootPart
-        local hum=player.Character:FindFirstChildOfClass("Humanoid")
+        local hum=player.Character:FindFirstChild("Humanoid")
+        if not hum then return end
 
-        -- 自瞄
+        --自瞄逻辑
         if st.aim or st.silent then
             local targets=getEnemies()
-            table.sort(targets,function(a,b) return (a.HumanoidRootPart.Position-myRoot.Position).Magnitude<(b.HumanoidRootPart.Position-myRoot.Position).Magnitude end)
-            for _,tChar in ipairs(targets) do
-                local aimPart=st.lockh and tChar:FindFirstChild("Head") or tChar:FindFirstChild("HumanoidRootPart")
-                if aimPart and los(cam.CFrame.Position,aimPart.Position,tChar) then
-                    local lookAt=CFrame.lookAt(cam.CFrame.Position,aimPart.Position)
-                    cam.CFrame=cam.CFrame:Lerp(lookAt, aimSmooth)
+            table.sort(targets,function(a,b)
+                return (a.HumanoidRootPart.Position-myRoot.Position).Magnitude < (b.HumanoidRootPart.Position-myRoot.Position).Magnitude
+            end)
+            for _,tarChar in ipairs(targets) do
+                local aimPart=st.lockh and tarChar:FindFirstChild("Head") or tarChar.HumanoidRootPart
+                if aimPart and losCheck(cam.CFrame.Position,aimPart.Position,tarChar) then
+                    local look=CFrame.lookAt(cam.CFrame.Position,aimPart.Position)
+                    cam.CFrame=cam.CFrame:Lerp(look,aimSmooth)
                     break
                 end
             end
         end
 
-        -- 飞行
+        --飞行逻辑
         if st.fly then
             if not bodyGyro then
-                bodyGyro=Instance.new("BodyGyro",myRoot); bodyGyro.P=9e4; bodyGyro.MaxTorque=Vector3.new(9e9,9e9,9e9); bodyGyro.CFrame=myRoot.CFrame
-                bodyVel=Instance.new("BodyVelocity",myRoot); bodyVel.MaxForce=Vector3.new(9e9,9e9,9e9); bodyVel.Velocity=Vector3.zero
+                bodyGyro=Instance.new("BodyGyro",myRoot)
+                bodyGyro.P=90000
+                bodyGyro.MaxTorque=Vector3.new(9e9,9e9,9e9)
+                bodyVel=Instance.new("BodyVelocity",myRoot)
+                bodyVel.MaxForce=Vector3.new(9e9,9e9,9e9)
                 hum.PlatformStand=true
             end
             local moveDir=hum.MoveDirection
@@ -802,32 +825,32 @@ RS.RenderStepped:Connect(function()
             local camRight=cam.CFrame.RightVector
             local forwardInput=moveDir.X*camForward.X+moveDir.Z*camForward.Z
             local rightInput=moveDir.X*camRight.X+moveDir.Z*camRight.Z
-            local flyDir=Vector3.zero
+            local flyDir=Vector3.new(0,0,0)
             if math.abs(forwardInput)>0.1 then flyDir+=camForward*math.sign(forwardInput) end
             if math.abs(rightInput)>0.1 then flyDir+=camRight*math.sign(rightInput) end
             if flyDir.Magnitude>0 then flyDir=flyDir.Unit end
             bodyVel.Velocity=flyDir*st.flyspeed
-            bodyGyro.CFrame=CFrame.lookAt(myRoot.Position,myRoot.Position+cam.CFrame.LookVector)
+            bodyGyro.CFrame=CFrame.new(myRoot.Position,myRoot.Position+camForward)
             if st.flyNoclip then
                 for _,part in ipairs(player.Character:GetDescendants()) do
                     if part:IsA("BasePart") then part.CanCollide=false end
                 end
             end
         else
-            if bodyGyro then bodyGyro:Destroy(); bodyGyro=nil end
-            if bodyVel then bodyVel:Destroy(); bodyVel=nil end
-            if not st.trackPlayer then hum.PlatformStand=false end
+            if bodyGyro then bodyGyro:Destroy();bodyGyro=nil end
+            if bodyVel then bodyVel:Destroy();bodyVel=nil end
+            hum.PlatformStand=false
         end
 
-        -- 跟踪玩家
+        --锁定玩家跟踪
         if st.trackPlayer and selectedTarget and selectedTarget.Character and selectedTarget.Character:FindFirstChild("HumanoidRootPart") then
-            local targetRoot=selectedTarget.Character.HumanoidRootPart
-            local offset=targetRoot.CFrame.LookVector*(-3)+Vector3.new(0,2,0)
-            myRoot.CFrame=CFrame.new(targetRoot.Position+offset)
+            local tarRoot=selectedTarget.Character.HumanoidRootPart
+            local offset=tarRoot.CFrame.LookVector*(-3)+Vector3.new(0,2,0)
+            myRoot.CFrame=CFrame.new(tarRoot.Position+offset)
             hum.PlatformStand=true
         end
 
-        -- 正面碰撞弹飞（加强）
+        --撞击弹飞
         if st.frontpush then
             local targets=getEnemies()
             for _,tChar in ipairs(targets) do
@@ -835,150 +858,100 @@ RS.RenderStepped:Connect(function()
                 if tRoot then
                     local dist=(tRoot.Position-myRoot.Position).Magnitude
                     if dist<8 then
-                        local toTarget=(tRoot.Position-myRoot.Position).Unit
-                        local dot=myRoot.CFrame.LookVector:Dot(toTarget)
-                        if dot>0.3 then
-                            tRoot.Velocity=toTarget*1000
-                            tRoot.AssemblyLinearVelocity=toTarget*1000
-                        end
+                        local dir=(tRoot.Position-myRoot.Position).Unit
+                        tRoot.Velocity=dir*1000
+                        tRoot.AssemblyLinearVelocity=dir*1000
                     end
                 end
             end
         end
 
-        -- 关闭玩家碰撞
+        --关闭玩家碰撞
         if st.noplayercol then
             for _,p in ipairs(Players:GetPlayers()) do
                 if p~=player and p.Character then
-                    for _,part in ipairs(p.Character:GetDescendants()) do if part:IsA("BasePart") then part.CanCollide=false end end
-                end
-            end
-        end
-
-        -- 移动
-        if st.speed then hum.WalkSpeed=st.walkspeed else hum.WalkSpeed=16 end
-        if st.jumpboost then hum.JumpPower=st.jumppower else hum.JumpPower=50 end
-        if st.autobhop and hum.FloorMaterial~=Enum.Material.Air then hum:ChangeState(Enum.HumanoidStateType.Jumping) end
-        if st.third and player.CameraMode~=Enum.CameraMode.Classic then player.CameraMode=Enum.CameraMode.Classic end
-        if st.noclip then for _,part in ipairs(player.Character:GetDescendants()) do if part:IsA("BasePart") then part.CanCollide=false end end end
-
-        -- 游泳加速
-        if st.swimBoost and hum.FloorMaterial==Enum.Material.Water then hum.WalkSpeed=60 end
-
-        -- 水上行走
-        if st.waterWalk then
-            local ray=Ray.new(myRoot.Position,Vector3.new(0,-3,0))
-            local hit=WS:FindPartOnRay(ray)
-            if hit and hit.Material==Enum.Material.Water then
-                if not bodyFloat then
-                    bodyFloat=Instance.new("BodyVelocity")
-                    bodyFloat.MaxForce=Vector3.new(0,9e9,0)
-                    bodyFloat.Velocity=Vector3.new(0,20,0)
-                    bodyFloat.Parent=myRoot
-                else
-                    bodyFloat.Velocity=Vector3.new(0,20,0)
-                end
-            else
-                if bodyFloat then bodyFloat.Velocity=Vector3.zero end
-            end
-        else
-            if bodyFloat then bodyFloat:Destroy(); bodyFloat=nil end
-        end
-
-        -- 假死
-        if st.fakeDeath then hum.Sit=true else hum.Sit=false end
-
-        -- 旋转
-        if st.spin then
-            if not bodySpin then
-                bodySpin=Instance.new("BodyAngularVelocity")
-                bodySpin.MaxTorque=Vector3.new(0,9e9,0)
-                bodySpin.AngularVelocity=Vector3.new(0,st.spinSpeed*0.5,0)
-                bodySpin.Parent=myRoot
-            else
-                bodySpin.AngularVelocity=Vector3.new(0,st.spinSpeed*0.5,0)
-            end
-        else
-            if bodySpin then bodySpin:Destroy(); bodySpin=nil end
-        end
-
-        -- 快速互动
-        if st.fastInteract then
-            for _,obj in ipairs(WS:GetDescendants()) do
-                if obj:IsA("ProximityPrompt") then obj.HoldDuration=0 end
-            end
-        end
-
-        -- 生存
-        if st.god then hum.Health=hum.MaxHealth end
-        if st.stamina then hum:SetStateEnabled(Enum.HumanoidStateType.Running,true); hum:SetStateEnabled(Enum.HumanoidStateType.RunningNoPhysics,true) end
-        if st.regen then hum.Health=math.min(hum.MaxHealth,hum.Health+0.5) end
-        if st.night then Lighting.Brightness=3 else Lighting.Brightness=1 end
-        if st.nofall then hum.FallSpeed=0 end
-
-        -- 武器
-        if st.norecoil or st.nospread or st.fastrel or st.infammo or st.rapid then
-            for _,tool in ipairs(player.Character:GetChildren()) do
-                if tool:IsA("Tool") then
-                    for _,child in ipairs(tool:GetDescendants()) do
-                        if child:IsA("NumberValue") then
-                            local n=child.Name:lower()
-                            if st.norecoil and (n:find("recoil") or n:find("kick")) then child.Value=0 end
-                            if st.nospread and n:find("spread") then child.Value=0 end
-                            if st.fastrel and n:find("reload") then child.Value=0.1 end
-                            if st.infammo and (n:find("ammo") or n:find("clip")) then child.Value=9999 end
-                            if st.rapid and n:find("fire") then child.Value=0.01 end
-                        end
+                    for _,part in ipairs(p.Character:GetDescendants()) do
+                        if part:IsA("BasePart") then part.CanCollide=false end
                     end
                 end
             end
         end
 
-        -- 自动射击
-        if st.autofire        -- 自动射击
-        if st.autofire then
-            local mouse = player:GetMouse()
-            if mouse.Button1Down then
-                local tool = player.Character:FindFirstChildOfClass("Tool")
-                if tool and tool:FindFirstChild("Activated") then
-                    task.spawn(function()
-                        tool:Activate()
-                        task.wait(0.05)
-                    end)
-                end
+        --移动属性
+        if st.speed then hum.WalkSpeed=st.walkspeed else hum.WalkSpeed=16 end
+        if st.jumpboost then hum.JumpPower=st.jumppower else hum.JumpPower=50 end
+        if st.autobhop and hum.FloorMaterial~=Enum.Material.Air then hum:ChangeState(Enum.HumanoidStateType.Jumping) end
+        if st.third and cam.CameraSubject~=hum then cam.CameraSubject=hum end
+        if st.noclip then
+            for _,part in ipairs(player.Character:GetDescendants()) do
+                if part:IsA("BasePart") then part.CanCollide=false end
             end
         end
 
-        -- 倍镜缩放
-        if st.zoom then
-            cam.FieldOfView = 30
+        --水上行走
+        if st.waterWalk then
+            local ray=workspace:Raycast(myRoot.Position,Vector3.new(0,-3,0))
+            if ray and ray.Instance:IsA("Terrain") and ray.Material==Enum.Material.Water then
+                if not bodyFloat then
+                    bodyFloat=Instance.new("BodyVelocity",myRoot)
+                    bodyFloat.MaxForce=Vector3.new(0,9e9,0)
+                    bodyFloat.Velocity=Vector3.new(0,20,0)
+                end
+            else
+                if bodyFloat then bodyFloat:Destroy();bodyFloat=nil end
+            end
         else
-            cam.FieldOfView = 70
+            if bodyFloat then bodyFloat:Destroy();bodyFloat=nil end
         end
 
-        -- 隐身
+        --假死坐姿
+        if st.fakeDeath then hum.Sit=true else hum.Sit=false end
+
+        --身体旋转
+        if st.spin then
+            if not bodySpin then
+                bodySpin=Instance.new("BodyAngularVelocity",myRoot)
+                bodySpin.MaxTorque=Vector3.new(0,9e9,0)
+            end
+            bodySpin.AngularVelocity=Vector3.new(0,st.spinSpeed*0.5,0)
+        else
+            if bodySpin then bodySpin:Destroy();bodySpin=nil end
+        end
+
+        --夜视
+        if st.night then Lighting.Brightness=3 else Lighting.Brightness=1 end
+        --防摔伤
+        if st.nofall then hum:SetStateEnabled(Enum.HumanoidStateType.FallingDown,false) end
+        --无敌
+        if st.god then hum.Health=hum.MaxHealth end
+        --自动回血
+        if st.regen then hum.Health=math.min(hum.MaxHealth,hum.Health+0.5) end
+
+        --视野缩放
+        if st.zoom then cam.FieldOfView=30 else cam.FieldOfView=70 end
+
+        --隐身
         if st.invisible then
             for _,part in ipairs(player.Character:GetDescendants()) do
                 if part:IsA("BasePart") then
-                    part.Transparency = 1
+                    part.Transparency=1
                 elseif part:IsA("Decal") or part:IsA("Texture") then
-                    part.Transparency = 1
+                    part.Transparency=1
                 end
             end
         else
             for _,part in ipairs(player.Character:GetDescendants()) do
-                if part:IsA("BasePart") and part.Name ~= "HumanoidRootPart" then
-                    part.Transparency = 0
+                if part:IsA("BasePart") and part.Name~="HumanoidRootPart" then
+                    part.Transparency=0
                 elseif part:IsA("Decal") or part:IsA("Texture") then
-                    part.Transparency = 0
+                    part.Transparency=0
                 end
             end
         end
-
     end)
 end)
 
--- 保存/传送位置热键 F1保存 F2传送
+--F1保存坐标 F2传送
 UIS.InputBegan:Connect(function(input,gp)
     if gp then return end
     if input.KeyCode == Enum.KeyCode.F1 then
