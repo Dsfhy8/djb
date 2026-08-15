@@ -5,16 +5,12 @@ local RS=game:GetService("RunService")
 local WS=workspace
 local UIS=game:GetService("UserInputService")
 local StarterGui=game:GetService("StarterGui")
-local TweenService=game:GetService("TweenService")
-local Lighting=game:GetService("Lighting")
 
--- 状态（检测NPC默认开启）
+-- 状态
 local st={
 aim=false,lockh=false,silent=false,wallcheck=false,teamcheck=true,aimrange=300,
-aimPriority="distance", aimPart="Head", aimSmooth=0.2,
-aimCircleEnabled=true, aimCircleRadius=80, aimCircleThickness=2,
-esp=false,espn=false,espd=false,esphp=false,espnpc=true,
-espBox=false,espLine=false,espHPBar=false,espRange=300,
+aimPriority="distance", aimPart="Head", aimSmooth=0.2, aimCircleEnabled=true, aimCircleRadius=80,
+esp=false,espn=false,espd=false,esphp=false,espnpc=true,espBox=false,espRange=300,
 norecoil=false,fastrel=false,nospread=false,infammo=false,rapid=false,autofire=false,
 speed=false,walkspeed=16,jumpboost=false,jumppower=50,autobhop=false,third=false,
 god=false,stamina=false,regen=false,night=false,nofall=false,nofoot=false,
@@ -26,18 +22,39 @@ spin=false,spinSpeed=50,
 fastInteract=false
 }
 
-local aimSmooth = 0.2
 local savedPos=nil
 local bodyGyro,bodyVel,bodyFloat,bodySpin
 local selectedTarget=nil
 local targetList={}
 local targetIndex=0
 
--- 通知
 local function notif(text)
     pcall(function()
         StarterGui:SetCore("SendNotification",{Title="机械脚本",Text=text,Duration=3})
     end)
+end
+
+-- 提前定义 getEnemies，避免协程中引用未定义函数
+local function getEnemies()
+    local list={}
+    for _,p in ipairs(Players:GetPlayers()) do
+        if p~=player and p.Character and p.Character:FindFirstChild("HumanoidRootPart") and p.Character:FindFirstChild("Humanoid") and p.Character.Humanoid.Health>0 then
+            if not st.teamcheck or (player.Team~=p.Team) then
+                table.insert(list,p.Character)
+            end
+        end
+    end
+    if st.espnpc then
+        for _,obj in ipairs(WS:GetDescendants()) do
+            if obj:IsA("Model") and obj:FindFirstChild("Humanoid") and obj:FindFirstChild("HumanoidRootPart") and not Players:GetPlayerFromCharacter(obj) then
+                local hum=obj.Humanoid
+                if hum.Health>0 then
+                    table.insert(list,obj)
+                end
+            end
+        end
+    end
+    return list
 end
 
 -- UI根
@@ -46,92 +63,7 @@ gui.Name="机械脚本"
 gui.ResetOnSpawn=false
 gui.ZIndexBehavior=Enum.ZIndexBehavior.Sibling
 
--- 全屏模糊
-local blur=Instance.new("BlurEffect",Lighting)
-blur.Name="HackBlur"
-blur.Size=60
-blur.Enabled=false
-
--- 全屏遮罩
-local hackOverlay=Instance.new("Frame",gui)
-hackOverlay.Size=UDim2.new(3,0,3,0)
-hackOverlay.Position=UDim2.new(-1,0,-1,0)
-hackOverlay.BackgroundColor3=Color3.new(0,0,0)
-hackOverlay.BackgroundTransparency=0.6
-hackOverlay.BorderSizePixel=0
-hackOverlay.ZIndex=300
-hackOverlay.Visible=true
-
--- 数字雨
-local rainFrame=Instance.new("Frame",hackOverlay)
-rainFrame.Size=UDim2.new(1,0,1,0)
-rainFrame.Position=UDim2.new(0,0,0,0)
-rainFrame.BackgroundTransparency=1
-rainFrame.ZIndex=298
-rainFrame.ClipsDescendants=true
-
-local rainLabels={}
-for i=1,25 do
-    local label=Instance.new("TextLabel",rainFrame)
-    label.Size=UDim2.new(0,18,0,120)
-    label.Position=UDim2.new((i-1)/24,0,0,math.random(-300,0))
-    label.BackgroundTransparency=1
-    label.TextColor3=Color3.new(0,1,0)
-    label.Font=Enum.Font.SourceSansBold
-    label.TextSize=14
-    label.Text=""
-    table.insert(rainLabels,label)
-end
-
-task.spawn(function()
-    while true do
-        for _,label in ipairs(rainLabels) do
-            local y=label.Position.Y.Offset
-            y=y+8
-            if y>500 then y=-150;label.Position=UDim2.new(label.Position.X.Scale,label.Position.X.Offset,0,math.random(-200,0)) end
-            label.Position=UDim2.new(label.Position.X.Scale,label.Position.X.Offset,0,y)
-            local str=""
-            for _=1,10 do str=str..string.char(math.random(48,57)).."\n" end
-            label.Text=str
-        end
-        task.wait(0.1)
-    end
-end)
-
--- 终端框
-local terminal=Instance.new("Frame",hackOverlay)
-terminal.Size=UDim2.new(0,380,0,320)
-terminal.Position=UDim2.new(0.5,-190,0.5,-160)
-terminal.BackgroundColor3=Color3.new(10/255,12/255,14/255)
-terminal.BackgroundTransparency=0
-terminal.BorderSizePixel=2
-terminal.BorderColor3=Color3.new(0,1,0)
-terminal.ZIndex=301
-
-local termTitle=Instance.new("TextLabel",terminal)
-termTitle.Size=UDim2.new(1,0,0,22)
-termTitle.Position=UDim2.new(0,0,0,0)
-termTitle.BackgroundColor3=Color3.new(0,30/255,0)
-termTitle.Text="ROBLOX_EXPLOIT_CONSOLE"
-termTitle.TextColor3=Color3.new(0,1,0)
-termTitle.Font=Enum.Font.SourceSansBold
-termTitle.TextSize=12
-termTitle.TextXAlignment=Enum.TextXAlignment.Center
-termTitle.ZIndex=302
-
-local termText=Instance.new("TextLabel",terminal)
-termText.Size=UDim2.new(1,-20,0,220)
-termText.Position=UDim2.new(0,10,0,30)
-termText.BackgroundTransparency=1
-termText.Text=""
-termText.TextColor3=Color3.new(1,0,0)
-termText.Font=Enum.Font.SourceSansBold
-termText.TextSize=14
-termText.TextXAlignment=Enum.TextXAlignment.Left
-termText.TextYAlignment=Enum.TextYAlignment.Top
-termText.RichText=true
-
--- 灵动岛
+-- 灵动岛（胶囊形，可拖拽）
 local island=Instance.new("TextButton",gui)
 island.Size=UDim2.new(0,160,0,32)
 island.Position=UDim2.new(0.5,-80,0.02,0)
@@ -142,24 +74,21 @@ island.Text="机械脚本"
 island.TextColor3=Color3.new(1,1,1)
 island.Font=Enum.Font.SourceSansBold
 island.TextSize=14
-island.AutoLocalize=false
+island.AutoButtonColor=false
 island.ZIndex=160
-island.Visible=false
-local uiCorner=Instance.new("UICorner",island)
-uiCorner.CornerRadius=UDim.new(1,0)
+island.Visible=true
+Instance.new("UICorner",island).CornerRadius=UDim.new(1,0)
 
 -- 主面板
 local panel=Instance.new("Frame",gui)
 panel.Size=UDim2.new(0,340,0,260)
 panel.Position=UDim2.new(0.5,-170,0.5,-130)
 panel.BackgroundColor3=Color3.new(22/255,22/255,22/255)
-panel.BackgroundTransparency=0
 panel.BorderSizePixel=3
 panel.BorderColor3=Color3.new(1,0,0)
 panel.Visible=false
 panel.ZIndex=50
 
---标题栏
 local titleBar=Instance.new("Frame",panel)
 titleBar.Size=UDim2.new(1,0,0,30)
 titleBar.BackgroundColor3=Color3.new(35/255,35/255,35/255)
@@ -183,10 +112,10 @@ closeBtn.Text="X"
 closeBtn.TextColor3=Color3.new(1,1,1)
 closeBtn.Font=Enum.Font.SourceSansBold
 closeBtn.TextSize=12
-closeBtn.AutoLocalize=false
+closeBtn.AutoButtonColor=false
 closeBtn.MouseButton1Click:Connect(function() panel.Visible=false end)
 
---页面容器9页
+-- 页面容器9页
 local pages={}
 local names={"自瞄合集","透视合集","武器合集","移动合集","生存合集","通用合集","娱乐合集","其他合集","更多合集"}
 for i=1,9 do
@@ -217,7 +146,7 @@ prevBtn.Text="上一页"
 prevBtn.TextColor3=Color3.new(1,1,1)
 prevBtn.Font=Enum.Font.SourceSansBold
 prevBtn.TextSize=11
-prevBtn.AutoLocalize=false
+prevBtn.AutoButtonColor=false
 prevBtn.ZIndex=70
 prevBtn.Visible=false
 
@@ -229,7 +158,7 @@ nextBtn.Text="下一页"
 nextBtn.TextColor3=Color3.new(1,1,1)
 nextBtn.Font=Enum.Font.SourceSansBold
 nextBtn.TextSize=11
-nextBtn.AutoLocalize=false
+nextBtn.AutoButtonColor=false
 nextBtn.ZIndex=70
 
 local pageLabel=Instance.new("TextLabel",panel)
@@ -331,7 +260,7 @@ flyAccelBtn.Text="加速"
 flyAccelBtn.TextColor3=Color3.new(1,1,1)
 flyAccelBtn.Font=Enum.Font.SourceSansBold
 flyAccelBtn.TextSize=14
-flyAccelBtn.AutoLocalize=false
+flyAccelBtn.AutoButtonColor=false
 flyAccelBtn.ZIndex=202
 flyAccelBtn.MouseButton1Click:Connect(function()
     st.flyspeed=math.min(200,st.flyspeed+10)
@@ -346,7 +275,7 @@ flyDecelBtn.Text="减速"
 flyDecelBtn.TextColor3=Color3.new(1,1,1)
 flyDecelBtn.Font=Enum.Font.SourceSansBold
 flyDecelBtn.TextSize=14
-flyDecelBtn.AutoLocalize=false
+flyDecelBtn.AutoButtonColor=false
 flyDecelBtn.ZIndex=202
 flyDecelBtn.MouseButton1Click:Connect(function()
     st.flyspeed=math.max(10,st.flyspeed-10)
@@ -361,7 +290,7 @@ flyCloseBtn.Text="关闭"
 flyCloseBtn.TextColor3=Color3.new(1,1,1)
 flyCloseBtn.Font=Enum.Font.SourceSansBold
 flyCloseBtn.TextSize=14
-flyCloseBtn.AutoLocalize=false
+flyCloseBtn.AutoButtonColor=false
 flyCloseBtn.ZIndex=202
 flyCloseBtn.MouseButton1Click:Connect(function()
     st.fly=false
@@ -382,11 +311,32 @@ flyNoclipBtn.Text="穿墙"
 flyNoclipBtn.TextColor3=Color3.new(1,1,1)
 flyNoclipBtn.Font=Enum.Font.SourceSansBold
 flyNoclipBtn.TextSize=14
-flyNoclipBtn.AutoLocalize=false
+flyNoclipBtn.AutoButtonColor=false
 flyNoclipBtn.ZIndex=202
 flyNoclipBtn.MouseButton1Click:Connect(function()
     st.flyNoclip=not st.flyNoclip
     flyNoclipBtn.BackgroundColor3=st.flyNoclip and Color3.new(0,200/255,0) or Color3.new(110/255,110/255,110/255)
+end)
+
+-- 飞行UI拖拽
+local flyUIDragging=false
+local flyUIDragStart=nil
+local flyUIStartPos=nil
+flyControlUI.InputBegan:Connect(function(input)
+    if input.UserInputType==Enum.UserInputType.MouseButton1 then
+        flyUIDragging=true
+        flyUIDragStart=input.Position
+        flyUIStartPos=flyControlUI.AbsolutePosition
+    end
+end)
+flyControlUI.InputChanged:Connect(function(input)
+    if flyUIDragging and input.UserInputType==Enum.UserInputType.MouseMovement then
+        local delta=input.Position-flyUIDragStart
+        flyControlUI.Position=UDim2.new(0,flyUIStartPos.X+delta.X,0,flyUIStartPos.Y+delta.Y)
+    end
+end)
+flyControlUI.InputEnded:Connect(function(input)
+    if input.UserInputType==Enum.UserInputType.MouseButton1 then flyUIDragging=false end
 end)
 
 -- 加速独立UI
@@ -406,11 +356,32 @@ speedToggleUI.Text="加速：开"
 speedToggleUI.TextColor3=Color3.new(1,1,1)
 speedToggleUI.Font=Enum.Font.SourceSansBold
 speedToggleUI.TextSize=14
-speedToggleUI.AutoLocalize=false
+speedToggleUI.AutoButtonColor=false
 speedToggleUI.MouseButton1Click:Connect(function()
     st.speed=not st.speed
     speedToggleUI.Text=st.speed and "加速：开" or "加速：关"
     speedToggleUI.BackgroundColor3=st.speed and Color3.new(0,200/255,0) or Color3.new(80/255,130/255,200/255)
+end)
+
+-- 加速UI拖拽
+local speedUIDragging=false
+local speedUIDragStart=nil
+local speedUIStartPos=nil
+speedControlUI.InputBegan:Connect(function(input)
+    if input.UserInputType==Enum.UserInputType.MouseButton1 then
+        speedUIDragging=true
+        speedUIDragStart=input.Position
+        speedUIStartPos=speedControlUI.AbsolutePosition
+    end
+end)
+speedControlUI.InputChanged:Connect(function(input)
+    if speedUIDragging and input.UserInputType==Enum.UserInputType.MouseMovement then
+        local delta=input.Position-speedUIDragStart
+        speedControlUI.Position=UDim2.new(0,speedUIStartPos.X+delta.X,0,speedUIStartPos.Y+delta.Y)
+    end
+end)
+speedControlUI.InputEnded:Connect(function(input)
+    if input.UserInputType==Enum.UserInputType.MouseButton1 then speedUIDragging=false end
 end)
 
 -- 生成按钮
@@ -423,7 +394,7 @@ local function addButton(parent,text,key,x,y)
     b.TextColor3=Color3.new(1,1,1)
     b.Font=Enum.Font.SourceSansBold
     b.TextSize=13
-    b.AutoLocalize=false
+    b.AutoButtonColor=false
     b.ZIndex=80
     b.MouseButton1Click:Connect(function()
         st[key]=not st[key]
@@ -490,7 +461,7 @@ local function addTargetButton(parent,text,x,y)
     b.TextColor3=Color3.new(1,1,1)
     b.Font=Enum.Font.SourceSansBold
     b.TextSize=13
-    b.AutoLocalize=false
+    b.AutoButtonColor=false
     b.ZIndex=80
     b.MouseButton1Click:Connect(function()
         targetList={}
@@ -524,7 +495,7 @@ aimPriorityBtn.Text = "优先："..(st.aimPriority=="distance" and "距离" or "
 aimPriorityBtn.TextColor3 = Color3.new(1,1,1)
 aimPriorityBtn.Font = Enum.Font.SourceSansBold
 aimPriorityBtn.TextSize = 13
-aimPriorityBtn.AutoLocalize = false
+aimPriorityBtn.AutoButtonColor = false
 aimPriorityBtn.ZIndex = 80
 aimPriorityBtn.MouseButton1Click:Connect(function()
     if st.aimPriority=="distance" then st.aimPriority="health" else st.aimPriority="distance" end
@@ -539,7 +510,7 @@ aimPartBtn.Text = "部位："..(st.aimPart=="Head" and "头部" or st.aimPart=="
 aimPartBtn.TextColor3 = Color3.new(1,1,1)
 aimPartBtn.Font = Enum.Font.SourceSansBold
 aimPartBtn.TextSize = 13
-aimPartBtn.AutoLocalize = false
+aimPartBtn.AutoButtonColor = false
 aimPartBtn.ZIndex = 80
 aimPartBtn.MouseButton1Click:Connect(function()
     if st.aimPart=="Head" then st.aimPart="Chest" elseif st.aimPart=="Chest" then st.aimPart="Root" else st.aimPart="Head" end
@@ -548,7 +519,6 @@ end)
 
 addSlider(pages[1],"平滑度","aimSmooth",0.05,1,10,160)
 addSlider(pages[1],"自瞄圈大小","aimCircleRadius",20,200,120,160)
-addSlider(pages[1],"自瞄圈粗细","aimCircleThickness",1,10,230,160)
 addButton(pages[1],"显示自瞄圈","aimCircleEnabled",10,205)
 
 -- 透视页
@@ -615,7 +585,7 @@ spinMinus.Text="速度-"..st.spinSpeed
 spinMinus.TextColor3=Color3.new(1,1,1)
 spinMinus.Font=Enum.Font.SourceSansBold
 spinMinus.TextSize=13
-spinMinus.AutoLocalize=false
+spinMinus.AutoButtonColor=false
 spinMinus.ZIndex=80
 spinMinus.MouseButton1Click:Connect(function()
     st.spinSpeed=math.max(1,st.spinSpeed-10)
@@ -630,7 +600,7 @@ spinPlus.Text="速度+"..st.spinSpeed
 spinPlus.TextColor3=Color3.new(1,1,1)
 spinPlus.Font=Enum.Font.SourceSansBold
 spinPlus.TextSize=13
-spinPlus.AutoLocalize=false
+spinPlus.AutoButtonColor=false
 spinPlus.ZIndex=80
 spinPlus.MouseButton1Click:Connect(function()
     st.spinSpeed=math.min(200,st.spinSpeed+10)
@@ -639,7 +609,7 @@ end)
 
 addButton(pages[9],"一键交互","fastInteract",10,70)
 
--- 自瞄圈 UI
+-- 自瞄圈
 local aimCircle = Instance.new("TextLabel",gui)
 aimCircle.Size = UDim2.new(0,200,0,200)
 aimCircle.Position = UDim2.new(0.5,-100,0.5,-100)
@@ -650,38 +620,19 @@ aimCircle.Font = Enum.Font.SourceSansBold
 aimCircle.TextSize = st.aimCircleRadius
 aimCircle.ZIndex = 250
 aimCircle.Visible = st.aimCircleEnabled
--- 描边厚度通过TextStroke
-local stroke = Instance.new("TextStroke",aimCircle)
-stroke.Color = Color3.new(1,1,1)
-stroke.Thickness = st.aimCircleThickness
-stroke.Transparency = 0
 
 -- 2D方框容器
 local boxContainer = Instance.new("Frame",gui)
 boxContainer.Size = UDim2.new(1,0,1,0)
 boxContainer.BackgroundTransparency = 1
 boxContainer.ZIndex = 260
-boxContainer.Visible = true
-
--- 更新自瞄圈显示
-task.spawn(function()
-    while true do
-        aimCircle.Visible = st.aimCircleEnabled
-        aimCircle.TextSize = st.aimCircleRadius
-        stroke.Thickness = st.aimCircleThickness
-        task.wait(0.1)
-    end
-end)
 
 -- 透视2D方框更新
 local espBoxes = {}
 task.spawn(function()
     while true do
         pcall(function()
-            -- 清掉旧方框
-            for _, box in pairs(espBoxes) do
-                box:Destroy()
-            end
+            for _, box in pairs(espBoxes) do box:Destroy() end
             espBoxes = {}
             if st.esp and st.espBox then
                 local targets = getEnemies()
@@ -702,7 +653,6 @@ task.spawn(function()
                             box.BackgroundTransparency = 1
                             box.BorderColor3 = Color3.new(1,1,1)
                             box.BorderSizePixel = 2
-                            box.BackgroundColor3 = Color3.new(1,1,1)
                             box.BackgroundTransparency = 1
                             box.Parent = boxContainer
                             table.insert(espBoxes, box)
@@ -716,32 +666,6 @@ task.spawn(function()
 end)
 
 -- 主循环
-local function getEnemies()
-    local list={}
-    for _,p in ipairs(Players:GetPlayers()) do
-        if p~=player and p.Character and p.Character:FindFirstChild("HumanoidRootPart") and p.Character:FindFirstChild("Humanoid") and p.Character.Humanoid.Health>0 then
-            if not st.teamcheck or (player.Team~=p.Team) then
-                table.insert(list,p.Character)
-            end
-        end
-    end
-    if st.espnpc then
-        for _,obj in ipairs(WS:GetDescendants()) do
-            if obj:IsA("Model") and obj:FindFirstChild("Humanoid") and obj:FindFirstChild("HumanoidRootPart") and not Players:GetPlayerFromCharacter(obj) then
-                local hum=obj.Humanoid
-                if hum.Health>0 then table.insert(list,obj) end
-            end
-        end
-    end
-    return list
-end
-
-local function losCheck(origin,targetPos,targetChar)
-    if not st.wallcheck then return true end
-    local ray=workspace:Raycast(origin,(targetPos-origin).Unit*500,{IgnoreList={player.Character,targetChar}})
-    return ray==nil
-end
-
 RS.RenderStepped:Connect(function()
     pcall(function()
         if not player.Character or not player.Character:FindFirstChild("HumanoidRootPart") then return end
@@ -749,7 +673,10 @@ RS.RenderStepped:Connect(function()
         local hum=player.Character:FindFirstChild("Humanoid")
         if not hum then return end
 
-        -- 自瞄
+        -- 更新自瞄圈
+        aimCircle.Visible = st.aimCircleEnabled
+        aimCircle.TextSize = st.aimCircleRadius
+
         if st.aim or st.silent then
             local targets=getEnemies()
             table.sort(targets,function(a,b)
@@ -771,16 +698,13 @@ RS.RenderStepped:Connect(function()
                 if aimPart then
                     local dist=(aimPart.Position-cam.CFrame.Position).Magnitude
                     if dist<=st.aimrange then
-                        -- 屏幕距离检查（自瞄圈）
                         local screenPos, onScreen = cam:WorldToScreenPoint(aimPart.Position)
                         if onScreen then
                             local screenDist = (Vector2.new(screenPos.X, screenPos.Y) - Vector2.new(cam.ViewportSize.X/2, cam.ViewportSize.Y/2)).Magnitude
                             if screenDist <= st.aimCircleRadius then
-                                if losCheck(cam.CFrame.Position,aimPart.Position,tarChar) then
-                                    local look=CFrame.lookAt(cam.CFrame.Position,aimPart.Position)
-                                    cam.CFrame=cam.CFrame:Lerp(look,st.aimSmooth)
-                                    break
-                                end
+                                local look=CFrame.lookAt(cam.CFrame.Position,aimPart.Position)
+                                cam.CFrame=cam.CFrame:Lerp(look,st.aimSmooth)
+                                break
                             end
                         end
                     end
@@ -788,7 +712,6 @@ RS.RenderStepped:Connect(function()
             end
         end
 
-        -- 飞行
         if st.fly then
             if not bodyGyro then
                 bodyGyro=Instance.new("BodyGyro",myRoot)
@@ -908,89 +831,5 @@ UIS.InputBegan:Connect(function(input,gp)
             player.Character.HumanoidRootPart.CFrame = savedPos
             notif("传送至保存点")
         end
-    end
-end)
-
--- 启动动画
-task.spawn(function()
-    blur.Enabled=true
-    hackOverlay.BackgroundTransparency=0.6
-    termText.Text=""
-    local function typeText(text,color,speed)
-        termText.TextColor3=color
-        for i=1,#text do
-            termText.Text = string.sub(text,1,i) .. "█"
-            task.wait(speed)
-        end
-        termText.Text = string.sub(text,1,#text)
-        task.wait(0.05)
-    end
-    typeText("> OS: ROBLOX_EXPLOIT v2.1\n",Color3.new(0,1,0),0.04)
-    typeText("> Kernel: injected\n",Color3.new(0,1,0),0.04)
-    typeText("> Memory: OK\n",Color3.new(0,1,0),0.04)
-    typeText("> 目标服务器：ROBLOX_SERVER_01\n",Color3.new(0,1,0),0.04)
-    typeText("> IP: 192.168.1.7\n\n",Color3.new(0,1,0),0.04)
-    local redLines = {"0x7F3A9C20 inject...","bypass check...","loading modules...","hooking functions...","decrypting data...","preparing access...","bypassing firewall...","establishing connection..."}
-    for _,line in ipairs(redLines) do typeText("> "..line.."\n",Color3.new(1,0,0),0.03) end
-    typeText("> ACCESS DENIED\n",Color3.new(1,0,0),0.04)
-    typeText("> RETRY...\n",Color3.new(1,0,0),0.04)
-    typeText("> ACCESS GRANTED\n\n",Color3.new(0,1,0),0.05)
-    typeText("> 加载完成\n",Color3.new(0,1,0),0.05)
-    typeText("> 用户名：" .. player.Name .. "\n",Color3.new(0,1,0),0.04)
-    typeText("> 密码：*******\n",Color3.new(0,1,0),0.04)
-    typeText("> 权限校验完成\n",Color3.new(0,1,0),0.05)
-    typeText("\n\n\n",Color3.new(0,1,0),0.01)
-    typeText("> 作者：Dsfhy8\n",Color3.new(0,1,0),0.04)
-    typeText("> 脚本版本：v2.1\n",Color3.new(0,1,0),0.04)
-
-    local progressFrame=Instance.new("Frame",terminal)
-    progressFrame.Size=UDim2.new(0,200,0,8)
-    progressFrame.Position=UDim2.new(0.5,-100,1,-60)
-    progressFrame.BackgroundColor3=Color3.new(0,40/255,0)
-    progressFrame.BorderSizePixel=0
-    progressFrame.ZIndex=304
-    local progressFill=Instance.new("Frame",progressFrame)
-    progressFill.Size=UDim2.new(0,0,1,0)
-    progressFill.Position=UDim2.new(0,0,0,0)
-    progressFill.BackgroundColor3=Color3.new(0,1,0)
-    progressFill.BorderSizePixel=0
-    progressFill.ZIndex=305
-    local percentLabel=Instance.new("TextLabel",terminal)
-    percentLabel.Size=UDim2.new(0,200,0,18)
-    percentLabel.Position=UDim2.new(0.5,-100,1,-78)
-    percentLabel.BackgroundTransparency=1
-    percentLabel.Text="Loading... 0%"
-    percentLabel.TextColor3=Color3.new(0,1,0)
-    percentLabel.Font=Enum.Font.SourceSansBold
-    percentLabel.TextSize=12
-    percentLabel.TextXAlignment=Enum.TextXAlignment.Center
-    percentLabel.ZIndex=305
-    for i=0,100,2 do
-        percentLabel.Text="Loading... "..i.."%"
-        progressFill.Size=UDim2.new(i/100,0,1,0)
-        task.wait(0.04)
-    end
-    percentLabel.Text="Loading... 100%"
-    progressFill.Size=UDim2.new(1,0,1,0)
-    task.wait(0.5)
-    local fadeOut=TweenService:Create(hackOverlay,TweenInfo.new(0.7),{BackgroundTransparency=1})
-    local termOut=TweenService:Create(terminal,TweenInfo.new(0.7),{BackgroundTransparency=1})
-    local textOut=TweenService:Create(termText,TweenInfo.new(0.7),{TextTransparency=1})
-    fadeOut:Play(); termOut:Play(); textOut:Play()
-    blur.Enabled=false
-    task.wait(0.7)
-    hackOverlay.Visible=false
-    rainFrame.Visible=false
-    island.Visible=true
-end)
-
--- 灵动岛彩虹边框
-local hue2=0
-task.spawn(function()
-    while true do
-        hue2=(hue2+0.02)%1
-        island.BorderColor3=Color3.fromHSV(hue2,1,1)
-        island.TextColor3=Color3.fromHSV(hue2,1,1)
-        task.wait(0.1)
     end
 end)
