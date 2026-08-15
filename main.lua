@@ -51,7 +51,7 @@ blur.Name="HackBlur"
 blur.Size=60
 blur.Enabled=false
 
--- 全屏遮罩（超大覆盖）
+-- 全屏遮罩
 local hackOverlay=Instance.new("Frame",gui)
 hackOverlay.Size=UDim2.new(3,0,3,0)
 hackOverlay.Position=UDim2.new(-1,0,-1,0)
@@ -61,7 +61,7 @@ hackOverlay.BorderSizePixel=0
 hackOverlay.ZIndex=300
 hackOverlay.Visible=true
 
--- 数字雨（全屏铺满）
+-- 数字雨
 local rainFrame=Instance.new("Frame",hackOverlay)
 rainFrame.Size=UDim2.new(1,0,1,0)
 rainFrame.Position=UDim2.new(0,0,0,0)
@@ -70,12 +70,10 @@ rainFrame.ZIndex=298
 rainFrame.ClipsDescendants=true
 
 local rainLabels={}
-local rainCount=25
-for i=1,rainCount do
+for i=1,25 do
     local label=Instance.new("TextLabel",rainFrame)
     label.Size=UDim2.new(0,18,0,120)
-    local xPercent=(i-1)/(rainCount-1)
-    label.Position=UDim2.new(xPercent,0,0,math.random(-300,0))
+    label.Position=UDim2.new((i-1)/24,0,0,math.random(-300,0))
     label.BackgroundTransparency=1
     label.TextColor3=Color3.fromRGB(0,255,0)
     label.Font=Enum.Font.SourceSansBold
@@ -132,12 +130,13 @@ termText.TextXAlignment=Enum.TextXAlignment.Left
 termText.TextYAlignment=Enum.TextYAlignment.Top
 termText.RichText=true
 
--- 灵动岛悬浮球（黑紫胶囊）
+-- 灵动岛（边框彩虹）
 local island=Instance.new("Frame",gui)
 island.Size=UDim2.new(0,200,0,40)
 island.Position=UDim2.new(0.5,-100,0.02,0)
 island.BackgroundColor3=Color3.fromRGB(20,0,30)
-island.BorderSizePixel=0
+island.BorderSizePixel=2
+island.BorderColor3=Color3.fromRGB(255,0,0)
 island.ZIndex=160
 island.Visible=false
 Instance.new("UICorner",island).CornerRadius=UDim.new(1,0)
@@ -164,26 +163,44 @@ islandTitle.Font=Enum.Font.SourceSansBold
 islandTitle.TextSize=16
 islandTitle.AutoButtonColor=false
 islandTitle.ZIndex=161
-islandTitle.MouseButton1Click:Connect(function()
-    panel.Visible=not panel.Visible
-    if panel.Visible then showPage(curPage) end
-end)
 
--- 灵动岛拖拽
+-- 灵动岛点击和拖拽
 local islandDragging=false
 local islandDragStart=nil
 local islandStartPos=nil
+local islandMoved=false
+
+local function togglePanel()
+    panel.Visible=not panel.Visible
+    if panel.Visible then showPage(curPage) end
+end
+
+islandTitle.MouseButton1Click:Connect(togglePanel)
+
 islandHandle.InputBegan:Connect(function(input)
     if input.UserInputType==Enum.UserInputType.Touch or input.UserInputType==Enum.UserInputType.MouseButton1 then
         islandDragging=true
+        islandMoved=false
         islandDragStart=input.Position
         islandStartPos=island.Position
     end
 end)
-islandHandle.InputEnded:Connect(function() islandDragging=false end)
+
+islandHandle.InputEnded:Connect(function(input)
+    if input.UserInputType==Enum.UserInputType.Touch or input.UserInputType==Enum.UserInputType.MouseButton1 then
+        if not islandMoved then
+            togglePanel()
+        end
+        islandDragging=false
+    end
+end)
+
 UIS.InputChanged:Connect(function(input)
     if islandDragging and islandDragStart and islandStartPos and (input.UserInputType==Enum.UserInputType.Touch or input.UserInputType==Enum.UserInputType.MouseMovement) then
         local delta=input.Position-islandDragStart
+        if delta.Magnitude>5 then
+            islandMoved=true
+        end
         island.Position=UDim2.new(islandStartPos.X.Scale,islandStartPos.X.Offset+delta.X,islandStartPos.Y.Scale,islandStartPos.Y.Offset+delta.Y)
     end
 end)
@@ -225,7 +242,7 @@ closeBtn.TextSize=12
 closeBtn.AutoButtonColor=false
 closeBtn.MouseButton1Click:Connect(function() panel.Visible=false end)
 
--- 页面容器（9页）
+-- 页面容器
 local pages={}
 local names={"自瞄合集","透视合集","武器合集","移动合集","生存合集","通用合集","娱乐合集","其他合集","更多合集"}
 for i=1,9 do
@@ -750,12 +767,12 @@ task.spawn(function()
     island.Visible=true
 end)
 
--- 彩虹闪烁（仅灵动岛标题）
-local hue=0
+-- 彩虹边框（灵动岛）
+local hue2=0
 task.spawn(function()
     while true do
-        hue=(hue+0.02)%1
-        islandTitle.TextColor3=Color3.fromHSV(hue,1,1)
+        hue2=(hue2+0.02)%1
+        island.BorderColor3=Color3.fromHSV(hue2,1,1)
         wait(0.1)
     end
 end)
