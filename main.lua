@@ -130,76 +130,22 @@ termText.TextXAlignment=Enum.TextXAlignment.Left
 termText.TextYAlignment=Enum.TextYAlignment.Top
 termText.RichText=true
 
--- 灵动岛（单按钮实现，整个可点击，左侧拖拽）
+-- 灵动岛（胶囊形，无拖拽，点击打开面板）
 local island=Instance.new("TextButton",gui)
-island.Size=UDim2.new(0,200,0,40)
-island.Position=UDim2.new(0.5,-100,0.02,0)
-island.BackgroundColor3=Color3.fromRGB(20,0,30)
+island.Size=UDim2.new(0,160,0,32)
+island.Position=UDim2.new(0.5,-80,0.02,0)
+island.BackgroundColor3=Color3.fromRGB(30,0,40)  -- 紫黑
 island.BorderSizePixel=2
 island.BorderColor3=Color3.fromRGB(255,0,0)
-island.Text=""
+island.Text="机械脚本"
+island.TextColor3=Color3.fromRGB(255,255,255)
+island.Font=Enum.Font.SourceSansBold
+island.TextSize=14
 island.AutoButtonColor=false
 island.ZIndex=160
 island.Visible=false
 Instance.new("UICorner",island).CornerRadius=UDim.new(1,0)
-
--- 手把图标
-local handleIcon=Instance.new("TextLabel",island)
-handleIcon.Size=UDim2.new(0,40,1,0)
-handleIcon.Position=UDim2.new(0,0,0,0)
-handleIcon.BackgroundColor3=Color3.fromRGB(50,0,70)
-handleIcon.Text="✋"
-handleIcon.TextColor3=Color3.new(1,1,1)
-handleIcon.Font=Enum.Font.SourceSansBold
-handleIcon.TextSize=18
-handleIcon.ZIndex=161
-Instance.new("UICorner",handleIcon).CornerRadius=UDim.new(1,0)
-
--- 标题文字
-local islandTitle=Instance.new("TextLabel",island)
-islandTitle.Size=UDim2.new(1,-40,1,0)
-islandTitle.Position=UDim2.new(0,40,0,0)
-islandTitle.BackgroundTransparency=1
-islandTitle.Text="机械脚本"
-islandTitle.TextColor3=Color3.fromRGB(255,255,255)
-islandTitle.Font=Enum.Font.SourceSansBold
-islandTitle.TextSize=16
-islandTitle.ZIndex=161
-
--- 拖拽逻辑
-local islandDragging=false
-local islandDragStart=nil
-local islandStartPos=nil
-local islandMoved=false
-
-island.InputBegan:Connect(function(input)
-    if input.UserInputType==Enum.UserInputType.Touch or input.UserInputType==Enum.UserInputType.MouseButton1 then
-        islandDragging=true
-        islandMoved=false
-        islandDragStart=input.Position
-        islandStartPos=island.Position
-    end
-end)
-
-island.InputEnded:Connect(function(input)
-    if input.UserInputType==Enum.UserInputType.Touch or input.UserInputType==Enum.UserInputType.MouseButton1 then
-        if not islandMoved then
-            panel.Visible=not panel.Visible
-            if panel.Visible then showPage(curPage) end
-        end
-        islandDragging=false
-    end
-end)
-
-UIS.InputChanged:Connect(function(input)
-    if islandDragging and islandDragStart and islandStartPos and (input.UserInputType==Enum.UserInputType.Touch or input.UserInputType==Enum.UserInputType.MouseMovement) then
-        local delta=input.Position-islandDragStart
-        if delta.Magnitude>5 then
-            islandMoved=true
-        end
-        island.Position=UDim2.new(islandStartPos.X.Scale,islandStartPos.X.Offset+delta.X,islandStartPos.Y.Scale,islandStartPos.Y.Offset+delta.Y)
-    end
-end)
+-- !!!原来这里的MouseButton1Click绑定删掉了!!!
 
 -- 主面板
 local panel=Instance.new("Frame",gui)
@@ -304,6 +250,28 @@ local function showPage(p)
 end
 prevBtn.MouseButton1Click:Connect(function() showPage(curPage-1) end)
 nextBtn.MouseButton1Click:Connect(function() showPage(curPage+1) end)
+
+-- ======================【修复：灵动岛点击绑定放到这里】======================
+island.MouseButton1Click:Connect(function()
+    pcall(function()
+        panel.Visible = not panel.Visible
+        if panel.Visible then
+            showPage(curPage)
+        end
+    end)
+end)
+
+-- 备用热键 Insert按键开关UI，灵动岛点不动就按键盘Insert
+UIS.InputBegan:Connect(function(input,gameProcessed)
+    if gameProcessed then return end
+    if input.KeyCode == Enum.KeyCode.Insert then
+        pcall(function()
+            panel.Visible = not panel.Visible
+            if panel.Visible then showPage(curPage) end
+        end)
+    end
+end)
+-- =========================================================================
 
 -- 飞行控制UI（独立正方形2x2）
 local flyControlUI=Instance.new("Frame",gui)
@@ -763,12 +731,13 @@ task.spawn(function()
     island.Visible=true
 end)
 
--- 彩虹边框（灵动岛）
+-- 彩虹边框和字体（灵动岛）
 local hue2=0
 task.spawn(function()
     while true do
         hue2=(hue2+0.02)%1
         island.BorderColor3=Color3.fromHSV(hue2,1,1)
+        island.TextColor3=Color3.fromHSV(hue2,1,1)
         wait(0.1)
     end
 end)
@@ -966,76 +935,61 @@ RS.RenderStepped:Connect(function()
         end
 
         -- 自动射击
+        if st.autofire        -- 自动射击
         if st.autofire then
-            local targets=getEnemies()
-            if #targets>0 then
-                local tChar=targets[1]
-                local aimPart=tChar:FindFirstChild("Head") or tChar:FindFirstChild("HumanoidRootPart")
-                if aimPart and los(cam.CFrame.Position,aimPart.Position,tChar) then
-                    cam.CFrame=cam.CFrame:Lerp(CFrame.lookAt(cam.CFrame.Position,aimPart.Position), 0.3)
-                    if player:GetMouse() then player:GetMouse().Button1Down:Fire(); player:GetMouse().Button1Up:Fire() end
+            local mouse = player:GetMouse()
+            if mouse.Button1Down then
+                local tool = player.Character:FindFirstChildOfClass("Tool")
+                if tool and tool:FindFirstChild("Activated") then
+                    task.spawn(function()
+                        tool:Activate()
+                        task.wait(0.05)
+                    end)
                 end
             end
         end
 
-        -- 保存传送
-        if st.savepos then savedPos=myRoot.Position; st.savepos=false end
-        if st.tpto and savedPos then myRoot.CFrame=CFrame.new(savedPos); st.tpto=false end
-        if st.zoom then cam.FieldOfView=30 else cam.FieldOfView=70 end
-    end)
-end)
+        -- 倍镜缩放
+        if st.zoom then
+            cam.FieldOfView = 30
+        else
+            cam.FieldOfView = 70
+        end
 
-player.CharacterAdded:Connect(function(char)
-    bodyGyro=nil
-    bodyVel=nil
-    bodyFloat=nil
-    bodySpin=nil
-    originalSizes={}
-    scaleFactor=1
-    selectedTarget=nil
-    targetList={}
-    targetIndex=0
-    local hum=char:WaitForChild("Humanoid")
-    hum.WalkSpeed=st.speed and st.walkspeed or 16
-    hum.JumpPower=st.jumpboost and st.jumppower or 50
-end)
-
-while true do
-    pcall(function()
-        if st.esp then
-            for _,p in ipairs(Players:GetPlayers()) do if p.Character and p.Character:FindFirstChild("ESPTag") then p.Character.ESPTag:Destroy() end end
-            for _,obj in ipairs(WS:GetDescendants()) do if obj:IsA("Model") and obj:FindFirstChild("ESPTag") then obj.ESPTag:Destroy() end end
-            local myRoot=player.Character and player.Character:FindFirstChild("HumanoidRootPart")
-            if myRoot then
-                for _,tChar in ipairs(getEnemies()) do
-                    local tRoot=tChar:FindFirstChild("HumanoidRootPart")
-                    if tRoot then
-                        local dist=(tRoot.Position-myRoot.Position).Magnitude
-                        if dist<=st.aimrange then
-                            local tag=tChar:FindFirstChild("ESPTag")
-                            if not tag then
-                                local bill=Instance.new("BillboardGui",tChar)
-                                bill.Name="ESPTag"; bill.AlwaysOnTop=true; bill.Size=UDim2.new(0,150,0,60); bill.StudsOffset=Vector3.new(0,3,0)
-                                local label=Instance.new("TextLabel",bill)
-                                label.Size=UDim2.new(1,0,1,0); label.BackgroundTransparency=1; label.TextColor3=Color3.new(1,0,0); label.Font=Enum.Font.SourceSansBold; label.TextSize=12
-                                tag=bill
-                            end
-                            local label=tag:FindFirstChild("TextLabel")
-                            if label then
-                                local lines={}
-                                if st.espn then table.insert(lines,tChar.Name) end
-                                if st.espd then table.insert(lines,math.floor(dist).."m") end
-                                if st.esphp then local h=tChar:FindFirstChildOfClass("Humanoid"); if h then table.insert(lines,"HP:"..math.floor(h.Health)) end end
-                                label.Text=table.concat(lines,"\n")
-                            end
-                        end
-                    end
+        -- 隐身
+        if st.invisible then
+            for _,part in ipairs(player.Character:GetDescendants()) do
+                if part:IsA("BasePart") then
+                    part.Transparency = 1
+                elseif part:IsA("Decal") or part:IsA("Texture") then
+                    part.Transparency = 1
                 end
             end
         else
-            for _,p in ipairs(Players:GetPlayers()) do if p.Character and p.Character:FindFirstChild("ESPTag") then p.Character.ESPTag:Destroy() end end
-            for _,obj in ipairs(WS:GetDescendants()) do if obj:IsA("Model") and obj:FindFirstChild("ESPTag") then obj.ESPTag:Destroy() end end
+            for _,part in ipairs(player.Character:GetDescendants()) do
+                if part:IsA("BasePart") and part.Name ~= "HumanoidRootPart" then
+                    part.Transparency = 0
+                elseif part:IsA("Decal") or part:IsA("Texture") then
+                    part.Transparency = 0
+                end
+            end
         end
+
     end)
-    wait(0.5)
-end
+end)
+
+-- 保存/传送位置热键 F1保存 F2传送
+UIS.InputBegan:Connect(function(input,gp)
+    if gp then return end
+    if input.KeyCode == Enum.KeyCode.F1 then
+        if player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
+            savedPos = player.Character.HumanoidRootPart.CFrame
+            notif("已保存坐标")
+        end
+    elseif input.KeyCode == Enum.KeyCode.F2 then
+        if savedPos and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
+            player.Character.HumanoidRootPart.CFrame = savedPos
+            notif("传送至保存点")
+        end
+    end
+end)
