@@ -5,6 +5,8 @@ local RS=game:GetService("RunService")
 local WS=workspace
 local UIS=game:GetService("UserInputService")
 local StarterGui=game:GetService("StarterGui")
+local TweenService=game:GetService("TweenService")
+local Lighting=game:GetService("Lighting")
 
 -- 状态
 local st={
@@ -21,14 +23,12 @@ spin=false,spinSpeed=50,
 fastInteract=false
 }
 
-local aimSmooth = 0.12 -- 自瞄平滑度
+local aimSmooth = 0.12
 local savedPos=nil
 local bodyGyro,bodyVel,bodyFloat,bodySpin
 local selectedTarget=nil
 local targetList={}
 local targetIndex=0
-
--- 角色尺寸控制
 local scaleFactor=1
 local originalSizes={}
 
@@ -45,34 +45,96 @@ gui.Name="机械脚本"
 gui.ResetOnSpawn=false
 gui.ZIndexBehavior=Enum.ZIndexBehavior.Sibling
 
--- 启动信息UI
-local startFrame=Instance.new("Frame",gui)
-startFrame.Size=UDim2.new(0,280,0,120)
-startFrame.Position=UDim2.new(0.5,-140,0.5,-60)
-startFrame.BackgroundColor3=Color3.fromRGB(20,20,20)
-startFrame.BorderSizePixel=0
-startFrame.ZIndex=200
-startFrame.Visible=true
+-- 全屏模糊
+local blur=Instance.new("BlurEffect",Lighting)
+blur.Name="HackBlur"
+blur.Size=60
+blur.Enabled=false
 
-local startTitle=Instance.new("TextLabel",startFrame)
-startTitle.Size=UDim2.new(1,-20,0,30)
-startTitle.Position=UDim2.new(0,10,0,15)
-startTitle.BackgroundTransparency=1
-startTitle.Text="作者：Dsfhy8"
-startTitle.TextColor3=Color3.fromRGB(255,255,255)
-startTitle.Font=Enum.Font.SourceSansBold
-startTitle.TextSize=16
-startTitle.TextXAlignment=Enum.TextXAlignment.Center
+-- 全屏遮罩（超大覆盖）
+local hackOverlay=Instance.new("Frame",gui)
+hackOverlay.Size=UDim2.new(3,0,3,0)
+hackOverlay.Position=UDim2.new(-1,0,-1,0)
+hackOverlay.BackgroundColor3=Color3.fromRGB(0,0,0)
+hackOverlay.BackgroundTransparency=0.6
+hackOverlay.BorderSizePixel=0
+hackOverlay.ZIndex=300
+hackOverlay.Visible=true
 
-local startDesc=Instance.new("TextLabel",startFrame)
-startDesc.Size=UDim2.new(1,-20,0,25)
-startDesc.Position=UDim2.new(0,10,0,60)
-startDesc.BackgroundTransparency=1
-startDesc.Text="脚本持续云更新（但是很慢）"
-startDesc.TextColor3=Color3.fromRGB(255,225,90)
-startDesc.Font=Enum.Font.SourceSansBold
-startDesc.TextSize=13
-startDesc.TextXAlignment=Enum.TextXAlignment.Center
+-- 数字雨（全屏铺满）
+local rainFrame=Instance.new("Frame",hackOverlay)
+rainFrame.Size=UDim2.new(1,0,1,0)
+rainFrame.Position=UDim2.new(0,0,0,0)
+rainFrame.BackgroundTransparency=1
+rainFrame.ZIndex=298
+rainFrame.ClipsDescendants=true
+
+local rainLabels={}
+local rainCount=25
+for i=1,rainCount do
+    local label=Instance.new("TextLabel",rainFrame)
+    label.Size=UDim2.new(0,18,0,120)
+    -- 均匀分布在整个屏幕宽度
+    local xPercent=(i-1)/(rainCount-1)
+    label.Position=UDim2.new(xPercent,0,0,math.random(-300,0))
+    label.BackgroundTransparency=1
+    label.TextColor3=Color3.fromRGB(0,255,0)
+    label.Font=Enum.Font.SourceSansBold
+    label.TextSize=14
+    label.Text=""
+    table.insert(rainLabels,label)
+end
+
+-- 数字雨更新
+task.spawn(function()
+    while true do
+        for _,label in ipairs(rainLabels) do
+            local y=label.Position.Y.Offset
+            y=y+8
+            if y>500 then y=-150; label.Position=UDim2.new(label.Position.X.Scale,label.Position.X.Offset,0,math.random(-200,0)) end
+            label.Position=UDim2.new(label.Position.X.Scale,label.Position.X.Offset,0,y)
+            local str=""
+            for _=1,10 do str=str..string.char(math.random(48,57)).."\n" end
+            label.Text=str
+        end
+        wait(0.1)
+    end
+end)
+
+-- 终端框
+local terminal=Instance.new("Frame",hackOverlay)
+terminal.Size=UDim2.new(0,380,0,320)
+terminal.Position=UDim2.new(0.5,-190,0.5,-160)
+terminal.BackgroundColor3=Color3.fromRGB(10,12,14)
+terminal.BackgroundTransparency=0
+terminal.BorderSizePixel=2
+terminal.BorderColor3=Color3.fromRGB(0,255,0)
+terminal.ZIndex=301
+
+-- 终端标题栏
+local termTitle=Instance.new("TextLabel",terminal)
+termTitle.Size=UDim2.new(1,0,0,22)
+termTitle.Position=UDim2.new(0,0,0,0)
+termTitle.BackgroundColor3=Color3.fromRGB(0,30,0)
+termTitle.Text="ROBLOX_EXPLOIT_CONSOLE"
+termTitle.TextColor3=Color3.fromRGB(0,255,0)
+termTitle.Font=Enum.Font.SourceSansBold
+termTitle.TextSize=12
+termTitle.TextXAlignment=Enum.TextXAlignment.Center
+termTitle.ZIndex=302
+
+-- 终端文字区域
+local termText=Instance.new("TextLabel",terminal)
+termText.Size=UDim2.new(1,-20,0,220)
+termText.Position=UDim2.new(0,10,0,30)
+termText.BackgroundTransparency=1
+termText.Text=""
+termText.TextColor3=Color3.fromRGB(255,0,0)
+termText.Font=Enum.Font.SourceSansBold
+termText.TextSize=14
+termText.TextXAlignment=Enum.TextXAlignment.Left
+termText.TextYAlignment=Enum.TextYAlignment.Top
+termText.RichText=true
 
 -- 悬浮球
 local ball=Instance.new("TextButton",gui)
@@ -395,18 +457,125 @@ shrinkBtn.MouseButton1Click:Connect(function()
     end
 end)
 
--- 悬浮球点击：打开时保持当前页码
+-- 悬浮球点击：保持当前页码
 ball.MouseButton1Click:Connect(function()
     panel.Visible=not panel.Visible
     if panel.Visible then showPage(curPage) end
 end)
 
--- 启动流程
-notif("欢迎 " .. player.Name .. " 使用此脚本")
+-- 黑客终端启动动画
 task.spawn(function()
-    wait(4)
-    startFrame.Visible=false
+    blur.Enabled=true
+    hackOverlay.BackgroundTransparency=0.6
+    termText.Text=""
+
+    local function typeText(text, color, speed)
+        termText.TextColor3=color
+        for i=1,#text do
+            termText.Text = string.sub(text,1,i) .. "█"
+            wait(speed)
+        end
+        termText.Text = string.sub(text,1,#text)
+        wait(0.05)
+    end
+
+    -- 系统信息
+    typeText("> OS: ROBLOX_EXPLOIT v2.1\n", Color3.fromRGB(0,255,0), 0.04)
+    typeText("> Kernel: injected\n", Color3.fromRGB(0,255,0), 0.04)
+    typeText("> Memory: OK\n", Color3.fromRGB(0,255,0), 0.04)
+    typeText("> 目标服务器：ROBLOX_SERVER_01\n", Color3.fromRGB(0,255,0), 0.04)
+    typeText("> IP: 192.168.1.7\n\n", Color3.fromRGB(0,255,0), 0.04)
+
+    -- 红色乱码8行
+    local redLines = {
+        "0x7F3A9C20 inject...",
+        "bypass check...",
+        "loading modules...",
+        "hooking functions...",
+        "decrypting data...",
+        "preparing access...",
+        "bypassing firewall...",
+        "establishing connection..."
+    }
+    for _, line in ipairs(redLines) do
+        typeText("> "..line.."\n", Color3.fromRGB(255,0,0), 0.03)
+    end
+
+    -- 红屏警告
+    typeText("> ACCESS DENIED\n", Color3.fromRGB(255,0,0), 0.04)
+    typeText("> RETRY...\n", Color3.fromRGB(255,0,0), 0.04)
+    typeText("> ACCESS GRANTED\n\n", Color3.fromRGB(0,255,0), 0.05)
+
+    -- 输入完成
+    typeText("> 输入完成\n", Color3.fromRGB(0,255,0), 0.05)
+
+    -- 用户名和密码
+    typeText("> 用户名：" .. player.Name .. "\n", Color3.fromRGB(0,255,0), 0.04)
+    typeText("> 密码：*******\n", Color3.fromRGB(0,255,0), 0.04)
+
+    -- 核验完成
+    typeText("> 身份信息核验完成，允许访问\n", Color3.fromRGB(0,255,0), 0.05)
+
+    -- 空三行
+    typeText("\n\n\n", Color3.fromRGB(0,255,0), 0.01)
+
+    -- 作者和云更新
+    typeText("> 作者：Dsfhy8\n", Color3.fromRGB(0,255,0), 0.04)
+    typeText("> 持续云更新（但是很慢）\n", Color3.fromRGB(0,255,0), 0.04)
+
+    -- 横向进度条
+    local progressFrame=Instance.new("Frame",terminal)
+    progressFrame.Size=UDim2.new(0,200,0,8)
+    progressFrame.Position=UDim2.new(0.5,-100,1,-60)
+    progressFrame.BackgroundColor3=Color3.fromRGB(0,40,0)
+    progressFrame.BorderSizePixel=0
+    progressFrame.ZIndex=304
+
+    local progressFill=Instance.new("Frame",progressFrame)
+    progressFill.Size=UDim2.new(0,0,1,0)
+    progressFill.Position=UDim2.new(0,0,0,0)
+    progressFill.BackgroundColor3=Color3.fromRGB(0,255,0)
+    progressFill.BorderSizePixel=0
+    progressFill.ZIndex=305
+
+    -- 百分比文字
+    local percentLabel=Instance.new("TextLabel",terminal)
+    percentLabel.Size=UDim2.new(0,200,0,18)
+    percentLabel.Position=UDim2.new(0.5,-100,1,-78)
+    percentLabel.BackgroundTransparency=1
+    percentLabel.Text="Loading... 0%"
+    percentLabel.TextColor3=Color3.fromRGB(0,255,0)
+    percentLabel.Font=Enum.Font.SourceSansBold
+    percentLabel.TextSize=12
+    percentLabel.TextXAlignment=Enum.TextXAlignment.Center
+    percentLabel.ZIndex=305
+
+    for i=0,100,2 do
+        percentLabel.Text="Loading... "..i.."%"
+        progressFill.Size=UDim2.new(i/100,0,1,0)
+        wait(0.04)
+    end
+    percentLabel.Text="Loading... 100%"
+    progressFill.Size=UDim2.new(1,0,1,0)
+    wait(0.5)
+
+    -- 淡出
+    local fadeOut=TweenService:Create(hackOverlay,TweenInfo.new(0.7),{BackgroundTransparency=1})
+    local termOut=TweenService:Create(terminal,TweenInfo.new(0.7),{BackgroundTransparency=1})
+    local textOut=TweenService:Create(termText,TweenInfo.new(0.7),{TextTransparency=1})
+    fadeOut:Play()
+    termOut:Play()
+    textOut:Play()
+    blur.Enabled=false
+    wait(0.7)
+    hackOverlay.Visible=false
+    rainFrame.Visible=false
+
+    -- 悬浮球淡入
     ball.Visible=true
+    ball.BackgroundTransparency=1
+    local ballIn=TweenService:Create(ball,TweenInfo.new(0.5),{BackgroundTransparency=0})
+    ballIn:Play()
 end)
 
 -- 彩虹边框
@@ -584,7 +753,7 @@ RS.RenderStepped:Connect(function()
         if st.god then hum.Health=hum.MaxHealth end
         if st.stamina then hum:SetStateEnabled(Enum.HumanoidStateType.Running,true); hum:SetStateEnabled(Enum.HumanoidStateType.RunningNoPhysics,true) end
         if st.regen then hum.Health=math.min(hum.MaxHealth,hum.Health+0.5) end
-        if st.night then game:GetService("Lighting").Brightness=3 else game:GetService("Lighting").Brightness=1 end
+        if st.night then Lighting.Brightness=3 else Lighting.Brightness=1 end
         if st.nofall then hum.FallSpeed=0 end
 
         -- 武器
@@ -636,7 +805,6 @@ player.CharacterAdded:Connect(function(char)
     selectedTarget=nil
     targetList={}
     targetIndex=0
-    -- 恢复默认速度
     local hum=char:WaitForChild("Humanoid")
     hum.WalkSpeed=st.speed and st.walkspeed or 16
     hum.JumpPower=st.jumpboost and st.jumppower or 50
