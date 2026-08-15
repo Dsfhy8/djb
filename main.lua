@@ -130,30 +130,33 @@ termText.TextXAlignment=Enum.TextXAlignment.Left
 termText.TextYAlignment=Enum.TextYAlignment.Top
 termText.RichText=true
 
--- 灵动岛（边框彩虹）
-local island=Instance.new("Frame",gui)
+-- 灵动岛（单按钮实现，整个可点击，左侧拖拽）
+local island=Instance.new("TextButton",gui)
 island.Size=UDim2.new(0,200,0,40)
 island.Position=UDim2.new(0.5,-100,0.02,0)
 island.BackgroundColor3=Color3.fromRGB(20,0,30)
 island.BorderSizePixel=2
 island.BorderColor3=Color3.fromRGB(255,0,0)
+island.Text=""
+island.AutoButtonColor=false
 island.ZIndex=160
 island.Visible=false
 Instance.new("UICorner",island).CornerRadius=UDim.new(1,0)
 
-local islandHandle=Instance.new("TextButton",island)
-islandHandle.Size=UDim2.new(0,40,1,0)
-islandHandle.Position=UDim2.new(0,0,0,0)
-islandHandle.BackgroundColor3=Color3.fromRGB(50,0,70)
-islandHandle.Text="✋"
-islandHandle.TextColor3=Color3.new(1,1,1)
-islandHandle.Font=Enum.Font.SourceSansBold
-islandHandle.TextSize=18
-islandHandle.AutoButtonColor=false
-islandHandle.ZIndex=161
-Instance.new("UICorner",islandHandle).CornerRadius=UDim.new(1,0)
+-- 手把图标
+local handleIcon=Instance.new("TextLabel",island)
+handleIcon.Size=UDim2.new(0,40,1,0)
+handleIcon.Position=UDim2.new(0,0,0,0)
+handleIcon.BackgroundColor3=Color3.fromRGB(50,0,70)
+handleIcon.Text="✋"
+handleIcon.TextColor3=Color3.new(1,1,1)
+handleIcon.Font=Enum.Font.SourceSansBold
+handleIcon.TextSize=18
+handleIcon.ZIndex=161
+Instance.new("UICorner",handleIcon).CornerRadius=UDim.new(1,0)
 
-local islandTitle=Instance.new("TextButton",island)
+-- 标题文字
+local islandTitle=Instance.new("TextLabel",island)
 islandTitle.Size=UDim2.new(1,-40,1,0)
 islandTitle.Position=UDim2.new(0,40,0,0)
 islandTitle.BackgroundTransparency=1
@@ -161,23 +164,15 @@ islandTitle.Text="机械脚本"
 islandTitle.TextColor3=Color3.fromRGB(255,255,255)
 islandTitle.Font=Enum.Font.SourceSansBold
 islandTitle.TextSize=16
-islandTitle.AutoButtonColor=false
 islandTitle.ZIndex=161
 
--- 灵动岛点击和拖拽
+-- 拖拽逻辑
 local islandDragging=false
 local islandDragStart=nil
 local islandStartPos=nil
 local islandMoved=false
 
-local function togglePanel()
-    panel.Visible=not panel.Visible
-    if panel.Visible then showPage(curPage) end
-end
-
-islandTitle.MouseButton1Click:Connect(togglePanel)
-
-islandHandle.InputBegan:Connect(function(input)
+island.InputBegan:Connect(function(input)
     if input.UserInputType==Enum.UserInputType.Touch or input.UserInputType==Enum.UserInputType.MouseButton1 then
         islandDragging=true
         islandMoved=false
@@ -186,10 +181,11 @@ islandHandle.InputBegan:Connect(function(input)
     end
 end)
 
-islandHandle.InputEnded:Connect(function(input)
+island.InputEnded:Connect(function(input)
     if input.UserInputType==Enum.UserInputType.Touch or input.UserInputType==Enum.UserInputType.MouseButton1 then
         if not islandMoved then
-            togglePanel()
+            panel.Visible=not panel.Visible
+            if panel.Visible then showPage(curPage) end
         end
         islandDragging=false
     end
@@ -242,7 +238,7 @@ closeBtn.TextSize=12
 closeBtn.AutoButtonColor=false
 closeBtn.MouseButton1Click:Connect(function() panel.Visible=false end)
 
--- 页面容器
+-- 页面容器（9页）
 local pages={}
 local names={"自瞄合集","透视合集","武器合集","移动合集","生存合集","通用合集","娱乐合集","其他合集","更多合集"}
 for i=1,9 do
