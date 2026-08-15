@@ -132,18 +132,61 @@ termText.TextXAlignment=Enum.TextXAlignment.Left
 termText.TextYAlignment=Enum.TextYAlignment.Top
 termText.RichText=true
 
--- 悬浮球
-local ball=Instance.new("TextButton",gui)
-ball.Size=UDim2.new(0,60,0,60)
-ball.Position=UDim2.new(1,-70,0.5,-30)
-ball.BackgroundColor3=Color3.fromRGB(0,180,255)
-ball.Text="机械"
-ball.TextColor3=Color3.new(1,1,1)
-ball.Font=Enum.Font.SourceSansBold
-ball.TextSize=16
-ball.AutoButtonColor=false
-ball.ZIndex=150
-ball.Visible=false
+-- 灵动岛悬浮球（黑紫胶囊）
+local island=Instance.new("Frame",gui)
+island.Size=UDim2.new(0,200,0,40)
+island.Position=UDim2.new(0.5,-100,0.02,0)
+island.BackgroundColor3=Color3.fromRGB(20,0,30)
+island.BorderSizePixel=0
+island.ZIndex=160
+island.Visible=false
+Instance.new("UICorner",island).CornerRadius=UDim.new(1,0)
+
+local islandHandle=Instance.new("TextButton",island)
+islandHandle.Size=UDim2.new(0,40,1,0)
+islandHandle.Position=UDim2.new(0,0,0,0)
+islandHandle.BackgroundColor3=Color3.fromRGB(50,0,70)
+islandHandle.Text="✋"
+islandHandle.TextColor3=Color3.new(1,1,1)
+islandHandle.Font=Enum.Font.SourceSansBold
+islandHandle.TextSize=18
+islandHandle.AutoButtonColor=false
+islandHandle.ZIndex=161
+Instance.new("UICorner",islandHandle).CornerRadius=UDim.new(1,0)
+
+local islandTitle=Instance.new("TextButton",island)
+islandTitle.Size=UDim2.new(1,-40,1,0)
+islandTitle.Position=UDim2.new(0,40,0,0)
+islandTitle.BackgroundTransparency=1
+islandTitle.Text="机械脚本"
+islandTitle.TextColor3=Color3.fromRGB(255,255,255)
+islandTitle.Font=Enum.Font.SourceSansBold
+islandTitle.TextSize=16
+islandTitle.AutoButtonColor=false
+islandTitle.ZIndex=161
+islandTitle.MouseButton1Click:Connect(function()
+    panel.Visible=not panel.Visible
+    if panel.Visible then showPage(curPage) end
+end)
+
+-- 灵动岛拖拽
+local islandDragging=false
+local islandDragStart=nil
+local islandStartPos=nil
+islandHandle.InputBegan:Connect(function(input)
+    if input.UserInputType==Enum.UserInputType.Touch or input.UserInputType==Enum.UserInputType.MouseButton1 then
+        islandDragging=true
+        islandDragStart=input.Position
+        islandStartPos=island.Position
+    end
+end)
+islandHandle.InputEnded:Connect(function() islandDragging=false end)
+UIS.InputChanged:Connect(function(input)
+    if islandDragging and islandDragStart and islandStartPos and (input.UserInputType==Enum.UserInputType.Touch or input.UserInputType==Enum.UserInputType.MouseMovement) then
+        local delta=input.Position-islandDragStart
+        island.Position=UDim2.new(islandStartPos.X.Scale,islandStartPos.X.Offset+delta.X,islandStartPos.Y.Scale,islandStartPos.Y.Offset+delta.Y)
+    end
+end)
 
 -- 主面板
 local panel=Instance.new("Frame",gui)
@@ -249,68 +292,71 @@ end
 prevBtn.MouseButton1Click:Connect(function() showPage(curPage-1) end)
 nextBtn.MouseButton1Click:Connect(function() showPage(curPage+1) end)
 
--- 飞行控制UI（独立）
+-- 飞行控制UI（独立正方形2x2）
 local flyControlUI=Instance.new("Frame",gui)
-flyControlUI.Size=UDim2.new(0,270,0,40)
-flyControlUI.Position=UDim2.new(0.5,-135,0.8,0)
+flyControlUI.Size=UDim2.new(0,150,0,80)
+flyControlUI.Position=UDim2.new(0.7,-75,0.75,-40)
 flyControlUI.BackgroundColor3=Color3.fromRGB(0,0,0)
-flyControlUI.BackgroundTransparency=0.3
+flyControlUI.BackgroundTransparency=0.2
 flyControlUI.BorderSizePixel=0
 flyControlUI.Visible=false
 flyControlUI.ZIndex=200
 
 local flySpeedLabel=Instance.new("TextLabel",flyControlUI)
-flySpeedLabel.Size=UDim2.new(0,40,1,0)
-flySpeedLabel.Position=UDim2.new(0,5,0,0)
+flySpeedLabel.Size=UDim2.new(0,60,0,20)
+flySpeedLabel.Position=UDim2.new(0.5,-30,0.5,-10)
 flySpeedLabel.BackgroundTransparency=1
 flySpeedLabel.Text="50"
 flySpeedLabel.TextColor3=Color3.new(1,1,1)
 flySpeedLabel.Font=Enum.Font.SourceSansBold
-flySpeedLabel.TextSize=14
+flySpeedLabel.TextSize=16
 flySpeedLabel.TextXAlignment=Enum.TextXAlignment.Center
 flySpeedLabel.TextYAlignment=Enum.TextYAlignment.Center
+flySpeedLabel.ZIndex=201
 
 local flyAccelBtn=Instance.new("TextButton",flyControlUI)
-flyAccelBtn.Size=UDim2.new(0,50,1,0)
-flyAccelBtn.Position=UDim2.new(0,55,0,0)
+flyAccelBtn.Size=UDim2.new(0,70,0,35)
+flyAccelBtn.Position=UDim2.new(0,5,0,5)
 flyAccelBtn.BackgroundColor3=Color3.fromRGB(80,130,200)
-flyAccelBtn.Text="+"
+flyAccelBtn.Text="加速"
 flyAccelBtn.TextColor3=Color3.new(1,1,1)
 flyAccelBtn.Font=Enum.Font.SourceSansBold
-flyAccelBtn.TextSize=16
+flyAccelBtn.TextSize=14
 flyAccelBtn.AutoButtonColor=false
+flyAccelBtn.ZIndex=202
 flyAccelBtn.MouseButton1Click:Connect(function()
     st.flyspeed=math.min(200,st.flyspeed+10)
     flySpeedLabel.Text=tostring(st.flyspeed)
 end)
 
 local flyDecelBtn=Instance.new("TextButton",flyControlUI)
-flyDecelBtn.Size=UDim2.new(0,50,1,0)
-flyDecelBtn.Position=UDim2.new(0,115,0,0)
+flyDecelBtn.Size=UDim2.new(0,70,0,35)
+flyDecelBtn.Position=UDim2.new(0,75,0,5)
 flyDecelBtn.BackgroundColor3=Color3.fromRGB(200,80,80)
-flyDecelBtn.Text="-"
+flyDecelBtn.Text="减速"
 flyDecelBtn.TextColor3=Color3.new(1,1,1)
 flyDecelBtn.Font=Enum.Font.SourceSansBold
-flyDecelBtn.TextSize=16
+flyDecelBtn.TextSize=14
 flyDecelBtn.AutoButtonColor=false
+flyDecelBtn.ZIndex=202
 flyDecelBtn.MouseButton1Click:Connect(function()
     st.flyspeed=math.max(10,st.flyspeed-10)
     flySpeedLabel.Text=tostring(st.flyspeed)
 end)
 
 local flyCloseBtn=Instance.new("TextButton",flyControlUI)
-flyCloseBtn.Size=UDim2.new(0,50,1,0)
-flyCloseBtn.Position=UDim2.new(0,175,0,0)
+flyCloseBtn.Size=UDim2.new(0,70,0,35)
+flyCloseBtn.Position=UDim2.new(0,5,0,40)
 flyCloseBtn.BackgroundColor3=Color3.fromRGB(255,100,100)
-flyCloseBtn.Text="关"
+flyCloseBtn.Text="关闭"
 flyCloseBtn.TextColor3=Color3.new(1,1,1)
 flyCloseBtn.Font=Enum.Font.SourceSansBold
 flyCloseBtn.TextSize=14
 flyCloseBtn.AutoButtonColor=false
+flyCloseBtn.ZIndex=202
 flyCloseBtn.MouseButton1Click:Connect(function()
     st.fly=false
     flyControlUI.Visible=false
-    -- 更新主面板飞行按钮文字
     for _,btn in ipairs(pages[6]:GetChildren()) do
         if btn:IsA("TextButton") and btn.Text:find("飞行") then
             btn.Text="飞行：关"
@@ -320,25 +366,45 @@ flyCloseBtn.MouseButton1Click:Connect(function()
 end)
 
 local flyNoclipBtn=Instance.new("TextButton",flyControlUI)
-flyNoclipBtn.Size=UDim2.new(0,50,1,0)
-flyNoclipBtn.Position=UDim2.new(0,230,0,0)
+flyNoclipBtn.Size=UDim2.new(0,70,0,35)
+flyNoclipBtn.Position=UDim2.new(0,75,0,40)
 flyNoclipBtn.BackgroundColor3=Color3.fromRGB(110,110,110)
 flyNoclipBtn.Text="穿墙"
 flyNoclipBtn.TextColor3=Color3.new(1,1,1)
 flyNoclipBtn.Font=Enum.Font.SourceSansBold
-flyNoclipBtn.TextSize=12
+flyNoclipBtn.TextSize=14
 flyNoclipBtn.AutoButtonColor=false
+flyNoclipBtn.ZIndex=202
 flyNoclipBtn.MouseButton1Click:Connect(function()
     st.flyNoclip=not st.flyNoclip
     flyNoclipBtn.BackgroundColor3=st.flyNoclip and Color3.fromRGB(0,200,0) or Color3.fromRGB(110,110,110)
 end)
 
+-- 飞行UI拖动
+local flyUIDragging=false
+local flyUIDragStart=nil
+local flyUIStartPos=nil
+flyControlUI.InputBegan:Connect(function(input)
+    if input.UserInputType==Enum.UserInputType.Touch or input.UserInputType==Enum.UserInputType.MouseButton1 then
+        flyUIDragging=true
+        flyUIDragStart=input.Position
+        flyUIStartPos=flyControlUI.Position
+    end
+end)
+flyControlUI.InputEnded:Connect(function() flyUIDragging=false end)
+UIS.InputChanged:Connect(function(input)
+    if flyUIDragging and flyUIDragStart and flyUIStartPos and (input.UserInputType==Enum.UserInputType.Touch or input.UserInputType==Enum.UserInputType.MouseMovement) then
+        local delta=input.Position-flyUIDragStart
+        flyControlUI.Position=UDim2.new(flyUIStartPos.X.Scale,flyUIStartPos.X.Offset+delta.X,flyUIStartPos.Y.Scale,flyUIStartPos.Y.Offset+delta.Y)
+    end
+end)
+
 -- 移动加速独立UI
 local speedControlUI=Instance.new("Frame",gui)
 speedControlUI.Size=UDim2.new(0,120,0,40)
-speedControlUI.Position=UDim2.new(0.02,0,0.8,0)
+speedControlUI.Position=UDim2.new(0.02,0,0.75,0)
 speedControlUI.BackgroundColor3=Color3.fromRGB(0,0,0)
-speedControlUI.BackgroundTransparency=0.3
+speedControlUI.BackgroundTransparency=0.2
 speedControlUI.BorderSizePixel=0
 speedControlUI.Visible=false
 speedControlUI.ZIndex=200
@@ -357,7 +423,26 @@ speedToggleUI.MouseButton1Click:Connect(function()
     speedToggleUI.BackgroundColor3=st.speed and Color3.fromRGB(0,200,0) or Color3.fromRGB(80,130,200)
 end)
 
--- 创建按钮函数（修改支持UI联动）
+-- 加速UI拖动
+local speedUIDragging=false
+local speedUIDragStart=nil
+local speedUIStartPos=nil
+speedControlUI.InputBegan:Connect(function(input)
+    if input.UserInputType==Enum.UserInputType.Touch or input.UserInputType==Enum.UserInputType.MouseButton1 then
+        speedUIDragging=true
+        speedUIDragStart=input.Position
+        speedUIStartPos=speedControlUI.Position
+    end
+end)
+speedControlUI.InputEnded:Connect(function() speedUIDragging=false end)
+UIS.InputChanged:Connect(function(input)
+    if speedUIDragging and speedUIDragStart and speedUIStartPos and (input.UserInputType==Enum.UserInputType.Touch or input.UserInputType==Enum.UserInputType.MouseMovement) then
+        local delta=input.Position-speedUIDragStart
+        speedControlUI.Position=UDim2.new(speedUIStartPos.X.Scale,speedUIStartPos.X.Offset+delta.X,speedUIStartPos.Y.Scale,speedUIStartPos.Y.Offset+delta.Y)
+    end
+end)
+
+-- 创建按钮函数
 local function addButton(parent,text,key,x,y)
     local b=Instance.new("TextButton",parent)
     b.Size=UDim2.new(0,100,0,35)
@@ -568,11 +653,6 @@ shrinkBtn.MouseButton1Click:Connect(function()
     end
 end)
 
-ball.MouseButton1Click:Connect(function()
-    panel.Visible=not panel.Visible
-    if panel.Visible then showPage(curPage) end
-end)
-
 -- 启动动画
 task.spawn(function()
     blur.Enabled=true
@@ -667,21 +747,16 @@ task.spawn(function()
     hackOverlay.Visible=false
     rainFrame.Visible=false
 
-    ball.Visible=true
-    ball.BackgroundTransparency=1
-    local ballIn=TweenService:Create(ball,TweenInfo.new(0.5),{BackgroundTransparency=0})
-    ballIn:Play()
+    island.Visible=true
 end)
 
--- 彩虹边框
+-- 彩虹闪烁（仅灵动岛标题）
 local hue=0
 task.spawn(function()
     while true do
-        hue=(hue+0.01)%1
-        local rc=Color3.fromHSV(hue,1,1)
-        panel.BorderColor3=rc
-        titleText.TextColor3=rc
-        wait(0.05)
+        hue=(hue+0.02)%1
+        islandTitle.TextColor3=Color3.fromHSV(hue,1,1)
+        wait(0.1)
     end
 end)
 
@@ -751,7 +826,6 @@ RS.RenderStepped:Connect(function()
             if flyDir.Magnitude>0 then flyDir=flyDir.Unit end
             bodyVel.Velocity=flyDir*st.flyspeed
             bodyGyro.CFrame=CFrame.lookAt(myRoot.Position,myRoot.Position+cam.CFrame.LookVector)
-            -- 飞行穿墙
             if st.flyNoclip then
                 for _,part in ipairs(player.Character:GetDescendants()) do
                     if part:IsA("BasePart") then part.CanCollide=false end
