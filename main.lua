@@ -10,19 +10,18 @@ local Lighting=game:GetService("Lighting")
 
 -- 状态
 local st={
-aim=false,lockh=false,silent=false,wallcheck=false,teamcheck=true,aimrange=300,
-aimPriority="distance", aimPart="Head", aimSmooth=0.2,
-aimCircleEnabled=false, aimCircleRadius=80,
-esp=false,espn=false,espd=false,esphp=false,espnpc=true,espBox=false,espRange=300,
-norecoil=false,fastrel=false,nospread=false,infammo=false,rapid=false,autofire=false,
-speed=false,walkspeed=16,jumpboost=false,jumppower=50,autobhop=false,third=false,
-god=false,stamina=false,regen=false,night=false,nofall=false,nofoot=false,
-fly=false,flyspeed=50,flyNoclip=false,noclip=false,noplayercol=false,frontpush=false,zoom=false,
-savepos=false,tpto=false,
-swimBoost=false,waterWalk=false,
-trackPlayer=false,
-spin=false,spinSpeed=50,
-fastInteract=false
+    aim=false,lockh=false,silent=false,wallcheck=false,teamcheck=false,aimrange=200,
+    aimCircle=false,aimCircleSize=100,aimSmooth=0.12,
+    esp=false,espn=false,espd=false,esphp=false,espnpc=true,espRange=500,
+    norecoil=false,fastrel=false,nospread=false,infammo=false,rapid=false,autofire=false,
+    speed=false,walkspeed=16,jumpboost=false,jumppower=50,autobhop=false,third=false,
+    god=false,stamina=false,regen=false,night=false,nofall=false,nofoot=false,
+    fly=false,flyspeed=50,flyNoclip=false,noclip=false,noplayercol=false,frontpush=false,zoom=false,
+    savepos=false,tpto=false,
+    swimBoost=false,waterWalk=false,
+    trackPlayer=false,
+    spin=false,spinSpeed=50,
+    fastInteract=false
 }
 
 local savedPos=nil
@@ -31,31 +30,11 @@ local selectedTarget=nil
 local targetList={}
 local targetIndex=0
 
+-- 通知
 local function notif(text)
     pcall(function()
         StarterGui:SetCore("SendNotification",{Title="机械脚本",Text=text,Duration=3})
     end)
-end
-
--- 提前定义 getEnemies
-local function getEnemies()
-    local list={}
-    for _,p in ipairs(Players:GetPlayers()) do
-        if p~=player and p.Character and p.Character:FindFirstChild("HumanoidRootPart") and p.Character:FindFirstChild("Humanoid") and p.Character.Humanoid.Health>0 then
-            if not st.teamcheck or (player.Team~=p.Team) then
-                table.insert(list,p.Character)
-            end
-        end
-    end
-    if st.espnpc then
-        for _,obj in ipairs(WS:GetDescendants()) do
-            if obj:IsA("Model") and obj:FindFirstChild("Humanoid") and obj:FindFirstChild("HumanoidRootPart") and not Players:GetPlayerFromCharacter(obj) then
-                local hum=obj.Humanoid
-                if hum.Health>0 then table.insert(list,obj) end
-            end
-        end
-    end
-    return list
 end
 
 -- UI根
@@ -64,17 +43,23 @@ gui.Name="机械脚本"
 gui.ResetOnSpawn=false
 gui.ZIndexBehavior=Enum.ZIndexBehavior.Sibling
 
--- 黑客开场遮罩
+-- 全屏模糊
+local blur=Instance.new("BlurEffect",Lighting)
+blur.Name="HackBlur"
+blur.Size=60
+blur.Enabled=false
+
+-- 全屏遮罩
 local hackOverlay=Instance.new("Frame",gui)
-hackOverlay.Size=UDim2.new(1,0,1,0)
-hackOverlay.Position=UDim2.new(0,0,0,0)
+hackOverlay.Size=UDim2.new(3,0,3,0)
+hackOverlay.Position=UDim2.new(-1,0,-1,0)
 hackOverlay.BackgroundColor3=Color3.new(0,0,0)
-hackOverlay.BackgroundTransparency=0.4
+hackOverlay.BackgroundTransparency=0.6
 hackOverlay.BorderSizePixel=0
 hackOverlay.ZIndex=300
 hackOverlay.Visible=true
 
--- 数字雨（背景层，在终端后面）
+-- 数字雨
 local rainFrame=Instance.new("Frame",hackOverlay)
 rainFrame.Size=UDim2.new(1,0,1,0)
 rainFrame.Position=UDim2.new(0,0,0,0)
@@ -112,132 +97,70 @@ end)
 
 -- 终端框
 local terminal=Instance.new("Frame",hackOverlay)
-terminal.Size=UDim2.new(0,380,0,260)
-terminal.Position=UDim2.new(0.5,-190,0.5,-130)
-terminal.BackgroundColor3=Color3.fromRGB(10,12,14)
+terminal.Size=UDim2.new(0,380,0,320)
+terminal.Position=UDim2.new(0.5,-190,0.5,-160)
+terminal.BackgroundColor3=Color3.new(10/255,12/255,14/255)
+terminal.BackgroundTransparency=0
 terminal.BorderSizePixel=2
-terminal.BorderColor3=Color3.fromRGB(0,255,0)
+terminal.BorderColor3=Color3.new(0,1,0)
 terminal.ZIndex=301
 
 local termTitle=Instance.new("TextLabel",terminal)
 termTitle.Size=UDim2.new(1,0,0,22)
 termTitle.Position=UDim2.new(0,0,0,0)
-termTitle.BackgroundColor3=Color3.fromRGB(0,30,0)
+termTitle.BackgroundColor3=Color3.new(0,30/255,0)
 termTitle.Text="ROBLOX_EXPLOIT_CONSOLE"
-termTitle.TextColor3=Color3.fromRGB(0,255,0)
+termTitle.TextColor3=Color3.new(0,1,0)
 termTitle.Font=Enum.Font.SourceSansBold
 termTitle.TextSize=12
 termTitle.TextXAlignment=Enum.TextXAlignment.Center
 termTitle.ZIndex=302
 
 local termText=Instance.new("TextLabel",terminal)
-termText.Size=UDim2.new(1,-20,0,200)
+termText.Size=UDim2.new(1,-20,0,220)
 termText.Position=UDim2.new(0,10,0,30)
 termText.BackgroundTransparency=1
 termText.Text=""
-termText.TextColor3=Color3.fromRGB(0,255,0)
+termText.TextColor3=Color3.new(1,0,0)
 termText.Font=Enum.Font.SourceSansBold
 termText.TextSize=14
 termText.TextXAlignment=Enum.TextXAlignment.Left
 termText.TextYAlignment=Enum.TextYAlignment.Top
 termText.RichText=true
 
-local progressFrame=Instance.new("Frame",terminal)
-progressFrame.Size=UDim2.new(0,200,0,8)
-progressFrame.Position=UDim2.new(0.5,-100,1,-40)
-progressFrame.BackgroundColor3=Color3.fromRGB(0,40,0)
-progressFrame.BorderSizePixel=0
-progressFrame.ZIndex=303
-local progressFill=Instance.new("Frame",progressFrame)
-progressFill.Size=UDim2.new(0,0,1,0)
-progressFill.BackgroundColor3=Color3.fromRGB(0,255,0)
-progressFill.BorderSizePixel=0
-progressFill.ZIndex=304
-
-local percentLabel=Instance.new("TextLabel",terminal)
-percentLabel.Size=UDim2.new(0,200,0,18)
-percentLabel.Position=UDim2.new(0.5,-100,1,-60)
-percentLabel.BackgroundTransparency=1
-percentLabel.Text="Loading... 0%"
-percentLabel.TextColor3=Color3.fromRGB(0,255,0)
-percentLabel.Font=Enum.Font.SourceSansBold
-percentLabel.TextSize=12
-percentLabel.TextXAlignment=Enum.TextXAlignment.Center
-percentLabel.ZIndex=305
-
--- 黑客开场动画
-task.spawn(function()
-    local lines={
-        "> OS: ROBLOX_EXPLOIT v2.1",
-        "> Kernel: injected",
-        "> Memory: OK",
-        "> 目标服务器：ROBLOX_SERVER_01",
-        "> IP: 192.168.1.7",
-        "> 0x7F3A9C20 inject...",
-        "> bypass check...",
-        "> loading modules...",
-        "> hooking functions...",
-        "> decrypting data...",
-        "> preparing access...",
-        "> bypassing firewall...",
-        "> establishing connection...",
-        "> ACCESS DENIED",
-        "> RETRY...",
-        "> ACCESS GRANTED",
-        "> 加载完成",
-        "> 用户名："..player.Name,
-        "> 密码：*******",
-        "> 权限校验完成",
-        "> 作者：Dsfhy8",
-        "> 脚本版本：v2.1"
-    }
-    for i,line in ipairs(lines) do
-        termText.Text = table.concat(lines,"\n",1,i)
-        local percent = math.floor(i/#lines*100)
-        percentLabel.Text = "Loading... "..percent.."%"
-        progressFill.Size = UDim2.new(i/#lines,0,1,0)
-        task.wait(0.08)
-    end
-    percentLabel.Text = "Loading... 100%"
-    progressFill.Size = UDim2.new(1,0,1,0)
-    task.wait(0.5)
-
-    local fadeOut=TweenService:Create(hackOverlay,TweenInfo.new(0.5),{BackgroundTransparency=1})
-    fadeOut:Play()
-    task.wait(0.5)
-    hackOverlay.Visible=false
-    rainFrame.Visible=false
-end)
-
--- 灵动岛
+-- 灵动岛（胶囊形，点击打开面板）
 local island=Instance.new("TextButton",gui)
 island.Size=UDim2.new(0,160,0,32)
 island.Position=UDim2.new(0.5,-80,0.02,0)
-island.BackgroundColor3=Color3.fromRGB(30,0,40)
+island.BackgroundColor3=Color3.new(30/255,0,40/255)
 island.BorderSizePixel=2
-island.BorderColor3=Color3.fromRGB(255,0,0)
+island.BorderColor3=Color3.new(1,0,0)
 island.Text="机械脚本"
 island.TextColor3=Color3.new(1,1,1)
 island.Font=Enum.Font.SourceSansBold
 island.TextSize=14
-island.AutoButtonColor=false
+island.AutoLocalize=false
 island.ZIndex=160
-island.Visible=true
-Instance.new("UICorner",island).CornerRadius=UDim.new(1,0)
+island.Visible=false
+local uiCorner=Instance.new("UICorner",island)
+uiCorner.CornerRadius=UDim.new(1,0)
 
 -- 主面板
 local panel=Instance.new("Frame",gui)
 panel.Size=UDim2.new(0,340,0,260)
 panel.Position=UDim2.new(0.5,-170,0.5,-130)
-panel.BackgroundColor3=Color3.fromRGB(22,22,22)
+panel.BackgroundColor3=Color3.new(22/255,22/255,22/255)
 panel.BorderSizePixel=3
-panel.BorderColor3=Color3.fromRGB(255,0,0)
+panel.BorderColor3=Color3.new(1,0,0)
 panel.Visible=false
 panel.ZIndex=50
 
+--标题栏
 local titleBar=Instance.new("Frame",panel)
 titleBar.Size=UDim2.new(1,0,0,30)
-titleBar.BackgroundColor3=Color3.fromRGB(35,35,35)
+titleBar.BackgroundColor3=Color3.new(35/255,35/255,35/255)
+titleBar.BorderSizePixel=0
+
 local titleText=Instance.new("TextLabel",titleBar)
 titleText.Size=UDim2.new(1,-30,1,0)
 titleText.Position=UDim2.new(0,10,0,0)
@@ -251,15 +174,15 @@ titleText.TextXAlignment=Enum.TextXAlignment.Left
 local closeBtn=Instance.new("TextButton",titleBar)
 closeBtn.Size=UDim2.new(0,24,0,24)
 closeBtn.Position=UDim2.new(1,-28,0,3)
-closeBtn.BackgroundColor3=Color3.fromRGB(220,50,50)
+closeBtn.BackgroundColor3=Color3.new(220/255,50/255,50/255)
 closeBtn.Text="X"
 closeBtn.TextColor3=Color3.new(1,1,1)
 closeBtn.Font=Enum.Font.SourceSansBold
 closeBtn.TextSize=12
-closeBtn.AutoButtonColor=false
+closeBtn.AutoLocalize=false
 closeBtn.MouseButton1Click:Connect(function() panel.Visible=false end)
 
--- 页面容器
+--页面容器9页
 local pages={}
 local names={"自瞄合集","透视合集","武器合集","移动合集","生存合集","通用合集","娱乐合集","其他合集","更多合集"}
 for i=1,9 do
@@ -274,7 +197,7 @@ for i=1,9 do
     h.Position=UDim2.new(0,0,0,0)
     h.BackgroundTransparency=1
     h.Text=names[i]
-    h.TextColor3=Color3.fromRGB(255,225,90)
+    h.TextColor3=Color3.new(255/255,225/255,90/255)
     h.Font=Enum.Font.SourceSansBold
     h.TextSize=14
     h.TextXAlignment=Enum.TextXAlignment.Left
@@ -285,24 +208,24 @@ local curPage=1
 local prevBtn=Instance.new("TextButton",panel)
 prevBtn.Size=UDim2.new(0,60,0,24)
 prevBtn.Position=UDim2.new(0,10,1,-30)
-prevBtn.BackgroundColor3=Color3.fromRGB(100,100,100)
+prevBtn.BackgroundColor3=Color3.new(100/255,100/255,100/255)
 prevBtn.Text="上一页"
 prevBtn.TextColor3=Color3.new(1,1,1)
 prevBtn.Font=Enum.Font.SourceSansBold
 prevBtn.TextSize=11
-prevBtn.AutoButtonColor=false
+prevBtn.AutoLocalize=false
 prevBtn.ZIndex=70
 prevBtn.Visible=false
 
 local nextBtn=Instance.new("TextButton",panel)
 nextBtn.Size=UDim2.new(0,60,0,24)
 nextBtn.Position=UDim2.new(0,270,1,-30)
-nextBtn.BackgroundColor3=Color3.fromRGB(100,100,100)
+nextBtn.BackgroundColor3=Color3.new(100/255,100/255,100/255)
 nextBtn.Text="下一页"
 nextBtn.TextColor3=Color3.new(1,1,1)
 nextBtn.Font=Enum.Font.SourceSansBold
 nextBtn.TextSize=11
-nextBtn.AutoButtonColor=false
+nextBtn.AutoLocalize=false
 nextBtn.ZIndex=70
 
 local pageLabel=Instance.new("TextLabel",panel)
@@ -326,44 +249,15 @@ end
 prevBtn.MouseButton1Click:Connect(function() showPage(curPage-1) end)
 nextBtn.MouseButton1Click:Connect(function() showPage(curPage+1) end)
 
--- 灵动岛点击与拖拽
-local islandDragging=false
-local islandDragStart=nil
-local islandStartPos=nil
-local islandMoved=false
-
-island.InputBegan:Connect(function(input)
-    if input.UserInputType==Enum.UserInputType.MouseButton1 or input.UserInputType==Enum.UserInputType.Touch then
-        islandDragging=true
-        islandMoved=false
-        islandDragStart=input.Position
-        islandStartPos=island.AbsolutePosition
-    end
+-- 修复灵动岛点击：放在panel全部创建完成之后
+island.MouseButton1Click:Connect(function()
+    pcall(function()
+        panel.Visible = not panel.Visible
+        if panel.Visible then showPage(curPage) end
+    end)
 end)
 
-island.InputEnded:Connect(function(input)
-    if islandDragging then
-        if not islandMoved then
-            pcall(function()
-                panel.Visible = not panel.Visible
-                if panel.Visible then showPage(curPage) end
-            end)
-        end
-        islandDragging=false
-    end
-end)
-
-island.InputChanged:Connect(function(input)
-    if islandDragging and (input.UserInputType==Enum.UserInputType.MouseMovement or input.UserInputType==Enum.UserInputType.Touch) then
-        local delta=input.Position-islandDragStart
-        if delta.Magnitude>10 then islandMoved=true end
-        if islandMoved then
-            island.Position=UDim2.new(0,islandStartPos.X+delta.X,0,islandStartPos.Y+delta.Y)
-        end
-    end
-end)
-
--- Insert快捷键
+-- Insert快捷键呼出面板
 UIS.InputBegan:Connect(function(input,gameProcessed)
     if gameProcessed then return end
     if input.KeyCode == Enum.KeyCode.Insert then
@@ -378,7 +272,7 @@ end)
 local flyControlUI=Instance.new("Frame",gui)
 flyControlUI.Size=UDim2.new(0,150,0,80)
 flyControlUI.Position=UDim2.new(0.7,-75,0.75,-40)
-flyControlUI.BackgroundColor3=Color3.fromRGB(0,0,0)
+flyControlUI.BackgroundColor3=Color3.new(0,0,0)
 flyControlUI.BackgroundTransparency=0.2
 flyControlUI.BorderSizePixel=0
 flyControlUI.Visible=false
@@ -399,12 +293,12 @@ flySpeedLabel.ZIndex=201
 local flyAccelBtn=Instance.new("TextButton",flyControlUI)
 flyAccelBtn.Size=UDim2.new(0,70,0,35)
 flyAccelBtn.Position=UDim2.new(0,5,0,5)
-flyAccelBtn.BackgroundColor3=Color3.fromRGB(80,130,200)
+flyAccelBtn.BackgroundColor3=Color3.new(80/255,130/255,200/255)
 flyAccelBtn.Text="加速"
 flyAccelBtn.TextColor3=Color3.new(1,1,1)
 flyAccelBtn.Font=Enum.Font.SourceSansBold
 flyAccelBtn.TextSize=14
-flyAccelBtn.AutoButtonColor=false
+flyAccelBtn.AutoLocalize=false
 flyAccelBtn.ZIndex=202
 flyAccelBtn.MouseButton1Click:Connect(function()
     st.flyspeed=math.min(200,st.flyspeed+10)
@@ -414,12 +308,12 @@ end)
 local flyDecelBtn=Instance.new("TextButton",flyControlUI)
 flyDecelBtn.Size=UDim2.new(0,70,0,35)
 flyDecelBtn.Position=UDim2.new(0,75,0,5)
-flyDecelBtn.BackgroundColor3=Color3.fromRGB(200,80,80)
+flyDecelBtn.BackgroundColor3=Color3.new(200/255,80/255,80/255)
 flyDecelBtn.Text="减速"
 flyDecelBtn.TextColor3=Color3.new(1,1,1)
 flyDecelBtn.Font=Enum.Font.SourceSansBold
 flyDecelBtn.TextSize=14
-flyDecelBtn.AutoButtonColor=false
+flyDecelBtn.AutoLocalize=false
 flyDecelBtn.ZIndex=202
 flyDecelBtn.MouseButton1Click:Connect(function()
     st.flyspeed=math.max(10,st.flyspeed-10)
@@ -429,12 +323,12 @@ end)
 local flyCloseBtn=Instance.new("TextButton",flyControlUI)
 flyCloseBtn.Size=UDim2.new(0,70,0,35)
 flyCloseBtn.Position=UDim2.new(0,5,0,40)
-flyCloseBtn.BackgroundColor3=Color3.fromRGB(255,100,100)
+flyCloseBtn.BackgroundColor3=Color3.new(255/255,100/255,100/255)
 flyCloseBtn.Text="关闭"
 flyCloseBtn.TextColor3=Color3.new(1,1,1)
 flyCloseBtn.Font=Enum.Font.SourceSansBold
 flyCloseBtn.TextSize=14
-flyCloseBtn.AutoButtonColor=false
+flyCloseBtn.AutoLocalize=false
 flyCloseBtn.ZIndex=202
 flyCloseBtn.MouseButton1Click:Connect(function()
     st.fly=false
@@ -442,7 +336,7 @@ flyCloseBtn.MouseButton1Click:Connect(function()
     for _,btn in ipairs(pages[6]:GetChildren()) do
         if btn:IsA("TextButton") and string.find(btn.Text,"飞行") then
             btn.Text="飞行：关"
-            btn.BackgroundColor3=Color3.fromRGB(110,110,110)
+            btn.BackgroundColor3=Color3.new(110/255,110/255,110/255)
         end
     end
 end)
@@ -450,16 +344,16 @@ end)
 local flyNoclipBtn=Instance.new("TextButton",flyControlUI)
 flyNoclipBtn.Size=UDim2.new(0,70,0,35)
 flyNoclipBtn.Position=UDim2.new(0,75,0,40)
-flyNoclipBtn.BackgroundColor3=Color3.fromRGB(110,110,110)
+flyNoclipBtn.BackgroundColor3=Color3.new(110/255,110/255,110/255)
 flyNoclipBtn.Text="穿墙"
 flyNoclipBtn.TextColor3=Color3.new(1,1,1)
 flyNoclipBtn.Font=Enum.Font.SourceSansBold
 flyNoclipBtn.TextSize=14
-flyNoclipBtn.AutoButtonColor=false
+flyNoclipBtn.AutoLocalize=false
 flyNoclipBtn.ZIndex=202
 flyNoclipBtn.MouseButton1Click:Connect(function()
     st.flyNoclip=not st.flyNoclip
-    flyNoclipBtn.BackgroundColor3=st.flyNoclip and Color3.fromRGB(0,200,0) or Color3.fromRGB(110,110,110)
+    flyNoclipBtn.BackgroundColor3=st.flyNoclip and Color3.new(0,200/255,0) or Color3.new(110/255,110/255,110/255)
 end)
 
 -- 飞行UI拖拽
@@ -487,7 +381,7 @@ end)
 local speedControlUI=Instance.new("Frame",gui)
 speedControlUI.Size=UDim2.new(0,120,0,40)
 speedControlUI.Position=UDim2.new(0.02,0,0.75,0)
-speedControlUI.BackgroundColor3=Color3.fromRGB(0,0,0)
+speedControlUI.BackgroundColor3=Color3.new(0,0,0)
 speedControlUI.BackgroundTransparency=0.2
 speedControlUI.BorderSizePixel=0
 speedControlUI.Visible=false
@@ -495,16 +389,16 @@ speedControlUI.ZIndex=200
 
 local speedToggleUI=Instance.new("TextButton",speedControlUI)
 speedToggleUI.Size=UDim2.new(1,0,1,0)
-speedToggleUI.BackgroundColor3=Color3.fromRGB(80,130,200)
+speedToggleUI.BackgroundColor3=Color3.new(80/255,130/255,200/255)
 speedToggleUI.Text="加速：开"
 speedToggleUI.TextColor3=Color3.new(1,1,1)
 speedToggleUI.Font=Enum.Font.SourceSansBold
 speedToggleUI.TextSize=14
-speedToggleUI.AutoButtonColor=false
+speedToggleUI.AutoLocalize=false
 speedToggleUI.MouseButton1Click:Connect(function()
     st.speed=not st.speed
     speedToggleUI.Text=st.speed and "加速：开" or "加速：关"
-    speedToggleUI.BackgroundColor3=st.speed and Color3.fromRGB(0,200,0) or Color3.fromRGB(80,130,200)
+    speedToggleUI.BackgroundColor3=st.speed and Color3.new(0,200/255,0) or Color3.new(80/255,130/255,200/255)
 end)
 
 -- 加速UI拖拽
@@ -528,33 +422,35 @@ speedControlUI.InputEnded:Connect(function(input)
     if input.UserInputType==Enum.UserInputType.MouseButton1 then speedUIDragging=false end
 end)
 
--- 生成按钮
+-- 生成开关按钮
 local function addButton(parent,text,key,x,y)
     local b=Instance.new("TextButton",parent)
     b.Size=UDim2.new(0,100,0,35)
     b.Position=UDim2.new(0,x,0,y)
-    b.BackgroundColor3=st[key] and Color3.fromRGB(80,230,80) or Color3.fromRGB(110,110,110)
+    b.BackgroundColor3=st[key] and Color3.new(80/255,230/255,80/255) or Color3.new(110/255,110/255,110/255)
     b.Text=text.."："..(st[key] and "开" or "关")
     b.TextColor3=Color3.new(1,1,1)
     b.Font=Enum.Font.SourceSansBold
     b.TextSize=13
-    b.AutoButtonColor=false
+    b.AutoLocalize=false
     b.ZIndex=80
     b.MouseButton1Click:Connect(function()
         st[key]=not st[key]
-        b.BackgroundColor3=st[key] and Color3.fromRGB(80,230,80) or Color3.fromRGB(110,110,110)
+        b.BackgroundColor3=st[key] and Color3.new(80/255,230/255,80/255) or Color3.new(110/255,110/255,110/255)
         b.Text=text.."："..(st[key] and "开" or "关")
         if key=="fly" then flyControlUI.Visible=st.fly end
         if key=="speed" then speedControlUI.Visible=st.speed end
     end)
 end
 
+-- 滑条：修复小数保留问题
 local function addSlider(parent,text,key,minv,maxv,x,y)
     local frame=Instance.new("Frame",parent)
     frame.Size=UDim2.new(0,100,0,40)
     frame.Position=UDim2.new(0,x,0,y)
     frame.BackgroundTransparency=1
     frame.ZIndex=80
+
     local lbl=Instance.new("TextLabel",frame)
     lbl.Size=UDim2.new(1,0,0,16)
     lbl.Position=UDim2.new(0,0,0,0)
@@ -564,48 +460,79 @@ local function addSlider(parent,text,key,minv,maxv,x,y)
     lbl.Font=Enum.Font.SourceSansBold
     lbl.TextSize=12
     lbl.TextXAlignment=Enum.TextXAlignment.Left
+
     local bg=Instance.new("Frame",frame)
     bg.Size=UDim2.new(1,0,0,6)
     bg.Position=UDim2.new(0,0,0,22)
-    bg.BackgroundColor3=Color3.fromRGB(70,70,70)
+    bg.BackgroundColor3=Color3.new(70/255,70/255,70/255)
     bg.BorderSizePixel=0
+
     local fill=Instance.new("Frame",bg)
     fill.Size=UDim2.new((st[key]-minv)/(maxv-minv),0,1,0)
     fill.Position=UDim2.new(0,0,0,0)
-    fill.BackgroundColor3=Color3.fromRGB(80,160,240)
+    fill.BackgroundColor3=Color3.new(80/255,160/255,240/255)
     fill.BorderSizePixel=0
+
     local knob=Instance.new("TextButton",bg)
     knob.Size=UDim2.new(0,14,0,14)
     knob.Position=UDim2.new((st[key]-minv)/(maxv-minv),-7,0.5,-7)
     knob.BackgroundColor3=Color3.new(1,1,1)
     knob.Text=""
     knob.BorderSizePixel=0
+
     local dragging=false
-    local function update(input)
-        local relX=input.Position.X-bg.AbsolutePosition.X
+    local function updateFromX(absoluteX)
+        local relX=absoluteX-bg.AbsolutePosition.X
         local percent=math.clamp(relX/bg.AbsoluteSize.X,0,1)
-        st[key]=math.floor(minv+percent*(maxv-minv))
+        local raw = minv + percent * (maxv - minv)
+        -- 判断是否为整数范围，保留整数；否则保留两位小数
+        if minv == math.floor(minv) and maxv == math.floor(maxv) then
+            st[key] = math.floor(raw)
+        else
+            st[key] = math.floor(raw * 100 + 0.5) / 100
+        end
         fill.Size=UDim2.new(percent,0,1,0)
         knob.Position=UDim2.new(percent,-7,0.5,-7)
         lbl.Text=text..": "..st[key]
     end
-    knob.InputBegan:Connect(function(i) if i.UserInputType==Enum.UserInputType.MouseButton1 or i.UserInputType==Enum.UserInputType.Touch then dragging=true end end)
-    knob.InputEnded:Connect(function(i) if i.UserInputType==Enum.UserInputType.MouseButton1 or i.UserInputType==Enum.UserInputType.Touch then dragging=false end end)
-    UIS.InputChanged:Connect(function(i) if dragging and (i.UserInputType==Enum.UserInputType.MouseMovement or i.UserInputType==Enum.UserInputType.Touch) then update(i) end end)
-    bg.InputBegan:Connect(function(i) if i.UserInputType==Enum.UserInputType.MouseButton1 or i.UserInputType==Enum.UserInputType.Touch then update(i);dragging=true end end)
-    bg.InputEnded:Connect(function(i) if i.UserInputType==Enum.UserInputType.MouseButton1 or i.UserInputType==Enum.UserInputType.Touch then dragging=false end end)
+
+    bg.InputBegan:Connect(function(input)
+        if input.UserInputType==Enum.UserInputType.MouseButton1 or input.UserInputType==Enum.UserInputType.Touch then
+            dragging=true
+            updateFromX(input.Position.X)
+        end
+    end)
+
+    knob.InputBegan:Connect(function(input)
+        if input.UserInputType==Enum.UserInputType.MouseButton1 or input.UserInputType==Enum.UserInputType.Touch then
+            dragging=true
+            updateFromX(input.Position.X)
+        end
+    end)
+
+    UIS.InputChanged:Connect(function(input)
+        if dragging and (input.UserInputType==Enum.UserInputType.MouseMovement or input.UserInputType==Enum.UserInputType.Touch) then
+            updateFromX(input.Position.X)
+        end
+    end)
+
+    UIS.InputEnded:Connect(function(input)
+        if dragging and (input.UserInputType==Enum.UserInputType.MouseButton1 or input.UserInputType==Enum.UserInputType.Touch) then
+            dragging=false
+        end
+    end)
 end
 
 local function addTargetButton(parent,text,x,y)
     local b=Instance.new("TextButton",parent)
     b.Size=UDim2.new(0,100,0,35)
     b.Position=UDim2.new(0,x,0,y)
-    b.BackgroundColor3=Color3.fromRGB(110,110,110)
+    b.BackgroundColor3=Color3.new(110/255,110/255,110/255)
     b.Text=text
     b.TextColor3=Color3.new(1,1,1)
     b.Font=Enum.Font.SourceSansBold
     b.TextSize=13
-    b.AutoButtonColor=false
+    b.AutoLocalize=false
     b.ZIndex=80
     b.MouseButton1Click:Connect(function()
         targetList={}
@@ -623,58 +550,26 @@ local function addTargetButton(parent,text,x,y)
     end)
 end
 
--- 自瞄页
+-- ========== 自瞄页 ==========
 addButton(pages[1],"自瞄","aim",10,25)
 addButton(pages[1],"锁头","lockh",120,25)
 addButton(pages[1],"静默自瞄","silent",230,25)
 addButton(pages[1],"墙体检测","wallcheck",10,70)
 addButton(pages[1],"队伍过滤","teamcheck",120,70)
 addSlider(pages[1],"自瞄范围","aimrange",50,500,230,70)
+addButton(pages[1],"自瞄圈","aimCircle",10,115)
+addSlider(pages[1],"圈大小","aimCircleSize",50,300,120,115)
+addSlider(pages[1],"平滑度","aimSmooth",0.01,1,230,115)
 
-local aimPriorityBtn = Instance.new("TextButton",pages[1])
-aimPriorityBtn.Size = UDim2.new(0,100,0,35)
-aimPriorityBtn.Position = UDim2.new(0,10,0,115)
-aimPriorityBtn.BackgroundColor3 = Color3.fromRGB(110,110,110)
-aimPriorityBtn.Text = "优先："..(st.aimPriority=="distance" and "距离" or "血量")
-aimPriorityBtn.TextColor3 = Color3.new(1,1,1)
-aimPriorityBtn.Font = Enum.Font.SourceSansBold
-aimPriorityBtn.TextSize = 13
-aimPriorityBtn.AutoButtonColor = false
-aimPriorityBtn.ZIndex = 80
-aimPriorityBtn.MouseButton1Click:Connect(function()
-    if st.aimPriority=="distance" then st.aimPriority="health" else st.aimPriority="distance" end
-    aimPriorityBtn.Text = "优先："..(st.aimPriority=="distance" and "距离" or "血量")
-end)
-
-local aimPartBtn = Instance.new("TextButton",pages[1])
-aimPartBtn.Size = UDim2.new(0,100,0,35)
-aimPartBtn.Position = UDim2.new(0,120,0,115)
-aimPartBtn.BackgroundColor3 = Color3.fromRGB(110,110,110)
-aimPartBtn.Text = "部位："..(st.aimPart=="Head" and "头部" or st.aimPart=="Chest" and "胸部" or "根")
-aimPartBtn.TextColor3 = Color3.new(1,1,1)
-aimPartBtn.Font = Enum.Font.SourceSansBold
-aimPartBtn.TextSize = 13
-aimPartBtn.AutoButtonColor = false
-aimPartBtn.ZIndex = 80
-aimPartBtn.MouseButton1Click:Connect(function()
-    if st.aimPart=="Head" then st.aimPart="Chest" elseif st.aimPart=="Chest" then st.aimPart="Root" else st.aimPart="Head" end
-    aimPartBtn.Text = "部位："..(st.aimPart=="Head" and "头部" or st.aimPart=="Chest" and "胸部" or "根")
-end)
-
-addSlider(pages[1],"平滑度","aimSmooth",0.05,1,10,160)
-addSlider(pages[1],"自瞄圈大小","aimCircleRadius",20,200,120,160)
-addButton(pages[1],"显示自瞄圈","aimCircleEnabled",10,205)
-
--- 透视页
+-- ========== 透视页 ==========
 addButton(pages[2],"透视","esp",10,25)
 addButton(pages[2],"显示名字","espn",120,25)
 addButton(pages[2],"显示距离","espd",230,25)
 addButton(pages[2],"显示血量","esphp",10,70)
 addButton(pages[2],"检测NPC","espnpc",120,70)
-addButton(pages[2],"2D方框","espBox",230,70)
-addSlider(pages[2],"透视范围","espRange",50,500,10,115)
+addSlider(pages[2],"透视范围","espRange",100,1000,230,70)
 
--- 武器页
+-- ========== 武器页 ==========
 addButton(pages[3],"无后坐","norecoil",10,25)
 addButton(pages[3],"快速换弹","fastrel",120,25)
 addButton(pages[3],"无散布","nospread",230,25)
@@ -682,7 +577,7 @@ addButton(pages[3],"无限弹药","infammo",10,70)
 addButton(pages[3],"射速增强","rapid",120,70)
 addButton(pages[3],"自动开火","autofire",230,70)
 
--- 移动页
+-- ========== 移动页 ==========
 addButton(pages[4],"速度","speed",10,25)
 addSlider(pages[4],"移速数值","walkspeed",16,100,120,25)
 addButton(pages[4],"高跳","jumpboost",230,25)
@@ -690,7 +585,7 @@ addSlider(pages[4],"跳跃力度","jumppower",50,200,10,70)
 addButton(pages[4],"自动连跳","autobhop",120,70)
 addButton(pages[4],"第三人称","third",230,70)
 
--- 生存页
+-- ========== 生存页 ==========
 addButton(pages[5],"无敌","god",10,25)
 addButton(pages[5],"无限体力","stamina",120,25)
 addButton(pages[5],"自动回血","regen",230,25)
@@ -698,7 +593,7 @@ addButton(pages[5],"夜视","night",10,70)
 addButton(pages[5],"防摔伤","nofall",120,70)
 addButton(pages[5],"消脚步声","nofoot",230,70)
 
--- 通用页
+-- ========== 通用页 ==========
 addButton(pages[6],"飞行","fly",10,25)
 addSlider(pages[6],"飞行速度","flyspeed",10,200,120,25)
 addButton(pages[6],"穿墙","noclip",230,25)
@@ -706,30 +601,30 @@ addButton(pages[6],"关闭玩家碰撞","noplayercol",10,70)
 addButton(pages[6],"撞击弹飞","frontpush",120,70)
 addButton(pages[6],"视野缩放","zoom",230,70)
 
--- 娱乐页
+-- ========== 娱乐页 ==========
 addButton(pages[7],"游泳加速","swimBoost",10,25)
 addButton(pages[7],"水上行走","waterWalk",120,25)
 addButton(pages[7],"锁定目标","trackPlayer",10,70)
 addTargetButton(pages[7],"切换目标",230,70)
 
--- 其他页
+-- ========== 其他页 ==========
 addButton(pages[8],"坐标保存","savepos",10,25)
 addButton(pages[8],"传送过去","tpto",120,25)
 addButton(pages[8],"屏蔽闪光","antiflash",230,25)
 addButton(pages[8],"屏蔽烟雾","antismoke",10,70)
 addButton(pages[8],"防抖画面","antishake",120,70)
 
--- 更多页
+-- ========== 更多页 ==========
 addButton(pages[9],"身体旋转","spin",10,25)
 local spinMinus=Instance.new("TextButton",pages[9])
 spinMinus.Size=UDim2.new(0,100,0,35)
 spinMinus.Position=UDim2.new(0,120,0,25)
-spinMinus.BackgroundColor3=Color3.fromRGB(110,110,110)
+spinMinus.BackgroundColor3=Color3.new(110/255,110/255,110/255)
 spinMinus.Text="速度-"..st.spinSpeed
 spinMinus.TextColor3=Color3.new(1,1,1)
 spinMinus.Font=Enum.Font.SourceSansBold
 spinMinus.TextSize=13
-spinMinus.AutoButtonColor=false
+spinMinus.AutoLocalize=false
 spinMinus.ZIndex=80
 spinMinus.MouseButton1Click:Connect(function()
     st.spinSpeed=math.max(1,st.spinSpeed-10)
@@ -739,12 +634,12 @@ end)
 local spinPlus=Instance.new("TextButton",pages[9])
 spinPlus.Size=UDim2.new(0,100,0,35)
 spinPlus.Position=UDim2.new(0,230,0,25)
-spinPlus.BackgroundColor3=Color3.fromRGB(110,110,110)
+spinPlus.BackgroundColor3=Color3.new(110/255,110/255,110/255)
 spinPlus.Text="速度+"..st.spinSpeed
 spinPlus.TextColor3=Color3.new(1,1,1)
 spinPlus.Font=Enum.Font.SourceSansBold
 spinPlus.TextSize=13
-spinPlus.AutoButtonColor=false
+spinPlus.AutoLocalize=false
 spinPlus.ZIndex=80
 spinPlus.MouseButton1Click:Connect(function()
     st.spinSpeed=math.min(200,st.spinSpeed+10)
@@ -753,106 +648,414 @@ end)
 
 addButton(pages[9],"一键交互","fastInteract",10,70)
 
--- 自瞄圈（圆形框）
-local aimCircle = Instance.new("Frame",gui)
-aimCircle.Size = UDim2.new(0,200,0,200)
-aimCircle.Position = UDim2.new(0.5,-100,0.5,-100)
-aimCircle.BackgroundTransparency = 1
-aimCircle.BorderColor3 = Color3.new(1,1,1)
-aimCircle.BorderSizePixel = 2
-aimCircle.Visible = st.aimCircleEnabled
-aimCircle.ZIndex = 250
-Instance.new("UICorner",aimCircle).CornerRadius = UDim.new(1,0)
+-- 开机动画（保留）
+task.spawn(function()
+    blur.Enabled=true
+    hackOverlay.BackgroundTransparency=0.6
+    termText.Text=""
 
--- 2D方框容器
-local boxContainer = Instance.new("Frame",gui)
-boxContainer.Size = UDim2.new(1,0,1,0)
-boxContainer.BackgroundTransparency = 1
-boxContainer.ZIndex = 260
+    local function typeText(text,color,speed)
+        termText.TextColor3=color
+        for i=1,#text do
+            termText.Text = string.sub(text,1,i) .. "█"
+            task.wait(speed)
+        end
+        termText.Text = string.sub(text,1,#text)
+        task.wait(0.05)
+    end
 
--- 透视2D方框更新
-local espBoxes = {}
+    typeText("> OS: ROBLOX_EXPLOIT v2.1\n",Color3.new(0,1,0),0.04)
+    typeText("> Kernel: injected\n",Color3.new(0,1,0),0.04)
+    typeText("> Memory: OK\n",Color3.new(0,1,0),0.04)
+    typeText("> 目标服务器：ROBLOX_SERVER_01\n",Color3.new(0,1,0),0.04)
+    typeText("> IP: 192.168.1.7\n\n",Color3.new(0,1,0),0.04)
+
+    local redLines = {
+        "0x7F3A9C20 inject...",
+        "bypass check...",
+        "loading modules...",
+        "hooking functions...",
+        "decrypting data...",
+        "preparing access...",
+        "bypassing firewall...",
+        "establishing connection..."
+    }
+    for _,line in ipairs(redLines) do
+        typeText("> "..line.."\n",Color3.new(1,0,0),0.03)
+    end
+
+    typeText("> ACCESS DENIED\n",Color3.new(1,0,0),0.04)
+    typeText("> RETRY...\n",Color3.new(1,0,0),0.04)
+    typeText("> ACCESS GRANTED\n\n",Color3.new(0,1,0),0.05)
+
+    typeText("> 加载完成\n",Color3.new(0,1,0),0.05)
+    typeText("> 用户名：" .. player.Name .. "\n",Color3.new(0,1,0),0.04)
+    typeText("> 密码：*******\n",Color3.new(0,1,0),0.04)
+    typeText("> 权限校验完成\n",Color3.new(0,1,0),0.05)
+
+    typeText("\n\n\n",Color3.new(0,1,0),0.01)
+    typeText("> 作者：Dsfhy8\n",Color3.new(0,1,0),0.04)
+    typeText("> 脚本版本：v2.1\n",Color3.new(0,1,0),0.04)
+
+    local progressFrame=Instance.new("Frame",terminal)
+    progressFrame.Size=UDim2.new(0,200,0,8)
+    progressFrame.Position=UDim2.new(0.5,-100,1,-60)
+    progressFrame.BackgroundColor3=Color3.new(0,40/255,0)
+    progressFrame.BorderSizePixel=0
+    progressFrame.ZIndex=304
+
+    local progressFill=Instance.new("Frame",progressFrame)
+    progressFill.Size=UDim2.new(0,0,1,0)
+    progressFill.Position=UDim2.new(0,0,0,0)
+    progressFill.BackgroundColor3=Color3.new(0,1,0)
+    progressFill.BorderSizePixel=0
+    progressFill.ZIndex=305
+
+    local percentLabel=Instance.new("TextLabel",terminal)
+    percentLabel.Size=UDim2.new(0,200,0,18)
+    percentLabel.Position=UDim2.new(0.5,-100,1,-78)
+    percentLabel.BackgroundTransparency=1
+    percentLabel.Text="Loading... 0%"
+    percentLabel.TextColor3=Color3.new(0,1,0)
+    percentLabel.Font=Enum.Font.SourceSansBold
+    percentLabel.TextSize=12
+    percentLabel.TextXAlignment=Enum.TextXAlignment.Center
+    percentLabel.ZIndex=305
+
+    for i=0,100,2 do
+        percentLabel.Text="Loading... "..i.."%"
+        progressFill.Size=UDim2.new(i/100,0,1,0)
+        task.wait(0.04)
+    end
+    percentLabel.Text="Loading... 100%"
+    progressFill.Size=UDim2.new(1,0,1,0)
+    task.wait(0.5)
+
+    local fadeOut=TweenService:Create(hackOverlay,TweenInfo.new(0.7),{BackgroundTransparency=1})
+    local termOut=TweenService:Create(terminal,TweenInfo.new(0.7),{BackgroundTransparency=1})
+    local textOut=TweenService:Create(termText,TweenInfo.new(0.7),{TextTransparency=1})
+    fadeOut:Play()
+    termOut:Play()
+    textOut:Play()
+    blur.Enabled=false
+    task.wait(0.7)
+    hackOverlay.Visible=false
+    rainFrame.Visible=false
+
+    island.Visible=true
+end)
+
+-- 灵动岛彩虹闪烁边框（保留）
+local hue2=0
 task.spawn(function()
     while true do
-        pcall(function()
-            for _, box in pairs(espBoxes) do box:Destroy() end
-            espBoxes = {}
-            if st.esp and st.espBox then
-                local targets = getEnemies()
-                for _, t in ipairs(targets) do
-                    local root = t:FindFirstChild("HumanoidRootPart")
-                    local head = t:FindFirstChild("Head")
-                    if root and head then
-                        local pos1, on1 = cam:WorldToScreenPoint(head.Position + Vector3.new(0,0.5,0))
-                        local pos2, on2 = cam:WorldToScreenPoint(root.Position - Vector3.new(0,2,0))
-                        if on1 and on2 then
-                            local width = math.abs(pos2.X - pos1.X)
-                            local height = math.abs(pos2.Y - pos1.Y)
-                            local x = math.min(pos1.X, pos2.X)
-                            local y = math.min(pos1.Y, pos2.Y)
-                            local box = Instance.new("Frame")
-                            box.Size = UDim2.new(0, width, 0, height)
-                            box.Position = UDim2.new(0, x, 0, y)
-                            box.BackgroundTransparency = 1
-                            box.BorderColor3 = Color3.new(1,1,1)
-                            box.BorderSizePixel = 2
-                            box.Parent = boxContainer
-                            table.insert(espBoxes, box)
-                        end
-                    end
-                end
-            end
-        end)
-        task.wait(0.05)
+        hue2=(hue2+0.02)%1
+        island.BorderColor3=Color3.fromHSV(hue2,1,1)
+        island.TextColor3=Color3.fromHSV(hue2,1,1)
+        task.wait(0.1)
     end
 end)
 
+-- ========== 自瞄圈（默认关闭） ==========
+local aimCircleGui = Instance.new("ScreenGui", player:WaitForChild("PlayerGui"))
+aimCircleGui.Name = "AimCircleGui"
+aimCircleGui.IgnoreGuiInset = true
+aimCircleGui.ResetOnSpawn = false
+aimCircleGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+
+local aimCircleFrame = Instance.new("Frame", aimCircleGui)
+aimCircleFrame.Size = UDim2.new(0, st.aimCircleSize*2, 0, st.aimCircleSize*2)
+aimCircleFrame.Position = UDim2.new(0.5, -st.aimCircleSize, 0.5, -st.aimCircleSize)
+aimCircleFrame.BackgroundTransparency = 1
+aimCircleFrame.BorderSizePixel = 0
+aimCircleFrame.Visible = st.aimCircle
+aimCircleFrame.ZIndex = 9999
+
+local aimCircleCorner = Instance.new("UICorner", aimCircleFrame)
+aimCircleCorner.CornerRadius = UDim.new(1, 0)
+
+local aimCircleStroke = Instance.new("UIStroke", aimCircleFrame)
+aimCircleStroke.Thickness = 2
+aimCircleStroke.Color = Color3.new(1,1,1)
+aimCircleStroke.Transparency = 0
+
+local function updateAimCircle()
+    if aimCircleFrame then
+        aimCircleFrame.Size = UDim2.new(0, st.aimCircleSize*2, 0, st.aimCircleSize*2)
+        aimCircleFrame.Position = UDim2.new(0.5, -st.aimCircleSize, 0.5, -st.aimCircleSize)
+        aimCircleFrame.Visible = st.aimCircle
+    end
+end
+
+-- ========== ESP 原生 UI 对象池 ==========
+local espGui = Instance.new("ScreenGui", player:WaitForChild("PlayerGui"))
+espGui.Name = "EspGui"
+espGui.IgnoreGuiInset = true
+espGui.ResetOnSpawn = false
+espGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+
+local espObjects = {}
+local MAX_ESP = 20
+
+for i = 1, MAX_ESP do
+    local obj = {}
+
+    obj.topLine = Instance.new("Frame", espGui)
+    obj.topLine.Size = UDim2.new(0, 0, 0, 1)
+    obj.topLine.BackgroundColor3 = Color3.new(1,1,1)
+    obj.topLine.BorderSizePixel = 0
+    obj.topLine.Visible = false
+    obj.topLine.ZIndex = 10000
+
+    obj.bottomLine = Instance.new("Frame", espGui)
+    obj.bottomLine.Size = UDim2.new(0, 0, 0, 1)
+    obj.bottomLine.BackgroundColor3 = Color3.new(1,1,1)
+    obj.bottomLine.BorderSizePixel = 0
+    obj.bottomLine.Visible = false
+    obj.bottomLine.ZIndex = 10000
+
+    obj.leftLine = Instance.new("Frame", espGui)
+    obj.leftLine.Size = UDim2.new(0, 1, 0, 0)
+    obj.leftLine.BackgroundColor3 = Color3.new(1,1,1)
+    obj.leftLine.BorderSizePixel = 0
+    obj.leftLine.Visible = false
+    obj.leftLine.ZIndex = 10000
+
+    obj.rightLine = Instance.new("Frame", espGui)
+    obj.rightLine.Size = UDim2.new(0, 1, 0, 0)
+    obj.rightLine.BackgroundColor3 = Color3.new(1,1,1)
+    obj.rightLine.BorderSizePixel = 0
+    obj.rightLine.Visible = false
+    obj.rightLine.ZIndex = 10000
+
+    obj.nameText = Instance.new("TextLabel", espGui)
+    obj.nameText.BackgroundTransparency = 1
+    obj.nameText.TextColor3 = Color3.new(1,1,1)
+    obj.nameText.Font = Enum.Font.SourceSansBold
+    obj.nameText.TextSize = 13
+    obj.nameText.TextXAlignment = Enum.TextXAlignment.Left
+    obj.nameText.TextYAlignment = Enum.TextYAlignment.Top
+    obj.nameText.Visible = false
+    obj.nameText.ZIndex = 10000
+    obj.nameText.RichText = false
+
+    obj.distText = Instance.new("TextLabel", espGui)
+    obj.distText.BackgroundTransparency = 1
+    obj.distText.TextColor3 = Color3.new(1,1,1)
+    obj.distText.Font = Enum.Font.SourceSansBold
+    obj.distText.TextSize = 13
+    obj.distText.TextXAlignment = Enum.TextXAlignment.Left
+    obj.distText.TextYAlignment = Enum.TextYAlignment.Top
+    obj.distText.Visible = false
+    obj.distText.ZIndex = 10000
+    obj.distText.RichText = false
+
+    obj.hpText = Instance.new("TextLabel", espGui)
+    obj.hpText.BackgroundTransparency = 1
+    obj.hpText.TextColor3 = Color3.new(1,1,1)
+    obj.hpText.Font = Enum.Font.SourceSansBold
+    obj.hpText.TextSize = 13
+    obj.hpText.TextXAlignment = Enum.TextXAlignment.Left
+    obj.hpText.TextYAlignment = Enum.TextYAlignment.Top
+    obj.hpText.Visible = false
+    obj.hpText.ZIndex = 10000
+    obj.hpText.RichText = false
+
+    espObjects[i] = obj
+end
+
+local function getEnemies()
+    local list={}
+    for _,p in ipairs(Players:GetPlayers()) do
+        if p~=player and p.Character and p.Character:FindFirstChild("HumanoidRootPart") and p.Character:FindFirstChild("Humanoid") and p.Character.Humanoid.Health>0 then
+            if not st.teamcheck or (player.Team~=p.Team) then
+                table.insert(list,p.Character)
+            end
+        end
+    end
+    if st.espnpc then
+        for _,obj in ipairs(WS:GetDescendants()) do
+            if obj:IsA("Model") and obj:FindFirstChild("Humanoid") and obj:FindFirstChild("HumanoidRootPart") and not Players:GetPlayerFromCharacter(obj) then
+                local hum=obj:FindFirstChild("Humanoid")
+                if hum and hum.Health>0 then
+                    table.insert(list,obj)
+                end
+            end
+        end
+    end
+    return list
+end
+
+local function losCheck(origin,targetPos,targetChar)
+    if not st.wallcheck then return true end
+    local rayParams = RaycastParams.new()
+    rayParams.FilterDescendantsInstances = {player.Character, targetChar}
+    rayParams.FilterType = Enum.RaycastFilterType.Blacklist
+    local rayResult = workspace:Raycast(origin, (targetPos-origin).Unit * 500, rayParams)
+    return rayResult == nil
+end
+
 -- 主循环
 RS.RenderStepped:Connect(function()
+    -- 更新自瞄圈
+    pcall(function()
+        updateAimCircle()
+    end)
+
+    -- 自瞄逻辑（圈关闭时直接锁最近目标，圈开启时只锁圈内目标）
     pcall(function()
         if not player.Character or not player.Character:FindFirstChild("HumanoidRootPart") then return end
-        local myRoot=player.Character.HumanoidRootPart
-        local hum=player.Character:FindFirstChild("Humanoid")
-        if not hum then return end
-
-        aimCircle.Visible = st.aimCircleEnabled
-        aimCircle.Size = UDim2.new(0, st.aimCircleRadius*2, 0, st.aimCircleRadius*2)
-        aimCircle.Position = UDim2.new(0.5, -st.aimCircleRadius, 0.5, -st.aimCircleRadius)
-
         if st.aim or st.silent then
-            local targets=getEnemies()
-            table.sort(targets,function(a,b)
-                if st.aimPriority=="health" then
-                    local ha=a:FindFirstChild("Humanoid") and a.Humanoid.Health or 100
-                    local hb=b:FindFirstChild("Humanoid") and b.Humanoid.Health or 100
-                    return ha<hb
+            local targets = getEnemies()
+            local screenCenter = Vector2.new(cam.ViewportSize.X/2, cam.ViewportSize.Y/2)
+            local bestTarget = nil
+            local bestDist = math.huge
+            for _, tarChar in ipairs(targets) do
+                local aimPart
+                if st.lockh then
+                    aimPart = tarChar:FindFirstChild("Head") or tarChar:FindFirstChild("HumanoidRootPart")
                 else
-                    local da=(a.HumanoidRootPart.Position-myRoot.Position).Magnitude
-                    local db=(b.HumanoidRootPart.Position-myRoot.Position).Magnitude
-                    return da<db
+                    aimPart = tarChar:FindFirstChild("HumanoidRootPart")
                 end
-            end)
-            for _,tarChar in ipairs(targets) do
-                local aimPart = nil
-                if st.aimPart=="Head" then aimPart=tarChar:FindFirstChild("Head") end
-                if st.aimPart=="Chest" then aimPart=tarChar:FindFirstChild("UpperTorso") or tarChar:FindFirstChild("Torso") end
-                if not aimPart then aimPart=tarChar.HumanoidRootPart end
                 if aimPart then
-                    local dist=(aimPart.Position-cam.CFrame.Position).Magnitude
-                    if dist<=st.aimrange then
-                        local screenPos, onScreen = cam:WorldToScreenPoint(aimPart.Position)
-                        if onScreen then
-                            local screenDist = (Vector2.new(screenPos.X, screenPos.Y) - Vector2.new(cam.ViewportSize.X/2, cam.ViewportSize.Y/2)).Magnitude
-                            if screenDist <= st.aimCircleRadius then
-                                local look=CFrame.lookAt(cam.CFrame.Position,aimPart.Position)
-                                cam.CFrame=cam.CFrame:Lerp(look,st.aimSmooth)
-                                break
+                    local dist = (aimPart.Position - cam.CFrame.Position).Magnitude
+                    if dist <= st.aimrange then
+                        local canLock = true
+                        if st.aimCircle then
+                            local screenPos, onScreen = cam:WorldToScreenPoint(aimPart.Position)
+                            if onScreen and screenPos then
+                                local screenDist = (Vector2.new(screenPos.X, screenPos.Y) - screenCenter).Magnitude
+                                if screenDist > st.aimCircleSize then
+                                    canLock = false
+                                end
+                            else
+                                canLock = false
+                            end
+                        end
+                        if canLock and losCheck(cam.CFrame.Position, aimPart.Position, tarChar) then
+                            if dist < bestDist then
+                                bestDist = dist
+                                bestTarget = aimPart
                             end
                         end
                     end
                 end
             end
+            if bestTarget then
+                local look = CFrame.lookAt(cam.CFrame.Position, bestTarget.Position)
+                cam.CFrame = cam.CFrame:Lerp(look, st.aimSmooth)
+            end
         end
+    end)
+
+    -- 透视逻辑（修复版：WorldToViewportPoint + Z轴修正 + Head/Root动态高度 + 加大方框）
+    pcall(function()
+        if not player.Character or not player.Character:FindFirstChild("HumanoidRootPart") then return end
+        if st.esp then
+            local targets = getEnemies()
+            --每帧先全部隐藏所有esp对象，清除上帧残留
+            for i=1, MAX_ESP do
+                local obj=espObjects[i]
+                obj.topLine.Visible = false
+                obj.bottomLine.Visible = false
+                obj.leftLine.Visible = false
+                obj.rightLine.Visible = false
+                obj.nameText.Visible = false
+                obj.distText.Visible = false
+                obj.hpText.Visible = false
+            end
+
+            local idx = 0
+            for _, tarChar in ipairs(targets) do
+                local root = tarChar:FindFirstChild("HumanoidRootPart")
+                local hum = tarChar:FindFirstChild("Humanoid")
+                local head = tarChar:FindFirstChild("Head")
+                if root and hum and head then
+                    local dist = (root.Position - cam.CFrame.Position).Magnitude
+                    if dist <= st.espRange then
+                        -- 顶部多留一点，底部多留一点，让方框更完整
+                        local topPosition = head.Position + Vector3.new(0,0.6,0)
+                        local bottomPosition = root.Position - Vector3.new(0,1.8,0)
+
+                        local topScreen = cam:WorldToViewportPoint(topPosition)
+                        local bottomScreen = cam:WorldToViewportPoint(bottomPosition)
+
+                        --修复：只要任意一个点Z>0就渲染，不全要求两点都在屏幕前方
+                        if topScreen.Z > 0 or bottomScreen.Z > 0 then
+                            idx = idx + 1
+                            if idx > MAX_ESP then break end
+                            local obj = espObjects[idx]
+
+                            local y1 = math.min(topScreen.Y, bottomScreen.Y) - 2
+                            local y2 = math.max(topScreen.Y, bottomScreen.Y) + 2
+                            local height = y2 - y1
+                            --宽度比例加大到0.6，保证方框更宽
+                            local width = math.max(height * 0.6, 10)
+                            local centerX = (topScreen.X + bottomScreen.X) / 2
+                            local x1 = centerX - width/2
+                            local x2 = centerX + width/2
+
+                            obj.topLine.Position = UDim2.new(0, x1, 0, y1)
+                            obj.topLine.Size = UDim2.new(0, width, 0, 1)
+                            obj.topLine.Visible = true
+
+                            obj.bottomLine.Position = UDim2.new(0, x1, 0, y2)
+                            obj.bottomLine.Size = UDim2.new(0, width, 0, 1)
+                            obj.bottomLine.Visible = true
+
+                            obj.leftLine.Position = UDim2.new(0, x1, 0, y1)
+                            obj.leftLine.Size = UDim2.new(0, 1, 0, height)
+                            obj.leftLine.Visible = true
+
+                            obj.rightLine.Position = UDim2.new(0, x2, 0, y1)
+                            obj.rightLine.Size = UDim2.new(0, 1, 0, height)
+                            obj.rightLine.Visible = true
+
+                            local name=""
+                            local plr=Players:GetPlayerFromCharacter(tarChar)
+                            if plr then name=plr.Name else name=tarChar.Name end
+
+                            if st.espn then
+                                obj.nameText.Text = name
+                                obj.nameText.Position = UDim2.new(0, x1, 0, y1-15)
+                                obj.nameText.Visible = true
+                            end
+
+                            if st.espd then
+                                obj.distText.Text = string.format("%.0f m", dist)
+                                obj.distText.Position = UDim2.new(0, x1, 0, y2+5)
+                                obj.distText.Visible = true
+                            end
+
+                            if st.esphp then
+                                obj.hpText.Text = "HP: "..math.floor(hum.Health).."/"..math.floor(hum.MaxHealth)
+                                obj.hpText.Position = UDim2.new(0, x1, 0, y2+20)
+                                obj.hpText.Visible = true
+                            end
+                        end
+                    end
+                end
+            end
+        else
+            for i=1, MAX_ESP do
+                local obj=espObjects[i]
+                obj.topLine.Visible = false
+                obj.bottomLine.Visible = false
+                obj.leftLine.Visible = false
+                obj.rightLine.Visible = false
+                obj.nameText.Visible = false
+                obj.distText.Visible = false
+                obj.hpText.Visible = false
+            end
+        end
+    end)
+
+    -- 其他功能逻辑
+    pcall(function()
+        if not player.Character or not player.Character:FindFirstChild("HumanoidRootPart") then return end
+        local myRoot=player.Character.HumanoidRootPart
+        local hum=player.Character:FindFirstChild("Humanoid")
+        if not hum then return end
 
         if st.fly then
             if not bodyGyro then
@@ -956,11 +1159,12 @@ RS.RenderStepped:Connect(function()
         if st.nofall then hum:SetStateEnabled(Enum.HumanoidStateType.FallingDown,false) end
         if st.god then hum.Health=hum.MaxHealth end
         if st.regen then hum.Health=math.min(hum.MaxHealth,hum.Health+0.5) end
+
         if st.zoom then cam.FieldOfView=30 else cam.FieldOfView=70 end
     end)
 end)
 
--- F1/F2 保存传送
+-- F1保存坐标 F2传送
 UIS.InputBegan:Connect(function(input,gp)
     if gp then return end
     if input.KeyCode == Enum.KeyCode.F1 then
