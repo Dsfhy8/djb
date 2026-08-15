@@ -30,8 +30,6 @@ local bodyGyro,bodyVel,bodyFloat,bodySpin
 local selectedTarget=nil
 local targetList={}
 local targetIndex=0
-local scaleFactor=1
-local originalSizes={}
 
 -- 通知
 local function notif(text)
@@ -586,66 +584,18 @@ spinPlus.MouseButton1Click:Connect(function()
 end)
 
 addButton(pages[9],"一键交互","fastInteract",10,70)
-
-local enlargeBtn=Instance.new("TextButton",pages[9])
-enlargeBtn.Size=UDim2.new(0,100,0,35)
-enlargeBtn.Position=UDim2.new(0,120,0,70)
-enlargeBtn.BackgroundColor3=Color3.new(110/255,110/255,110/255)
-enlargeBtn.Text="变大"
-enlargeBtn.TextColor3=Color3.new(1,1,1)
-enlargeBtn.Font=Enum.Font.SourceSansBold
-enlargeBtn.TextSize=13
-enlargeBtn.AutoButtonColor=false
-enlargeBtn.ZIndex=80
-enlargeBtn.MouseButton1Click:Connect(function()
-    scaleFactor=math.min(3,scaleFactor+0.1)
-    if player.Character then
-        for _,obj in ipairs(player.Character:GetDescendants()) do
-            if obj:IsA("BasePart") then
-                if not originalSizes[obj] then originalSizes[obj]=obj.Size end
-                obj.Size=originalSizes[obj]*scaleFactor
-            end
-        end
-    end
-end)
-
-local shrinkBtn=Instance.new("TextButton",pages[9])
-shrinkBtn.Size=UDim2.new(0,100,0,35)
-shrinkBtn.Position=UDim2.new(0,230,0,70)
-shrinkBtn.BackgroundColor3=Color3.new(110/255,110/255,110/255)
-shrinkBtn.Text="变小"
-shrinkBtn.TextColor3=Color3.new(1,1,1)
-shrinkBtn.Font=Enum.Font.SourceSansBold
-shrinkBtn.TextSize=13
-shrinkBtn.AutoButtonColor=false
-shrinkBtn.ZIndex=80
-shrinkBtn.MouseButton1Click:Connect(function()
-    scaleFactor=math.max(0.3,scaleFactor-0.1)
-    if player.Character then
-        for _,obj in ipairs(player.Character:GetDescendants()) do
-            if obj:IsA("BasePart") then
-                if not originalSizes[obj] then originalSizes[obj]=obj.Size end
-                obj.Size=originalSizes[obj]*scaleFactor
-            end
-        end
-    end
-end)
-
--- 意念操控按钮（第7页或第9页可加，先放在第9页）
-addButton(pages[9],"意念操控","psychic",10,145)
+addButton(pages[9],"意念操控","psychic",120,70)
 
 -- 事件绑定（所有UI创建完成后统一绑定）
--- 飞行加速
+-- 飞行按钮
 flyAccelBtn.MouseButton1Click:Connect(function()
     st.flyspeed=math.min(200,st.flyspeed+10)
     flySpeedLabel.Text=tostring(st.flyspeed)
 end)
--- 飞行减速
 flyDecelBtn.MouseButton1Click:Connect(function()
     st.flyspeed=math.max(10,st.flyspeed-10)
     flySpeedLabel.Text=tostring(st.flyspeed)
 end)
--- 飞行关闭
 flyCloseBtn.MouseButton1Click:Connect(function()
     st.fly=false
     flyControlUI.Visible=false
@@ -656,26 +606,24 @@ flyCloseBtn.MouseButton1Click:Connect(function()
         end
     end
 end)
--- 飞行穿墙
 flyNoclipBtn.MouseButton1Click:Connect(function()
     st.flyNoclip=not st.flyNoclip
     flyNoclipBtn.BackgroundColor3=st.flyNoclip and Color3.new(0,200/255,0) or Color3.new(110/255,110/255,110/255)
 end)
 
--- 加速UI按钮事件
+-- 加速UI按钮
 speedToggleUI.MouseButton1Click:Connect(function()
     st.speed=not st.speed
     speedToggleUI.Text=st.speed and "加速：开" or "加速：关"
     speedToggleUI.BackgroundColor3=st.speed and Color3.new(0,200/255,0) or Color3.new(80/255,130/255,200/255)
 end)
 
--- 意念操控按钮事件
+-- 意念操控按钮
 psychicGrabBtn.MouseButton1Click:Connect(function()
     if not st.psychic then return end
     local target = getPsychicTarget()
     if target then
         st.psychicTarget = target
-        -- 让目标悬浮在准星前方
         local pos = cam.CFrame.Position + cam.CFrame.LookVector * 10
         if target:IsA("BasePart") then
             target.Anchored = false
@@ -694,7 +642,6 @@ psychicGrabBtn.MouseButton1Click:Connect(function()
         notif("没有对准目标")
     end
 end)
-
 psychicThrowBtn.MouseButton1Click:Connect(function()
     if not st.psychicTarget then return end
     local dir = cam.CFrame.LookVector * 80
@@ -702,35 +649,28 @@ psychicThrowBtn.MouseButton1Click:Connect(function()
         st.psychicTarget.AssemblyLinearVelocity = dir
     elseif st.psychicTarget:IsA("Model") then
         local root = st.psychicTarget:FindFirstChild("HumanoidRootPart") or st.psychicTarget:FindFirstChild("Torso")
-        if root then
-            root.AssemblyLinearVelocity = dir
-        end
+        if root then root.AssemblyLinearVelocity = dir end
     end
     st.psychicTarget = nil
     notif("已扔出")
 end)
-
 psychicDropBtn.MouseButton1Click:Connect(function()
     if st.psychicTarget then
         if st.psychicTarget:IsA("BasePart") then
             st.psychicTarget.AssemblyLinearVelocity = Vector3.zero
         elseif st.psychicTarget:IsA("Model") then
             local root = st.psychicTarget:FindFirstChild("HumanoidRootPart") or st.psychicTarget:FindFirstChild("Torso")
-            if root then
-                root.AssemblyLinearVelocity = Vector3.zero
-            end
+            if root then root.AssemblyLinearVelocity = Vector3.zero end
         end
         st.psychicTarget = nil
         notif("已放下")
     end
 end)
-
 psychicCloseBtn.MouseButton1Click:Connect(function()
     st.psychic=false
     psychicUI.Visible=false
     crosshair.Visible=false
-    st.psychicTarget = nil
-    -- 更新主面板按钮文字
+    st.psychicTarget=nil
     for _,btn in ipairs(pages[9]:GetChildren()) do
         if btn:IsA("TextButton") and string.find(btn.Text,"意念操控") then
             btn.Text="意念操控：关"
@@ -740,6 +680,10 @@ psychicCloseBtn.MouseButton1Click:Connect(function()
 end)
 
 -- 灵动岛事件
+local islandDragging=false
+local islandDragStart=nil
+local islandStartPos=nil
+local islandMoved=false
 island.InputBegan:Connect(function(input)
     if input.UserInputType==Enum.UserInputType.MouseButton1 or input.UserInputType==Enum.UserInputType.Touch then
         islandDragging=true
@@ -769,7 +713,7 @@ island.InputChanged:Connect(function(input)
     end
 end)
 
--- 飞行UI拖拽
+-- 飞行UI拖动
 local flyUIDragging=false
 local flyUIDragStart=nil
 local flyUIStartPos=nil
@@ -790,7 +734,7 @@ flyControlUI.InputEnded:Connect(function(input)
     if input.UserInputType==Enum.UserInputType.MouseButton1 or input.UserInputType==Enum.UserInputType.Touch then flyUIDragging=false end
 end)
 
--- 加速UI拖拽
+-- 加速UI拖动
 local speedUIDragging=false
 local speedUIDragStart=nil
 local speedUIStartPos=nil
@@ -811,7 +755,7 @@ speedControlUI.InputEnded:Connect(function(input)
     if input.UserInputType==Enum.UserInputType.MouseButton1 or input.UserInputType==Enum.UserInputType.Touch then speedUIDragging=false end
 end)
 
--- 意念操控UI拖拽
+-- 意念操控UI拖动
 local psychicUIDragging=false
 local psychicUIDragStart=nil
 local psychicUIStartPos=nil
@@ -852,12 +796,10 @@ local function getPsychicTarget()
     local result = WS:Raycast(ray.Origin, ray.Direction * 100, params)
     if result and result.Instance then
         local obj = result.Instance
-        -- 如果是玩家的部件，返回对应的Model
         local model = obj:FindFirstAncestorOfClass("Model")
         if model and Players:GetPlayerFromCharacter(model) then
             return model
         end
-        -- 否则返回部件本身
         return obj
     end
     return nil
