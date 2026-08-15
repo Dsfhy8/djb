@@ -11,26 +11,25 @@ local Lighting=game:GetService("Lighting")
 -- 状态
 local st={
 aim=false,lockh=false,silent=false,wallcheck=false,teamcheck=true,aimrange=200,
+aimPriority="distance", aimPart="Head", aimFOV=180, aimSmooth=0.18,
 esp=false,espn=false,espd=false,esphp=false,espnpc=false,
+espBox=false,espLine=false,espHPBar=false,espRange=300,
 norecoil=false,fastrel=false,nospread=false,infammo=false,rapid=false,autofire=false,
 speed=false,walkspeed=16,jumpboost=false,jumppower=50,autobhop=false,third=false,
 god=false,stamina=false,regen=false,night=false,nofall=false,nofoot=false,
 fly=false,flyspeed=50,flyNoclip=false,noclip=false,noplayercol=false,frontpush=false,zoom=false,
 savepos=false,tpto=false,
-swimBoost=false,waterWalk=false,invisible=false,fakeDeath=false,
+swimBoost=false,waterWalk=false,
 trackPlayer=false,
 spin=false,spinSpeed=50,
 fastInteract=false
 }
 
-local aimSmooth = 0.12
 local savedPos=nil
 local bodyGyro,bodyVel,bodyFloat,bodySpin
 local selectedTarget=nil
 local targetList={}
 local targetIndex=0
-local scaleFactor=1
-local originalSizes={}
 
 -- 通知
 local function notif(text)
@@ -130,7 +129,7 @@ termText.TextXAlignment=Enum.TextXAlignment.Left
 termText.TextYAlignment=Enum.TextYAlignment.Top
 termText.RichText=true
 
--- 灵动岛（胶囊形，点击打开面板）
+-- 灵动岛（胶囊形，可拖拽）
 local island=Instance.new("TextButton",gui)
 island.Size=UDim2.new(0,160,0,32)
 island.Position=UDim2.new(0.5,-80,0.02,0)
@@ -252,15 +251,46 @@ end
 prevBtn.MouseButton1Click:Connect(function() showPage(curPage-1) end)
 nextBtn.MouseButton1Click:Connect(function() showPage(curPage+1) end)
 
---修复灵动岛点击：放在panel全部创建完成之后
-island.MouseButton1Click:Connect(function()
-    pcall(function()
-        panel.Visible = not panel.Visible
-        if panel.Visible then showPage(curPage) end
-    end)
+-- 灵动岛点击与拖拽逻辑
+local islandDragging=false
+local islandDragStart=nil
+local islandStartPos=nil
+local islandMoved=false
+
+island.InputBegan:Connect(function(input)
+    if input.UserInputType==Enum.UserInputType.MouseButton1 or input.UserInputType==Enum.UserInputType.Touch then
+        islandDragging=true
+        islandMoved=false
+        islandDragStart=input.Position
+        islandStartPos=island.AbsolutePosition
+    end
 end)
 
---Insert快捷键呼出面板
+island.InputEnded:Connect(function(input)
+    if islandDragging then
+        if not islandMoved then
+            pcall(function()
+                panel.Visible = not panel.Visible
+                if panel.Visible then showPage(curPage) end
+            end)
+        end
+        islandDragging=false
+    end
+end)
+
+island.InputChanged:Connect(function(input)
+    if islandDragging and (input.UserInputType==Enum.UserInputType.MouseMovement or input.UserInputType==Enum.UserInputType.Touch) then
+        local delta=input.Position-islandDragStart
+        if delta.Magnitude>10 then
+            islandMoved=true
+        end
+        if islandMoved then
+            island.Position=UDim2.new(0,islandStartPos.X+delta.X,0,islandStartPos.Y+delta.Y)
+        end
+    end
+end)
+
+-- Insert快捷键呼出面板
 UIS.InputBegan:Connect(function(input,gameProcessed)
     if gameProcessed then return end
     if input.KeyCode == Enum.KeyCode.Insert then
@@ -520,19 +550,59 @@ local function addTargetButton(parent,text,x,y)
     end)
 end
 
+-- 自瞄页
 addButton(pages[1],"自瞄","aim",10,25)
 addButton(pages[1],"锁头","lockh",120,25)
 addButton(pages[1],"静默自瞄","silent",230,25)
 addButton(pages[1],"墙体检测","wallcheck",10,70)
 addButton(pages[1],"队伍过滤","teamcheck",120,70)
 addSlider(pages[1],"自瞄范围","aimrange",50,500,230,70)
+-- 平滑度和FOV放在第二行？
+local aimPriorityBtn = Instance.new("TextButton",pages[1])
+aimPriorityBtn.Size = UDim2.new(0,100,0,35)
+aimPriorityBtn.Position = UDim2.new(0,10,0,115)
+aimPriorityBtn.BackgroundColor3 = Color3.new(110/255,110/255,110/255)
+aimPriorityBtn.Text = "优先："..st.aimPriority
+aimPriorityBtn.TextColor3 = Color3.new(1,1,1)
+aimPriorityBtn.Font = Enum.Font.SourceSansBold
+aimPriorityBtn.TextSize = 13
+aimPriorityBtn.AutoLocalize = false
+aimPriorityBtn.ZIndex = 80
+aimPriorityBtn.MouseButton1Click:Connect(function()
+    if st.aimPriority=="distance" then st.aimPriority="health" else st.aimPriority="distance" end
+    aimPriorityBtn.Text = "优先："..st.aimPriority
+end)
 
+local aimPartBtn = Instance.new("TextButton",pages[1])
+aimPartBtn.Size = UDim2.new(0,100,0,35)
+aimPartBtn.Position = UDim2.new(0,120,0,115)
+aimPartBtn.BackgroundColor3 = Color3.new(110/255,110/255,110/255)
+aimPartBtn.Text = "部位："..st.aimPart
+aimPartBtn.TextColor3 = Color3.new(1,1,1)
+aimPartBtn.Font = Enum.Font.SourceSansBold
+aimPartBtn.TextSize = 13
+aimPartBtn.AutoLocalize = false
+aimPartBtn.ZIndex = 80
+aimPartBtn.MouseButton1Click:Connect(function()
+    if st.aimPart=="Head" then st.aimPart="Chest" elseif st.aimPart=="Chest" then st.aimPart="Root" else st.aimPart="Head" end
+    aimPartBtn.Text = "部位："..st.aimPart
+end)
+
+addSlider(pages[1],"平滑度","aimSmooth",0.05,1,10,160)
+addSlider(pages[1],"FOV限制","aimFOV",5,180,120,160)
+
+-- 透视页
 addButton(pages[2],"透视","esp",10,25)
 addButton(pages[2],"显示名字","espn",120,25)
 addButton(pages[2],"显示距离","espd",230,25)
 addButton(pages[2],"显示血量","esphp",10,70)
 addButton(pages[2],"检测NPC","espnpc",120,70)
+addButton(pages[2],"方框透视","espBox",230,70)
+addButton(pages[2],"射线透视","espLine",10,115)
+addButton(pages[2],"血量条","espHPBar",120,115)
+addSlider(pages[2],"透视范围","espRange",50,500,230,115)
 
+-- 武器页
 addButton(pages[3],"无后坐","norecoil",10,25)
 addButton(pages[3],"快速换弹","fastrel",120,25)
 addButton(pages[3],"无散布","nospread",230,25)
@@ -540,6 +610,7 @@ addButton(pages[3],"无限弹药","infammo",10,70)
 addButton(pages[3],"射速增强","rapid",120,70)
 addButton(pages[3],"自动开火","autofire",230,70)
 
+-- 移动页
 addButton(pages[4],"速度","speed",10,25)
 addSlider(pages[4],"移速数值","walkspeed",16,100,120,25)
 addButton(pages[4],"高跳","jumpboost",230,25)
@@ -547,6 +618,7 @@ addSlider(pages[4],"跳跃力度","jumppower",50,200,10,70)
 addButton(pages[4],"自动连跳","autobhop",120,70)
 addButton(pages[4],"第三人称","third",230,70)
 
+-- 生存页
 addButton(pages[5],"无敌","god",10,25)
 addButton(pages[5],"无限体力","stamina",120,25)
 addButton(pages[5],"自动回血","regen",230,25)
@@ -554,6 +626,7 @@ addButton(pages[5],"夜视","night",10,70)
 addButton(pages[5],"防摔伤","nofall",120,70)
 addButton(pages[5],"消脚步声","nofoot",230,70)
 
+-- 通用页
 addButton(pages[6],"飞行","fly",10,25)
 addSlider(pages[6],"飞行速度","flyspeed",10,200,120,25)
 addButton(pages[6],"穿墙","noclip",230,25)
@@ -561,19 +634,20 @@ addButton(pages[6],"关闭玩家碰撞","noplayercol",10,70)
 addButton(pages[6],"撞击弹飞","frontpush",120,70)
 addButton(pages[6],"视野缩放","zoom",230,70)
 
+-- 娱乐页
 addButton(pages[7],"游泳加速","swimBoost",10,25)
 addButton(pages[7],"水上行走","waterWalk",120,25)
-addButton(pages[7],"人物隐身","invisible",230,25)
-addButton(pages[7],"假死坐姿","fakeDeath",10,70)
-addButton(pages[7],"锁定目标","trackPlayer",120,70)
+addButton(pages[7],"锁定目标","trackPlayer",10,70)
 addTargetButton(pages[7],"切换目标",230,70)
 
+-- 其他页
 addButton(pages[8],"坐标保存","savepos",10,25)
 addButton(pages[8],"传送过去","tpto",120,25)
 addButton(pages[8],"屏蔽闪光","antiflash",230,25)
 addButton(pages[8],"屏蔽烟雾","antismoke",10,70)
 addButton(pages[8],"防抖画面","antishake",120,70)
 
+-- 更多页
 addButton(pages[9],"身体旋转","spin",10,25)
 local spinMinus=Instance.new("TextButton",pages[9])
 spinMinus.Size=UDim2.new(0,100,0,35)
@@ -606,50 +680,6 @@ spinPlus.MouseButton1Click:Connect(function()
 end)
 
 addButton(pages[9],"一键交互","fastInteract",10,70)
-
-local enlargeBtn=Instance.new("TextButton",pages[9])
-enlargeBtn.Size=UDim2.new(0,100,0,35)
-enlargeBtn.Position=UDim2.new(0,120,0,70)
-enlargeBtn.BackgroundColor3=Color3.new(110/255,110/255,110/255)
-enlargeBtn.Text="变大"
-enlargeBtn.TextColor3=Color3.new(1,1,1)
-enlargeBtn.Font=Enum.Font.SourceSansBold
-enlargeBtn.TextSize=13
-enlargeBtn.AutoLocalize=false
-enlargeBtn.ZIndex=80
-enlargeBtn.MouseButton1Click:Connect(function()
-    scaleFactor=math.min(3,scaleFactor+0.1)
-    if player.Character then
-        for _,obj in ipairs(player.Character:GetDescendants()) do
-            if obj:IsA("BasePart") then
-                if not originalSizes[obj] then originalSizes[obj]=obj.Size end
-                obj.Size=originalSizes[obj]*scaleFactor
-            end
-        end
-    end
-end)
-
-local shrinkBtn=Instance.new("TextButton",pages[9])
-shrinkBtn.Size=UDim2.new(0,100,0,35)
-shrinkBtn.Position=UDim2.new(0,230,0,70)
-shrinkBtn.BackgroundColor3=Color3.new(110/255,110/255,110/255)
-shrinkBtn.Text="变小"
-shrinkBtn.TextColor3=Color3.new(1,1,1)
-shrinkBtn.Font=Enum.Font.SourceSansBold
-shrinkBtn.TextSize=13
-shrinkBtn.AutoLocalize=false
-shrinkBtn.ZIndex=80
-shrinkBtn.MouseButton1Click:Connect(function()
-    scaleFactor=math.max(0.3,scaleFactor-0.1)
-    if player.Character then
-        for _,obj in ipairs(player.Character:GetDescendants()) do
-            if obj:IsA("BasePart") then
-                if not originalSizes[obj] then originalSizes[obj]=obj.Size end
-                obj.Size=originalSizes[obj]*scaleFactor
-            end
-        end
-    end
-end)
 
 --开机动画
 task.spawn(function()
@@ -787,6 +817,84 @@ local function losCheck(origin,targetPos,targetChar)
     return ray==nil
 end
 
+-- 透视循环
+task.spawn(function()
+    while true do
+        pcall(function()
+            if st.esp then
+                for _,p in ipairs(Players:GetPlayers()) do
+                    if p~=player and p.Character and p.Character:FindFirstChild("HumanoidRootPart") then
+                        local root=p.Character.HumanoidRootPart
+                        local dist=(root.Position-player.Character.HumanoidRootPart.Position).Magnitude
+                        if dist<=st.espRange then
+                            local tag=p.Character:FindFirstChild("ESPTag")
+                            if not tag then
+                                local bill=Instance.new("BillboardGui",p.Character)
+                                bill.Name="ESPTag"
+                                bill.AlwaysOnTop=true
+                                bill.Size=UDim2.new(0,150,0,60)
+                                bill.StudsOffset=Vector3.new(0,3,0)
+                                local label=Instance.new("TextLabel",bill)
+                                label.Size=UDim2.new(1,0,1,0)
+                                label.BackgroundTransparency=1
+                                label.TextColor3=Color3.new(1,0,0)
+                                label.Font=Enum.Font.SourceSansBold
+                                label.TextSize=12
+                                tag=bill
+                            end
+                            local label=tag:FindFirstChild("TextLabel")
+                            if label then
+                                local lines={}
+                                if st.espn then table.insert(lines,p.Name) end
+                                if st.espd then table.insert(lines,math.floor(dist).."m") end
+                                if st.esphp then
+                                    local hum=p.Character:FindFirstChild("Humanoid")
+                                    if hum then table.insert(lines,"HP:"..math.floor(hum.Health)) end
+                                end
+                                label.Text=table.concat(lines,"\n")
+                            end
+                            -- 方框
+                            if st.espBox then
+                                if not p.Character:FindFirstChild("ESPBox") then
+                                    local box=Instance.new("SelectionBox",p.Character)
+                                    box.Name="ESPBox"
+                                    box.Adornee=p.Character
+                                    box.Color3=Color3.new(1,0,0)
+                                    box.LineThickness=0.05
+                                    box.Transparency=0.3
+                                end
+                            else
+                                if p.Character:FindFirstChild("ESPBox") then p.Character.ESPBox:Destroy() end
+                            end
+                            -- 射线（省略，用SelectionBox代替）
+                        end
+                    end
+                end
+                -- 清理
+                for _,p in ipairs(Players:GetPlayers()) do
+                    if p~=player and p.Character and p.Character:FindFirstChild("ESPTag") then
+                        local root=p.Character:FindFirstChild("HumanoidRootPart")
+                        local hum=p.Character:FindFirstChild("Humanoid")
+                        if not root or not hum or hum.Health<=0 or (root.Position-player.Character.HumanoidRootPart.Position).Magnitude>st.espRange then
+                            p.Character.ESPTag:Destroy()
+                            if p.Character:FindFirstChild("ESPBox") then p.Character.ESPBox:Destroy() end
+                        end
+                    end
+                end
+            else
+                for _,p in ipairs(Players:GetPlayers()) do
+                    if p~=player and p.Character then
+                        if p.Character:FindFirstChild("ESPTag") then p.Character.ESPTag:Destroy() end
+                        if p.Character:FindFirstChild("ESPBox") then p.Character.ESPBox:Destroy() end
+                    end
+                end
+            end
+        end)
+        task.wait(0.3)
+    end
+end)
+
+-- 主循环
 RS.RenderStepped:Connect(function()
     pcall(function()
         if not player.Character or not player.Character:FindFirstChild("HumanoidRootPart") then return end
@@ -794,23 +902,44 @@ RS.RenderStepped:Connect(function()
         local hum=player.Character:FindFirstChild("Humanoid")
         if not hum then return end
 
-        --自瞄逻辑
+        -- 自瞄
         if st.aim or st.silent then
             local targets=getEnemies()
+            -- 排序
             table.sort(targets,function(a,b)
-                return (a.HumanoidRootPart.Position-myRoot.Position).Magnitude < (b.HumanoidRootPart.Position-myRoot.Position).Magnitude
+                if st.aimPriority=="health" then
+                    local ha=a:FindFirstChild("Humanoid") and a.Humanoid.Health or 100
+                    local hb=b:FindFirstChild("Humanoid") and b.Humanoid.Health or 100
+                    return ha<hb
+                else
+                    local da=(a.HumanoidRootPart.Position-myRoot.Position).Magnitude
+                    local db=(b.HumanoidRootPart.Position-myRoot.Position).Magnitude
+                    return da<db
+                end
             end)
             for _,tarChar in ipairs(targets) do
-                local aimPart=st.lockh and tarChar:FindFirstChild("Head") or tarChar.HumanoidRootPart
-                if aimPart and losCheck(cam.CFrame.Position,aimPart.Position,tarChar) then
-                    local look=CFrame.lookAt(cam.CFrame.Position,aimPart.Position)
-                    cam.CFrame=cam.CFrame:Lerp(look,aimSmooth)
-                    break
+                local aimPart = nil
+                if st.aimPart=="Head" then aimPart=tarChar:FindFirstChild("Head") end
+                if st.aimPart=="Chest" then aimPart=tarChar:FindFirstChild("UpperTorso") or tarChar:FindFirstChild("Torso") end
+                if not aimPart then aimPart=tarChar.HumanoidRootPart end
+                if aimPart then
+                    local dist=(aimPart.Position-cam.CFrame.Position).Magnitude
+                    if dist<=st.aimrange then
+                        -- FOV检查
+                        local camDir=cam.CFrame.LookVector
+                        local targetDir=(aimPart.Position-cam.CFrame.Position).Unit
+                        local angle=math.acos(math.clamp(camDir:Dot(targetDir),-1,1))
+                        if math.deg(angle)<=st.aimFOV/2 and losCheck(cam.CFrame.Position,aimPart.Position,tarChar) then
+                            local look=CFrame.lookAt(cam.CFrame.Position,aimPart.Position)
+                            cam.CFrame=cam.CFrame:Lerp(look,st.aimSmooth)
+                            break
+                        end
+                    end
                 end
             end
         end
 
-        --飞行逻辑
+        -- 飞行
         if st.fly then
             if not bodyGyro then
                 bodyGyro=Instance.new("BodyGyro",myRoot)
@@ -842,7 +971,7 @@ RS.RenderStepped:Connect(function()
             hum.PlatformStand=false
         end
 
-        --锁定玩家跟踪
+        -- 其他功能逻辑...
         if st.trackPlayer and selectedTarget and selectedTarget.Character and selectedTarget.Character:FindFirstChild("HumanoidRootPart") then
             local tarRoot=selectedTarget.Character.HumanoidRootPart
             local offset=tarRoot.CFrame.LookVector*(-3)+Vector3.new(0,2,0)
@@ -850,7 +979,6 @@ RS.RenderStepped:Connect(function()
             hum.PlatformStand=true
         end
 
-        --撞击弹飞
         if st.frontpush then
             local targets=getEnemies()
             for _,tChar in ipairs(targets) do
@@ -866,7 +994,6 @@ RS.RenderStepped:Connect(function()
             end
         end
 
-        --关闭玩家碰撞
         if st.noplayercol then
             for _,p in ipairs(Players:GetPlayers()) do
                 if p~=player and p.Character then
@@ -877,7 +1004,6 @@ RS.RenderStepped:Connect(function()
             end
         end
 
-        --移动属性
         if st.speed then hum.WalkSpeed=st.walkspeed else hum.WalkSpeed=16 end
         if st.jumpboost then hum.JumpPower=st.jumppower else hum.JumpPower=50 end
         if st.autobhop and hum.FloorMaterial~=Enum.Material.Air then hum:ChangeState(Enum.HumanoidStateType.Jumping) end
@@ -888,7 +1014,6 @@ RS.RenderStepped:Connect(function()
             end
         end
 
-        --水上行走
         if st.waterWalk then
             local ray=workspace:Raycast(myRoot.Position,Vector3.new(0,-3,0))
             if ray and ray.Instance:IsA("Terrain") and ray.Material==Enum.Material.Water then
@@ -904,10 +1029,6 @@ RS.RenderStepped:Connect(function()
             if bodyFloat then bodyFloat:Destroy();bodyFloat=nil end
         end
 
-        --假死坐姿
-        if st.fakeDeath then hum.Sit=true else hum.Sit=false end
-
-        --身体旋转
         if st.spin then
             if not bodySpin then
                 bodySpin=Instance.new("BodyAngularVelocity",myRoot)
@@ -918,40 +1039,14 @@ RS.RenderStepped:Connect(function()
             if bodySpin then bodySpin:Destroy();bodySpin=nil end
         end
 
-        --夜视
         if st.night then Lighting.Brightness=3 else Lighting.Brightness=1 end
-        --防摔伤
         if st.nofall then hum:SetStateEnabled(Enum.HumanoidStateType.FallingDown,false) end
-        --无敌
         if st.god then hum.Health=hum.MaxHealth end
-        --自动回血
         if st.regen then hum.Health=math.min(hum.MaxHealth,hum.Health+0.5) end
-
-        --视野缩放
         if st.zoom then cam.FieldOfView=30 else cam.FieldOfView=70 end
-
-        --隐身
-        if st.invisible then
-            for _,part in ipairs(player.Character:GetDescendants()) do
-                if part:IsA("BasePart") then
-                    part.Transparency=1
-                elseif part:IsA("Decal") or part:IsA("Texture") then
-                    part.Transparency=1
-                end
-            end
-        else
-            for _,part in ipairs(player.Character:GetDescendants()) do
-                if part:IsA("BasePart") and part.Name~="HumanoidRootPart" then
-                    part.Transparency=0
-                elseif part:IsA("Decal") or part:IsA("Texture") then
-                    part.Transparency=0
-                end
-            end
-        end
     end)
 end)
 
---F1保存坐标 F2传送
 UIS.InputBegan:Connect(function(input,gp)
     if gp then return end
     if input.KeyCode == Enum.KeyCode.F1 then
