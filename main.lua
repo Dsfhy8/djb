@@ -9,7 +9,8 @@ local StarterGui=game:GetService("StarterGui")
 -- 状态
 local st={
 aim=false,lockh=false,silent=false,wallcheck=false,teamcheck=true,aimrange=300,
-aimPriority="distance", aimPart="Head", aimSmooth=0.2, aimCircleEnabled=true, aimCircleRadius=80,
+aimPriority="distance", aimPart="Head", aimSmooth=0.2,
+aimCircleEnabled=true, aimCircleRadius=80,
 esp=false,espn=false,espd=false,esphp=false,espnpc=true,espBox=false,espRange=300,
 norecoil=false,fastrel=false,nospread=false,infammo=false,rapid=false,autofire=false,
 speed=false,walkspeed=16,jumpboost=false,jumppower=50,autobhop=false,third=false,
@@ -34,7 +35,7 @@ local function notif(text)
     end)
 end
 
--- 提前定义 getEnemies，避免协程中引用未定义函数
+-- 提前定义 getEnemies
 local function getEnemies()
     local list={}
     for _,p in ipairs(Players:GetPlayers()) do
@@ -48,9 +49,7 @@ local function getEnemies()
         for _,obj in ipairs(WS:GetDescendants()) do
             if obj:IsA("Model") and obj:FindFirstChild("Humanoid") and obj:FindFirstChild("HumanoidRootPart") and not Players:GetPlayerFromCharacter(obj) then
                 local hum=obj.Humanoid
-                if hum.Health>0 then
-                    table.insert(list,obj)
-                end
+                if hum.Health>0 then table.insert(list,obj) end
             end
         end
     end
@@ -63,13 +62,13 @@ gui.Name="机械脚本"
 gui.ResetOnSpawn=false
 gui.ZIndexBehavior=Enum.ZIndexBehavior.Sibling
 
--- 灵动岛（胶囊形，可拖拽）
+-- 灵动岛（可拖拽）
 local island=Instance.new("TextButton",gui)
 island.Size=UDim2.new(0,160,0,32)
 island.Position=UDim2.new(0.5,-80,0.02,0)
-island.BackgroundColor3=Color3.new(30/255,0,40/255)
+island.BackgroundColor3=Color3.fromRGB(30,0,40)
 island.BorderSizePixel=2
-island.BorderColor3=Color3.new(1,0,0)
+island.BorderColor3=Color3.fromRGB(255,0,0)
 island.Text="机械脚本"
 island.TextColor3=Color3.new(1,1,1)
 island.Font=Enum.Font.SourceSansBold
@@ -83,17 +82,15 @@ Instance.new("UICorner",island).CornerRadius=UDim.new(1,0)
 local panel=Instance.new("Frame",gui)
 panel.Size=UDim2.new(0,340,0,260)
 panel.Position=UDim2.new(0.5,-170,0.5,-130)
-panel.BackgroundColor3=Color3.new(22/255,22/255,22/255)
+panel.BackgroundColor3=Color3.fromRGB(22,22,22)
 panel.BorderSizePixel=3
-panel.BorderColor3=Color3.new(1,0,0)
+panel.BorderColor3=Color3.fromRGB(255,0,0)
 panel.Visible=false
 panel.ZIndex=50
 
 local titleBar=Instance.new("Frame",panel)
 titleBar.Size=UDim2.new(1,0,0,30)
-titleBar.BackgroundColor3=Color3.new(35/255,35/255,35/255)
-titleBar.BorderSizePixel=0
-
+titleBar.BackgroundColor3=Color3.fromRGB(35,35,35)
 local titleText=Instance.new("TextLabel",titleBar)
 titleText.Size=UDim2.new(1,-30,1,0)
 titleText.Position=UDim2.new(0,10,0,0)
@@ -107,7 +104,7 @@ titleText.TextXAlignment=Enum.TextXAlignment.Left
 local closeBtn=Instance.new("TextButton",titleBar)
 closeBtn.Size=UDim2.new(0,24,0,24)
 closeBtn.Position=UDim2.new(1,-28,0,3)
-closeBtn.BackgroundColor3=Color3.new(220/255,50/255,50/255)
+closeBtn.BackgroundColor3=Color3.fromRGB(220,50,50)
 closeBtn.Text="X"
 closeBtn.TextColor3=Color3.new(1,1,1)
 closeBtn.Font=Enum.Font.SourceSansBold
@@ -130,7 +127,7 @@ for i=1,9 do
     h.Position=UDim2.new(0,0,0,0)
     h.BackgroundTransparency=1
     h.Text=names[i]
-    h.TextColor3=Color3.new(255/255,225/255,90/255)
+    h.TextColor3=Color3.fromRGB(255,225,90)
     h.Font=Enum.Font.SourceSansBold
     h.TextSize=14
     h.TextXAlignment=Enum.TextXAlignment.Left
@@ -141,7 +138,7 @@ local curPage=1
 local prevBtn=Instance.new("TextButton",panel)
 prevBtn.Size=UDim2.new(0,60,0,24)
 prevBtn.Position=UDim2.new(0,10,1,-30)
-prevBtn.BackgroundColor3=Color3.new(100/255,100/255,100/255)
+prevBtn.BackgroundColor3=Color3.fromRGB(100,100,100)
 prevBtn.Text="上一页"
 prevBtn.TextColor3=Color3.new(1,1,1)
 prevBtn.Font=Enum.Font.SourceSansBold
@@ -153,7 +150,7 @@ prevBtn.Visible=false
 local nextBtn=Instance.new("TextButton",panel)
 nextBtn.Size=UDim2.new(0,60,0,24)
 nextBtn.Position=UDim2.new(0,270,1,-30)
-nextBtn.BackgroundColor3=Color3.new(100/255,100/255,100/255)
+nextBtn.BackgroundColor3=Color3.fromRGB(100,100,100)
 nextBtn.Text="下一页"
 nextBtn.TextColor3=Color3.new(1,1,1)
 nextBtn.Font=Enum.Font.SourceSansBold
@@ -234,7 +231,7 @@ end)
 local flyControlUI=Instance.new("Frame",gui)
 flyControlUI.Size=UDim2.new(0,150,0,80)
 flyControlUI.Position=UDim2.new(0.7,-75,0.75,-40)
-flyControlUI.BackgroundColor3=Color3.new(0,0,0)
+flyControlUI.BackgroundColor3=Color3.fromRGB(0,0,0)
 flyControlUI.BackgroundTransparency=0.2
 flyControlUI.BorderSizePixel=0
 flyControlUI.Visible=false
@@ -255,7 +252,7 @@ flySpeedLabel.ZIndex=201
 local flyAccelBtn=Instance.new("TextButton",flyControlUI)
 flyAccelBtn.Size=UDim2.new(0,70,0,35)
 flyAccelBtn.Position=UDim2.new(0,5,0,5)
-flyAccelBtn.BackgroundColor3=Color3.new(80/255,130/255,200/255)
+flyAccelBtn.BackgroundColor3=Color3.fromRGB(80,130,200)
 flyAccelBtn.Text="加速"
 flyAccelBtn.TextColor3=Color3.new(1,1,1)
 flyAccelBtn.Font=Enum.Font.SourceSansBold
@@ -270,7 +267,7 @@ end)
 local flyDecelBtn=Instance.new("TextButton",flyControlUI)
 flyDecelBtn.Size=UDim2.new(0,70,0,35)
 flyDecelBtn.Position=UDim2.new(0,75,0,5)
-flyDecelBtn.BackgroundColor3=Color3.new(200/255,80/255,80/255)
+flyDecelBtn.BackgroundColor3=Color3.fromRGB(200,80,80)
 flyDecelBtn.Text="减速"
 flyDecelBtn.TextColor3=Color3.new(1,1,1)
 flyDecelBtn.Font=Enum.Font.SourceSansBold
@@ -285,7 +282,7 @@ end)
 local flyCloseBtn=Instance.new("TextButton",flyControlUI)
 flyCloseBtn.Size=UDim2.new(0,70,0,35)
 flyCloseBtn.Position=UDim2.new(0,5,0,40)
-flyCloseBtn.BackgroundColor3=Color3.new(255/255,100/255,100/255)
+flyCloseBtn.BackgroundColor3=Color3.fromRGB(255,100,100)
 flyCloseBtn.Text="关闭"
 flyCloseBtn.TextColor3=Color3.new(1,1,1)
 flyCloseBtn.Font=Enum.Font.SourceSansBold
@@ -298,7 +295,7 @@ flyCloseBtn.MouseButton1Click:Connect(function()
     for _,btn in ipairs(pages[6]:GetChildren()) do
         if btn:IsA("TextButton") and string.find(btn.Text,"飞行") then
             btn.Text="飞行：关"
-            btn.BackgroundColor3=Color3.new(110/255,110/255,110/255)
+            btn.BackgroundColor3=Color3.fromRGB(110,110,110)
         end
     end
 end)
@@ -306,7 +303,7 @@ end)
 local flyNoclipBtn=Instance.new("TextButton",flyControlUI)
 flyNoclipBtn.Size=UDim2.new(0,70,0,35)
 flyNoclipBtn.Position=UDim2.new(0,75,0,40)
-flyNoclipBtn.BackgroundColor3=Color3.new(110/255,110/255,110/255)
+flyNoclipBtn.BackgroundColor3=Color3.fromRGB(110,110,110)
 flyNoclipBtn.Text="穿墙"
 flyNoclipBtn.TextColor3=Color3.new(1,1,1)
 flyNoclipBtn.Font=Enum.Font.SourceSansBold
@@ -315,7 +312,7 @@ flyNoclipBtn.AutoButtonColor=false
 flyNoclipBtn.ZIndex=202
 flyNoclipBtn.MouseButton1Click:Connect(function()
     st.flyNoclip=not st.flyNoclip
-    flyNoclipBtn.BackgroundColor3=st.flyNoclip and Color3.new(0,200/255,0) or Color3.new(110/255,110/255,110/255)
+    flyNoclipBtn.BackgroundColor3=st.flyNoclip and Color3.fromRGB(0,200,0) or Color3.fromRGB(110,110,110)
 end)
 
 -- 飞行UI拖拽
@@ -343,7 +340,7 @@ end)
 local speedControlUI=Instance.new("Frame",gui)
 speedControlUI.Size=UDim2.new(0,120,0,40)
 speedControlUI.Position=UDim2.new(0.02,0,0.75,0)
-speedControlUI.BackgroundColor3=Color3.new(0,0,0)
+speedControlUI.BackgroundColor3=Color3.fromRGB(0,0,0)
 speedControlUI.BackgroundTransparency=0.2
 speedControlUI.BorderSizePixel=0
 speedControlUI.Visible=false
@@ -351,7 +348,7 @@ speedControlUI.ZIndex=200
 
 local speedToggleUI=Instance.new("TextButton",speedControlUI)
 speedToggleUI.Size=UDim2.new(1,0,1,0)
-speedToggleUI.BackgroundColor3=Color3.new(80/255,130/255,200/255)
+speedToggleUI.BackgroundColor3=Color3.fromRGB(80,130,200)
 speedToggleUI.Text="加速：开"
 speedToggleUI.TextColor3=Color3.new(1,1,1)
 speedToggleUI.Font=Enum.Font.SourceSansBold
@@ -360,7 +357,7 @@ speedToggleUI.AutoButtonColor=false
 speedToggleUI.MouseButton1Click:Connect(function()
     st.speed=not st.speed
     speedToggleUI.Text=st.speed and "加速：开" or "加速：关"
-    speedToggleUI.BackgroundColor3=st.speed and Color3.new(0,200/255,0) or Color3.new(80/255,130/255,200/255)
+    speedToggleUI.BackgroundColor3=st.speed and Color3.fromRGB(0,200,0) or Color3.fromRGB(80,130,200)
 end)
 
 -- 加速UI拖拽
@@ -389,7 +386,7 @@ local function addButton(parent,text,key,x,y)
     local b=Instance.new("TextButton",parent)
     b.Size=UDim2.new(0,100,0,35)
     b.Position=UDim2.new(0,x,0,y)
-    b.BackgroundColor3=st[key] and Color3.new(80/255,230/255,80/255) or Color3.new(110/255,110/255,110/255)
+    b.BackgroundColor3=st[key] and Color3.fromRGB(80,230,80) or Color3.fromRGB(110,110,110)
     b.Text=text.."："..(st[key] and "开" or "关")
     b.TextColor3=Color3.new(1,1,1)
     b.Font=Enum.Font.SourceSansBold
@@ -398,7 +395,7 @@ local function addButton(parent,text,key,x,y)
     b.ZIndex=80
     b.MouseButton1Click:Connect(function()
         st[key]=not st[key]
-        b.BackgroundColor3=st[key] and Color3.new(80/255,230/255,80/255) or Color3.new(110/255,110/255,110/255)
+        b.BackgroundColor3=st[key] and Color3.fromRGB(80,230,80) or Color3.fromRGB(110,110,110)
         b.Text=text.."："..(st[key] and "开" or "关")
         if key=="fly" then flyControlUI.Visible=st.fly end
         if key=="speed" then speedControlUI.Visible=st.speed end
@@ -423,12 +420,12 @@ local function addSlider(parent,text,key,minv,maxv,x,y)
     local bg=Instance.new("Frame",frame)
     bg.Size=UDim2.new(1,0,0,6)
     bg.Position=UDim2.new(0,0,0,22)
-    bg.BackgroundColor3=Color3.new(70/255,70/255,70/255)
+    bg.BackgroundColor3=Color3.fromRGB(70,70,70)
     bg.BorderSizePixel=0
     local fill=Instance.new("Frame",bg)
     fill.Size=UDim2.new((st[key]-minv)/(maxv-minv),0,1,0)
     fill.Position=UDim2.new(0,0,0,0)
-    fill.BackgroundColor3=Color3.new(80/255,160/255,240/255)
+    fill.BackgroundColor3=Color3.fromRGB(80,160,240)
     fill.BorderSizePixel=0
     local knob=Instance.new("TextButton",bg)
     knob.Size=UDim2.new(0,14,0,14)
@@ -447,7 +444,7 @@ local function addSlider(parent,text,key,minv,maxv,x,y)
     end
     knob.InputBegan:Connect(function(i) if i.UserInputType==Enum.UserInputType.MouseButton1 or i.UserInputType==Enum.UserInputType.Touch then dragging=true end end)
     knob.InputEnded:Connect(function(i) if i.UserInputType==Enum.UserInputType.MouseButton1 or i.UserInputType==Enum.UserInputType.Touch then dragging=false end end)
-    bg.InputChanged:Connect(function(i) if dragging and (i.UserInputType==Enum.UserInputType.MouseMovement or i.UserInputType==Enum.UserInputType.Touch) then update(i) end end)
+    UIS.InputChanged:Connect(function(i) if dragging and (i.UserInputType==Enum.UserInputType.MouseMovement or i.UserInputType==Enum.UserInputType.Touch) then update(i) end end)
     bg.InputBegan:Connect(function(i) if i.UserInputType==Enum.UserInputType.MouseButton1 or i.UserInputType==Enum.UserInputType.Touch then update(i);dragging=true end end)
     bg.InputEnded:Connect(function(i) if i.UserInputType==Enum.UserInputType.MouseButton1 or i.UserInputType==Enum.UserInputType.Touch then dragging=false end end)
 end
@@ -456,7 +453,7 @@ local function addTargetButton(parent,text,x,y)
     local b=Instance.new("TextButton",parent)
     b.Size=UDim2.new(0,100,0,35)
     b.Position=UDim2.new(0,x,0,y)
-    b.BackgroundColor3=Color3.new(110/255,110/255,110/255)
+    b.BackgroundColor3=Color3.fromRGB(110,110,110)
     b.Text=text
     b.TextColor3=Color3.new(1,1,1)
     b.Font=Enum.Font.SourceSansBold
@@ -490,7 +487,7 @@ addSlider(pages[1],"自瞄范围","aimrange",50,500,230,70)
 local aimPriorityBtn = Instance.new("TextButton",pages[1])
 aimPriorityBtn.Size = UDim2.new(0,100,0,35)
 aimPriorityBtn.Position = UDim2.new(0,10,0,115)
-aimPriorityBtn.BackgroundColor3 = Color3.new(110/255,110/255,110/255)
+aimPriorityBtn.BackgroundColor3 = Color3.fromRGB(110,110,110)
 aimPriorityBtn.Text = "优先："..(st.aimPriority=="distance" and "距离" or "血量")
 aimPriorityBtn.TextColor3 = Color3.new(1,1,1)
 aimPriorityBtn.Font = Enum.Font.SourceSansBold
@@ -505,7 +502,7 @@ end)
 local aimPartBtn = Instance.new("TextButton",pages[1])
 aimPartBtn.Size = UDim2.new(0,100,0,35)
 aimPartBtn.Position = UDim2.new(0,120,0,115)
-aimPartBtn.BackgroundColor3 = Color3.new(110/255,110/255,110/255)
+aimPartBtn.BackgroundColor3 = Color3.fromRGB(110,110,110)
 aimPartBtn.Text = "部位："..(st.aimPart=="Head" and "头部" or st.aimPart=="Chest" and "胸部" or "根")
 aimPartBtn.TextColor3 = Color3.new(1,1,1)
 aimPartBtn.Font = Enum.Font.SourceSansBold
@@ -580,7 +577,7 @@ addButton(pages[9],"身体旋转","spin",10,25)
 local spinMinus=Instance.new("TextButton",pages[9])
 spinMinus.Size=UDim2.new(0,100,0,35)
 spinMinus.Position=UDim2.new(0,120,0,25)
-spinMinus.BackgroundColor3=Color3.new(110/255,110/255,110/255)
+spinMinus.BackgroundColor3=Color3.fromRGB(110,110,110)
 spinMinus.Text="速度-"..st.spinSpeed
 spinMinus.TextColor3=Color3.new(1,1,1)
 spinMinus.Font=Enum.Font.SourceSansBold
@@ -595,7 +592,7 @@ end)
 local spinPlus=Instance.new("TextButton",pages[9])
 spinPlus.Size=UDim2.new(0,100,0,35)
 spinPlus.Position=UDim2.new(0,230,0,25)
-spinPlus.BackgroundColor3=Color3.new(110/255,110/255,110/255)
+spinPlus.BackgroundColor3=Color3.fromRGB(110,110,110)
 spinPlus.Text="速度+"..st.spinSpeed
 spinPlus.TextColor3=Color3.new(1,1,1)
 spinPlus.Font=Enum.Font.SourceSansBold
@@ -609,7 +606,7 @@ end)
 
 addButton(pages[9],"一键交互","fastInteract",10,70)
 
--- 自瞄圈
+-- 自瞄圈UI
 local aimCircle = Instance.new("TextLabel",gui)
 aimCircle.Size = UDim2.new(0,200,0,200)
 aimCircle.Position = UDim2.new(0.5,-100,0.5,-100)
@@ -653,7 +650,6 @@ task.spawn(function()
                             box.BackgroundTransparency = 1
                             box.BorderColor3 = Color3.new(1,1,1)
                             box.BorderSizePixel = 2
-                            box.BackgroundTransparency = 1
                             box.Parent = boxContainer
                             table.insert(espBoxes, box)
                         end
@@ -673,7 +669,6 @@ RS.RenderStepped:Connect(function()
         local hum=player.Character:FindFirstChild("Humanoid")
         if not hum then return end
 
-        -- 更新自瞄圈
         aimCircle.Visible = st.aimCircleEnabled
         aimCircle.TextSize = st.aimCircleRadius
 
