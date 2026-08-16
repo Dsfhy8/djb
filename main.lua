@@ -21,7 +21,8 @@ local st={
     swimBoost=false,waterWalk=false,
     trackPlayer=false,
     spin=false,spinSpeed=50,
-    fastInteract=false
+    fastInteract=false,
+    watchedAlert=false
 }
 
 local savedPos=nil
@@ -128,7 +129,7 @@ termText.TextXAlignment=Enum.TextXAlignment.Left
 termText.TextYAlignment=Enum.TextYAlignment.Top
 termText.RichText=true
 
--- 跳过按钮（新增）
+-- 跳过按钮（左侧）
 local skipButton = Instance.new("TextButton", hackOverlay)
 skipButton.Size = UDim2.new(0, 80, 0, 32)
 skipButton.Position = UDim2.new(0, 10, 0, 10)
@@ -141,7 +142,7 @@ skipButton.AutoLocalize = false
 skipButton.ZIndex = 400
 skipButton.Visible = true
 
--- 灵动岛（胶囊形，点击打开面板）
+-- 灵动岛
 local island=Instance.new("TextButton",gui)
 island.Size=UDim2.new(0,160,0,32)
 island.Position=UDim2.new(0.5,-80,0.02,0)
@@ -262,7 +263,6 @@ end
 prevBtn.MouseButton1Click:Connect(function() showPage(curPage-1) end)
 nextBtn.MouseButton1Click:Connect(function() showPage(curPage+1) end)
 
--- 修复灵动岛点击：放在panel全部创建完成之后
 island.MouseButton1Click:Connect(function()
     pcall(function()
         panel.Visible = not panel.Visible
@@ -270,7 +270,6 @@ island.MouseButton1Click:Connect(function()
     end)
 end)
 
--- Insert快捷键呼出面板
 UIS.InputBegan:Connect(function(input,gameProcessed)
     if gameProcessed then return end
     if input.KeyCode == Enum.KeyCode.Insert then
@@ -456,7 +455,7 @@ local function addButton(parent,text,key,x,y)
     end)
 end
 
--- 滑条：修复小数保留问题
+-- 滑条（修复小数）
 local function addSlider(parent,text,key,minv,maxv,x,y)
     local frame=Instance.new("Frame",parent)
     frame.Size=UDim2.new(0,100,0,40)
@@ -604,6 +603,7 @@ addButton(pages[5],"自动回血","regen",230,25)
 addButton(pages[5],"夜视","night",10,70)
 addButton(pages[5],"防摔伤","nofall",120,70)
 addButton(pages[5],"消脚步声","nofoot",230,70)
+addButton(pages[5],"被看提醒","watchedAlert",10,115)
 
 -- ========== 通用页 ==========
 addButton(pages[6],"飞行","fly",10,25)
@@ -900,7 +900,8 @@ local function getEnemies()
     local list={}
     for _,p in ipairs(Players:GetPlayers()) do
         if p~=player and p.Character and p.Character:FindFirstChild("HumanoidRootPart") and p.Character:FindFirstChild("Humanoid") and p.Character.Humanoid.Health>0 then
-            if not st.teamcheck or (player.Team~=p.Team) then
+            -- 修复队伍检测：仅当双方都有队伍且相同时才过滤
+            if not st.teamcheck or (player.Team and p.Team and player.Team == p.Team) == false then
                 table.insert(list,p.Character)
             end
         end
@@ -918,13 +919,102 @@ local function getEnemies()
     return list
 end
 
+-- 使用更兼容的射线检测
 local function losCheck(origin,targetPos,targetChar)
     if not st.wallcheck then return true end
-    local rayParams = RaycastParams.new()
-    rayParams.FilterDescendantsInstances = {player.Character, targetChar}
-    rayParams.FilterType = Enum.RaycastFilterType.Blacklist
-    local rayResult = workspace:Raycast(origin, (targetPos-origin).Unit * 500, rayParams)
-    return rayResult == nil
+    local ray = Ray.new(origin, (targetPos - origin).Unit * 500)
+    local hit = workspace:FindPartOnRayWithIgnoreList(ray, {player.Character, targetChar})
+    return hit == nil
+end
+
+-- 被看提醒屏幕下方文字
+local watchedLabel = Instance.new("TextLabel", gui)
+watchedLabel.Size = UDim2.new(1,0,0,30)
+watchedLabel.Position = UDim2.new(0,0,1,-35)
+watchedLabel.BackgroundTransparency = 1
+watchedLabel.Text = ""
+watchedLabel.TextColor3 = Color3.new(1,0,0)
+watchedLabel.Font = Enum.Font.SourceSansBold
+watchedLabel.TextSize = 16
+watchedLabel.TextXAlignment = Enum.TextXAlignment.Center
+watchedLabel.TextYAlignment = Enum.TextYAlignment.Center
+watchedLabel.ZIndex = 1500
+watchedLabel.Visible = false
+
+-- 方向判断函数
+local function getDirection(angle)
+    local deg = math.deg(angle)
+    if deg >= -22.5 and deg < 22.5 then return "前方"
+    elseif deg >= 22.5 and deg < 67.5 then return "右前方"
+    elseif deg >= 67.5 and deg < 112.5 then return "右侧"
+    elseif deg >= 112.5 and deg < 157.5 then return "右后方"
+    elseif deg >= 157.5 or deg < -157.5 then return "后方"
+    elseif deg >= -157.5 and deg < -112.5 then return "左后方"
+    elseif deg >= -112.5 and deg < -67.5 then return "左侧"
+    else return "左前方"
+    end
+end
+
+-- 被看提醒检测函数
+local function checkWatched()
+    if not st.watchedAlert then
+        watchedLabel.Visible = false
+        return
+    end
+    if not player.Character or not player.Character:FindFirstChild("HumanoidRootPart") then
+        watchedLabel.Visible = false
+        return
+    end
+    local myRoot = player.Character.HumanoidRootPart
+    local myPos = myRoot.Position
+    local lookers = {}
+
+    -- 检查真人玩家
+    for _, p in ipairs(Players:GetPlayers()) do
+        if p ~= player and p.Character and p.Character:FindFirstChild("HumanoidRootPart") and p.Character:FindFirstChild("Humanoid") then
+            local targetRoot = p.Character.HumanoidRootPart
+            local targetPos = targetRoot.Position
+            local dist = (targetPos - myPos).Magnitude
+            if dist <= 200 then
+                local lookVector = p.Character.HumanoidRootPart.CFrame.LookVector
+                local toMe = (myPos - targetPos).Unit
+                local angle = math.acos(math.clamp(lookVector:Dot(toMe), -1, 1))
+                if angle <= math.rad(25) then
+                    table.insert(lookers, {pos = targetPos, angle = angle})
+                end
+            end
+        end
+    end
+
+    -- 检查NPC
+    for _, obj in ipairs(WS:GetDescendants()) do
+        if obj:IsA("Model") and obj:FindFirstChild("Humanoid") and obj:FindFirstChild("HumanoidRootPart") and not Players:GetPlayerFromCharacter(obj) then
+            local targetRoot = obj.HumanoidRootPart
+            local targetPos = targetRoot.Position
+            local dist = (targetPos - myPos).Magnitude
+            if dist <= 200 then
+                local lookVector = targetRoot.CFrame.LookVector
+                local toMe = (myPos - targetPos).Unit
+                local angle = math.acos(math.clamp(lookVector:Dot(toMe), -1, 1))
+                if angle <= math.rad(25) then
+                    table.insert(lookers, {pos = targetPos, angle = angle})
+                end
+            end
+        end
+    end
+
+    if #lookers > 0 then
+        -- 选择最近的一个威胁
+        table.sort(lookers, function(a,b) return (a.pos - myPos).Magnitude < (b.pos - myPos).Magnitude end)
+        local nearest = lookers[1]
+        local directionVector = (nearest.pos - myPos).Unit
+        local forward = myRoot.CFrame.LookVector
+        local relativeAngle = math.atan2(directionVector.Z, directionVector.X) - math.atan2(forward.Z, forward.X)
+        watchedLabel.Text = getDirection(relativeAngle) .. "有人看你"
+        watchedLabel.Visible = true
+    else
+        watchedLabel.Visible = false
+    end
 end
 
 -- 主循环
@@ -934,7 +1024,7 @@ RS.RenderStepped:Connect(function()
         updateAimCircle()
     end)
 
-    -- 自瞄逻辑（修复近距离墙检误判）
+    -- 自瞄逻辑
     pcall(function()
         if not player.Character or not player.Character:FindFirstChild("HumanoidRootPart") then return end
         if st.aim or st.silent then
@@ -964,12 +1054,7 @@ RS.RenderStepped:Connect(function()
                                 canLock = false
                             end
                         end
-                        -- 修复：近距离直接锁定，不进行墙体检测
-                        local visible = true
-                        if dist >= 8 then
-                            visible = losCheck(cam.CFrame.Position, aimPart.Position, tarChar)
-                        end
-                        if canLock and visible then
+                        if canLock and losCheck(cam.CFrame.Position, aimPart.Position, tarChar) then
                             if dist < bestDist then
                                 bestDist = dist
                                 bestTarget = aimPart
@@ -985,7 +1070,7 @@ RS.RenderStepped:Connect(function()
         end
     end)
 
-    -- 透视逻辑（修复版：WorldToViewportPoint + Z轴修正 + Head/Root动态高度 + 加大方框）
+    -- 透视逻辑
     pcall(function()
         if not player.Character or not player.Character:FindFirstChild("HumanoidRootPart") then return end
         if st.esp then
@@ -1081,6 +1166,11 @@ RS.RenderStepped:Connect(function()
                 obj.hpText.Visible = false
             end
         end
+    end)
+
+    -- 被看提醒
+    pcall(function()
+        checkWatched()
     end)
 
     -- 其他功能逻辑
