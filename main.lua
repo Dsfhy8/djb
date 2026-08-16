@@ -128,6 +128,19 @@ termText.TextXAlignment=Enum.TextXAlignment.Left
 termText.TextYAlignment=Enum.TextYAlignment.Top
 termText.RichText=true
 
+-- 跳过按钮（新增）
+local skipButton = Instance.new("TextButton", hackOverlay)
+skipButton.Size = UDim2.new(0, 80, 0, 32)
+skipButton.Position = UDim2.new(0, 10, 0, 10)
+skipButton.BackgroundColor3 = Color3.new(80/255, 130/255, 200/255)
+skipButton.Text = "跳过"
+skipButton.TextColor3 = Color3.new(1,1,1)
+skipButton.Font = Enum.Font.SourceSansBold
+skipButton.TextSize = 14
+skipButton.AutoLocalize = false
+skipButton.ZIndex = 400
+skipButton.Visible = true
+
 -- 灵动岛（胶囊形，点击打开面板）
 local island=Instance.new("TextButton",gui)
 island.Size=UDim2.new(0,160,0,32)
@@ -485,7 +498,6 @@ local function addSlider(parent,text,key,minv,maxv,x,y)
         local relX=absoluteX-bg.AbsolutePosition.X
         local percent=math.clamp(relX/bg.AbsoluteSize.X,0,1)
         local raw = minv + percent * (maxv - minv)
-        -- 判断是否为整数范围，保留整数；否则保留两位小数
         if minv == math.floor(minv) and maxv == math.floor(maxv) then
             st[key] = math.floor(raw)
         else
@@ -648,8 +660,27 @@ end)
 
 addButton(pages[9],"一键交互","fastInteract",10,70)
 
--- 开机动画（保留）
-task.spawn(function()
+-- 开机动画（保留，增加跳过逻辑）
+local introCoroutine = nil
+local function finishIntro()
+    pcall(function()
+        hackOverlay.Visible = false
+        rainFrame.Visible = false
+        blur.Enabled = false
+        island.Visible = true
+        skipButton.Visible = false
+    end)
+end
+
+skipButton.MouseButton1Click:Connect(function()
+    if introCoroutine then
+        task.cancel(introCoroutine)
+        introCoroutine = nil
+    end
+    finishIntro()
+end)
+
+introCoroutine = task.spawn(function()
     blur.Enabled=true
     hackOverlay.BackgroundTransparency=0.6
     termText.Text=""
@@ -743,6 +774,7 @@ task.spawn(function()
     rainFrame.Visible=false
 
     island.Visible=true
+    skipButton.Visible=false
 end)
 
 -- 灵动岛彩虹闪烁边框（保留）
@@ -902,7 +934,7 @@ RS.RenderStepped:Connect(function()
         updateAimCircle()
     end)
 
-    -- 自瞄逻辑（圈关闭时直接锁最近目标，圈开启时只锁圈内目标）
+    -- 自瞄逻辑（修复近距离墙检误判）
     pcall(function()
         if not player.Character or not player.Character:FindFirstChild("HumanoidRootPart") then return end
         if st.aim or st.silent then
@@ -932,7 +964,12 @@ RS.RenderStepped:Connect(function()
                                 canLock = false
                             end
                         end
-                        if canLock and losCheck(cam.CFrame.Position, aimPart.Position, tarChar) then
+                        -- 修复：近距离直接锁定，不进行墙体检测
+                        local visible = true
+                        if dist >= 8 then
+                            visible = losCheck(cam.CFrame.Position, aimPart.Position, tarChar)
+                        end
+                        if canLock and visible then
                             if dist < bestDist then
                                 bestDist = dist
                                 bestTarget = aimPart
@@ -953,7 +990,6 @@ RS.RenderStepped:Connect(function()
         if not player.Character or not player.Character:FindFirstChild("HumanoidRootPart") then return end
         if st.esp then
             local targets = getEnemies()
-            --每帧先全部隐藏所有esp对象，清除上帧残留
             for i=1, MAX_ESP do
                 local obj=espObjects[i]
                 obj.topLine.Visible = false
@@ -973,14 +1009,12 @@ RS.RenderStepped:Connect(function()
                 if root and hum and head then
                     local dist = (root.Position - cam.CFrame.Position).Magnitude
                     if dist <= st.espRange then
-                        -- 顶部多留一点，底部多留一点，让方框更完整
                         local topPosition = head.Position + Vector3.new(0,0.6,0)
                         local bottomPosition = root.Position - Vector3.new(0,1.8,0)
 
                         local topScreen = cam:WorldToViewportPoint(topPosition)
                         local bottomScreen = cam:WorldToViewportPoint(bottomPosition)
 
-                        --修复：只要任意一个点Z>0就渲染，不全要求两点都在屏幕前方
                         if topScreen.Z > 0 or bottomScreen.Z > 0 then
                             idx = idx + 1
                             if idx > MAX_ESP then break end
@@ -989,7 +1023,6 @@ RS.RenderStepped:Connect(function()
                             local y1 = math.min(topScreen.Y, bottomScreen.Y) - 2
                             local y2 = math.max(topScreen.Y, bottomScreen.Y) + 2
                             local height = y2 - y1
-                            --宽度比例加大到0.6，保证方框更宽
                             local width = math.max(height * 0.6, 10)
                             local centerX = (topScreen.X + bottomScreen.X) / 2
                             local x1 = centerX - width/2
