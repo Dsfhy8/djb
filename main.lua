@@ -129,7 +129,7 @@ termText.TextXAlignment=Enum.TextXAlignment.Left
 termText.TextYAlignment=Enum.TextYAlignment.Top
 termText.RichText=true
 
--- 跳过按钮（左侧）
+-- 跳过按钮
 local skipButton = Instance.new("TextButton", hackOverlay)
 skipButton.Size = UDim2.new(0, 80, 0, 32)
 skipButton.Position = UDim2.new(0, 10, 0, 10)
@@ -900,7 +900,6 @@ local function getEnemies()
     local list={}
     for _,p in ipairs(Players:GetPlayers()) do
         if p~=player and p.Character and p.Character:FindFirstChild("HumanoidRootPart") and p.Character:FindFirstChild("Humanoid") and p.Character.Humanoid.Health>0 then
-            -- 修复队伍检测：仅当双方都有队伍且相同时才过滤
             if not st.teamcheck or (player.Team and p.Team and player.Team == p.Team) == false then
                 table.insert(list,p.Character)
             end
@@ -919,12 +918,49 @@ local function getEnemies()
     return list
 end
 
--- 使用更兼容的射线检测
-local function losCheck(origin,targetPos,targetChar)
-    if not st.wallcheck then return true end
-    local ray = Ray.new(origin, (targetPos - origin).Unit * 500)
-    local hit = workspace:FindPartOnRayWithIgnoreList(ray, {player.Character, targetChar})
-    return hit == nil
+-- 修正后的losCheck函数
+local function losCheck(origin, targetPos, targetChar)
+    if not st.wallcheck then
+        return true
+    end
+
+    local direction = targetPos - origin
+    local distance = direction.Magnitude
+    if distance <= 0.01 then
+        return true
+    end
+    direction = direction.Unit
+
+    local ignoreList = {}
+    if player.Character then
+        for _, v in ipairs(player.Character:GetDescendants()) do
+            if v:IsA("BasePart") then
+                table.insert(ignoreList, v)
+            end
+        end
+    end
+    if targetChar then
+        for _, v in ipairs(targetChar:GetDescendants()) do
+            if v:IsA("BasePart") then
+                table.insert(ignoreList, v)
+            end
+        end
+    end
+
+    local success, result = pcall(function()
+        local params = RaycastParams.new()
+        params.FilterDescendantsInstances = ignoreList
+        params.FilterType = Enum.RaycastFilterType.Blacklist
+        return workspace:Raycast(origin, direction * distance, params)
+    end)
+
+    if success then
+        return result == nil
+    else
+        local ray = Ray.new(origin, direction * distance)
+        local hit = workspace:FindPartOnRayWithIgnoreList(ray, ignoreList)
+        return hit == nil
+    end
 end
 
 -- 被看提醒屏幕下方文字
@@ -969,14 +1005,13 @@ local function checkWatched()
     local myPos = myRoot.Position
     local lookers = {}
 
-    -- 检查真人玩家
     for _, p in ipairs(Players:GetPlayers()) do
         if p ~= player and p.Character and p.Character:FindFirstChild("HumanoidRootPart") and p.Character:FindFirstChild("Humanoid") then
             local targetRoot = p.Character.HumanoidRootPart
             local targetPos = targetRoot.Position
             local dist = (targetPos - myPos).Magnitude
             if dist <= 200 then
-                local lookVector = p.Character.HumanoidRootPart.CFrame.LookVector
+                local lookVector = targetRoot.CFrame.LookVector
                 local toMe = (myPos - targetPos).Unit
                 local angle = math.acos(math.clamp(lookVector:Dot(toMe), -1, 1))
                 if angle <= math.rad(25) then
@@ -986,7 +1021,6 @@ local function checkWatched()
         end
     end
 
-    -- 检查NPC
     for _, obj in ipairs(WS:GetDescendants()) do
         if obj:IsA("Model") and obj:FindFirstChild("Humanoid") and obj:FindFirstChild("HumanoidRootPart") and not Players:GetPlayerFromCharacter(obj) then
             local targetRoot = obj.HumanoidRootPart
@@ -1004,7 +1038,6 @@ local function checkWatched()
     end
 
     if #lookers > 0 then
-        -- 选择最近的一个威胁
         table.sort(lookers, function(a,b) return (a.pos - myPos).Magnitude < (b.pos - myPos).Magnitude end)
         local nearest = lookers[1]
         local directionVector = (nearest.pos - myPos).Unit
@@ -1019,7 +1052,6 @@ end
 
 -- 主循环
 RS.RenderStepped:Connect(function()
-    -- 更新自瞄圈
     pcall(function()
         updateAimCircle()
     end)
