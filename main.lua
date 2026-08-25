@@ -256,10 +256,10 @@ openLabel.TextXAlignment=Enum.TextXAlignment.Right
 openLabel.TextYAlignment=Enum.TextYAlignment.Center
 openLabel.ZIndex=163
 
--- 主面板（从屏幕中心弹出）
+-- 主面板（初始很小，用于酷炫弹出动画）
 local panel=Instance.new("Frame",gui)
 panel.AnchorPoint=Vector2.new(0.5,0.5)
-panel.Size=UDim2.new(0,30,0,30)
+panel.Size=UDim2.new(0,20,0,20)
 panel.Position=UDim2.new(0.5,0,0.5,0)
 panel.BackgroundColor3=Color3.new(22/255,22/255,22/255)
 panel.BorderSizePixel=3
@@ -267,6 +267,7 @@ panel.BorderColor3=Color3.new(1,0,0)
 panel.Visible=false
 panel.ZIndex=50
 panel.ClipsDescendants = true
+panel.Rotation = -15
 
 -- 标题栏
 local titleBar=Instance.new("Frame",panel)
@@ -363,21 +364,24 @@ end
 prevBtn.MouseButton1Click:Connect(function() showPage(curPage-1) end)
 nextBtn.MouseButton1Click:Connect(function() showPage(curPage+1) end)
 
--- 主面板动画函数（从中心弹出，从小变大 + 弹性抖动）
+-- 主面板酷炫动画函数（从中心放大旋转弹出）
 local panelTween = nil
 local function animatePanel(show)
     if scriptClosed then return end
     if panelTween then panelTween:Cancel() end
     if show then
         panel.Visible = true
-        panel.Size = UDim2.new(0,30,0,30)
-        panelTween = TweenService:Create(panel, TweenInfo.new(0.35, Enum.EasingStyle.Elastic, Enum.EasingDirection.Out), {
-            Size = UDim2.new(0,340,0,260)
+        panel.Size = UDim2.new(0,20,0,20)
+        panel.Rotation = -15
+        panelTween = TweenService:Create(panel, TweenInfo.new(0.4, Enum.EasingStyle.Elastic, Enum.EasingDirection.Out), {
+            Size = UDim2.new(0,340,0,260),
+            Rotation = 0
         })
         panelTween:Play()
     else
         panelTween = TweenService:Create(panel, TweenInfo.new(0.25, Enum.EasingStyle.Back, Enum.EasingDirection.In), {
-            Size = UDim2.new(0,30,0,30)
+            Size = UDim2.new(0,20,0,20),
+            Rotation = 15
         })
         panelTween:Play()
         panelTween.Completed:Connect(function()
@@ -913,15 +917,32 @@ addButton(pages[6],"飞行","fly",10,25)
 addSlider(pages[6],"飞行速度","flyspeed",10,200,120,25)
 addButton(pages[6],"穿墙","noclip",230,25)
 addButton(pages[6],"关闭玩家碰撞","noplayercol",10,70)
-addButton(pages[6],"撞击弹飞","frontpush",120,70)
+
+-- 踢人按钮（老外脚本）
+local kickButton = Instance.new("TextButton",pages[6])
+kickButton.Size = UDim2.new(0,100,0,35)
+kickButton.Position = UDim2.new(0,120,0,70)
+kickButton.BackgroundColor3 = Color3.new(80/255,130/255,200/255)
+kickButton.Text = "踢人（老外脚本）"
+kickButton.TextColor3 = Color3.new(1,1,1)
+kickButton.Font = Enum.Font.SourceSansBold
+kickButton.TextSize = 13
+kickButton.AutoLocalize = false
+kickButton.ZIndex = 80
+kickButton.MouseButton1Click:Connect(function()
+    pcall(function()
+        loadstring(game:HttpGet("https://rawscripts.net/raw/Universal-Script-THE-REAL-dropkick-177199"))()
+    end)
+end)
+
 addButton(pages[6],"视野缩放","zoom",230,70)
 
--- ========== 娱乐页 ==========
+-- ========== 娱乐页（整理按钮布局） ==========
 addButton(pages[7],"游泳加速","swimBoost",10,25)
 addButton(pages[7],"水上行走","waterWalk",120,25)
-addButton(pages[7],"锁定目标","trackPlayer",10,70)
-addTargetButton(pages[7],"切换目标",230,70)
-addButton(pages[7],"显示目标列表","showTargetList",10,115)
+addButton(pages[7],"锁定目标","trackPlayer",230,25)
+addTargetButton(pages[7],"切换目标",10,70)
+addButton(pages[7],"显示目标列表","showTargetList",120,70)
 
 -- ========== 其他页 ==========
 addButton(pages[8],"坐标保存","savepos",10,25)
@@ -1020,7 +1041,7 @@ local bloxButton = Instance.new("TextButton", pages[10])
 bloxButton.Size = UDim2.new(0,100,0,35)
 bloxButton.Position = UDim2.new(0,10,0,65)
 bloxButton.BackgroundColor3 = Color3.new(80/255,130/255,200/255)
-bloxButton.Text = "blox脚本"
+bloxButton.Text = "blox战利品需要卡密英文"
 bloxButton.TextColor3 = Color3.new(1,1,1)
 bloxButton.Font = Enum.Font.SourceSansBold
 bloxButton.TextSize = 13
@@ -1622,42 +1643,6 @@ RS.RenderStepped:Connect(function()
             local offset=tarRoot.CFrame.LookVector*(-3)+Vector3.new(0,2,0)
             myRoot.CFrame=CFrame.new(tarRoot.Position+offset)
             hum.PlatformStand=true
-        end
-
-        if st.frontpush then
-            local targets=getEnemies()
-            for _,tChar in ipairs(targets) do
-                local tRoot=tChar:FindFirstChild("HumanoidRootPart")
-                local tHum=tChar:FindFirstChild("Humanoid")
-                if tRoot and tHum then
-                    local dist=(tRoot.Position-myRoot.Position).Magnitude
-                    if dist<10 then
-                        local dir = myRoot.CFrame.LookVector
-                        dir = Vector3.new(dir.X, 0, dir.Z)
-                        if dir.Magnitude < 0.1 then dir = Vector3.new(1, 0, 0) end
-                        dir = dir.Unit
-                        -- 增加向上分量，撞飞更明显
-                        local launchDir = (dir + Vector3.new(0, 0.35, 0)).Unit
-
-                        tHum.PlatformStand = true
-                        task.delay(0.5, function()
-                            pcall(function()
-                                tHum.PlatformStand = false
-                            end)
-                        end)
-
-                        local bodyVel = Instance.new("BodyVelocity")
-                        bodyVel.MaxForce = Vector3.new(math.huge, math.huge, math.huge)
-                        bodyVel.Velocity = launchDir * 1800
-                        bodyVel.Parent = tRoot
-                        game:GetService("Debris"):AddItem(bodyVel, 0.5)
-
-                        pcall(function()
-                            tRoot.AssemblyLinearVelocity = launchDir * 1500
-                        end)
-                    end
-                end
-            end
         end
 
         if st.noplayercol then
