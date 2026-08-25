@@ -1,10 +1,7 @@
 local player=game.Players.LocalPlayer
 
 -- 黑名单检查
-local blacklist = {
-    -- "jsbsnss3",  -- 已解除拉黑，以后可继续添加其他名字
-}
-
+local blacklist = {}
 local isBlacklisted = false
 for _, name in ipairs(blacklist) do
     if player.Name == name then
@@ -12,7 +9,6 @@ for _, name in ipairs(blacklist) do
         break
     end
 end
-
 if isBlacklisted then
     pcall(function()
         player:Kick("你已被此脚本拉黑")
@@ -29,10 +25,8 @@ local StarterGui=game:GetService("StarterGui")
 local TweenService=game:GetService("TweenService")
 local Lighting=game:GetService("Lighting")
 
--- 卡密验证状态
-local accessGranted = false
-local validKey = "cjhslm"
-local wrongAttempts = 0
+-- 脚本关闭状态
+local scriptClosed = false
 
 -- 状态
 local st={
@@ -123,7 +117,7 @@ task.spawn(function()
     end
 end)
 
--- 终端框
+-- 黑客终端框
 local terminal=Instance.new("Frame",hackOverlay)
 terminal.Size=UDim2.new(0,380,0,320)
 terminal.Position=UDim2.new(0.5,-190,0.5,-160)
@@ -169,134 +163,112 @@ skipButton.AutoLocalize = false
 skipButton.ZIndex = 400
 skipButton.Visible = true
 
--- 卡密界面
-local keyGui = Instance.new("Frame", gui)
-keyGui.Size = UDim2.new(0, 320, 0, 200)
-keyGui.Position = UDim2.new(0.5, -160, 0.5, -100)
-keyGui.BackgroundColor3 = Color3.new(10/255, 12/255, 14/255)
-keyGui.BorderSizePixel = 2
-keyGui.BorderColor3 = Color3.new(0,1,0)
-keyGui.Visible = false
-keyGui.ZIndex = 500
-
-local keyTitle = Instance.new("TextLabel", keyGui)
-keyTitle.Size = UDim2.new(1,0,0,30)
-keyTitle.Position = UDim2.new(0,0,0,0)
-keyTitle.BackgroundColor3 = Color3.new(0,30/255,0)
-keyTitle.Text = "卡密验证"
-keyTitle.TextColor3 = Color3.new(0,1,0)
-keyTitle.Font = Enum.Font.SourceSansBold
-keyTitle.TextSize = 14
-keyTitle.TextXAlignment = Enum.TextXAlignment.Center
-keyTitle.ZIndex = 501
-
-local keyTextBox = Instance.new("TextBox", keyGui)
-keyTextBox.Size = UDim2.new(1,-40,0,36)
-keyTextBox.Position = UDim2.new(0,20,0,50)
-keyTextBox.BackgroundColor3 = Color3.new(0,0,0)
-keyTextBox.BorderColor3 = Color3.new(0,1,0)
-keyTextBox.BorderSizePixel = 1
-keyTextBox.Text = ""
-keyTextBox.PlaceholderText = "请输入卡密..."
-keyTextBox.PlaceholderColor3 = Color3.new(0.5,0.5,0.5)
-keyTextBox.TextColor3 = Color3.new(0,1,0)
-keyTextBox.Font = Enum.Font.SourceSansBold
-keyTextBox.TextSize = 15
-keyTextBox.ZIndex = 501
-
-local keyConfirmBtn = Instance.new("TextButton", keyGui)
-keyConfirmBtn.Size = UDim2.new(1,-40,0,36)
-keyConfirmBtn.Position = UDim2.new(0,20,0,100)
-keyConfirmBtn.BackgroundColor3 = Color3.new(0,80/255,0)
-keyConfirmBtn.Text = "确认"
-keyConfirmBtn.TextColor3 = Color3.new(1,1,1)
-keyConfirmBtn.Font = Enum.Font.SourceSansBold
-keyConfirmBtn.TextSize = 14
-keyConfirmBtn.AutoLocalize = false
-keyConfirmBtn.ZIndex = 501
-
-local keyErrorLabel = Instance.new("TextLabel", keyGui)
-keyErrorLabel.Size = UDim2.new(1,0,0,20)
-keyErrorLabel.Position = UDim2.new(0,0,0,145)
-keyErrorLabel.BackgroundTransparency = 1
-keyErrorLabel.Text = ""
-keyErrorLabel.TextColor3 = Color3.new(1,0,0)
-keyErrorLabel.Font = Enum.Font.SourceSansBold
-keyErrorLabel.TextSize = 12
-keyErrorLabel.TextXAlignment = Enum.TextXAlignment.Center
-keyErrorLabel.ZIndex = 501
-
-local keyInfo = Instance.new("TextLabel", keyGui)
-keyInfo.Size = UDim2.new(1,0,0,30)
-keyInfo.Position = UDim2.new(0,0,0,168)
-keyInfo.BackgroundTransparency = 1
-keyInfo.Text = ""
-keyInfo.TextColor3 = Color3.new(0,1,0)
-keyInfo.Font = Enum.Font.SourceSansBold
-keyInfo.TextSize = 11
-keyInfo.TextXAlignment = Enum.TextXAlignment.Center
-keyInfo.TextYAlignment = Enum.TextYAlignment.Center
-keyInfo.ZIndex = 501
-
--- 灵动岛
+-- 灵动岛（新样式）
 local island=Instance.new("TextButton",gui)
-island.Size=UDim2.new(0,160,0,32)
-island.Position=UDim2.new(0.5,-80,0.02,0)
-island.BackgroundColor3=Color3.new(30/255,0,40/255)
-island.BorderSizePixel=2
-island.BorderColor3=Color3.new(1,0,0)
-island.Text="机械脚本"
-island.TextColor3=Color3.new(1,1,1)
-island.Font=Enum.Font.SourceSansBold
-island.TextSize=14
+island.Size=UDim2.new(0,170,0,36)
+island.Position=UDim2.new(0.5,-85,0.02,0)
+island.BackgroundColor3=Color3.new(0,0,0)
+island.BackgroundTransparency=1
+island.BorderSizePixel=0
+island.Text=""
 island.AutoLocalize=false
 island.ZIndex=160
 island.Visible=false
-local uiCorner=Instance.new("UICorner",island)
-uiCorner.CornerRadius=UDim.new(1,0)
+island.ClipsDescendants = true
 
--- 灵动岛拖拽
-local islandDragging = false
-local islandDragStart = nil
-local islandStartPos = nil
-local islandDragMoved = false
+local islandCorner=Instance.new("UICorner",island)
+islandCorner.CornerRadius=UDim.new(1,0)
 
-island.InputBegan:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-        islandDragging = true
-        islandDragStart = input.Position
-        islandStartPos = island.AbsolutePosition
-        islandDragMoved = false
-    end
-end)
+local borderFrame=Instance.new("Frame",island)
+borderFrame.Size=UDim2.new(1,0,1,0)
+borderFrame.Position=UDim2.new(0,0,0,0)
+borderFrame.BackgroundColor3=Color3.new(1,1,1)
+borderFrame.BorderSizePixel=0
+borderFrame.ZIndex=161
 
-UIS.InputChanged:Connect(function(input)
-    if islandDragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
-        local delta = input.Position - islandDragStart
-        if delta.Magnitude > 5 then
-            islandDragMoved = true
-        end
-        island.Position = UDim2.new(0, islandStartPos.X + delta.X, 0, islandStartPos.Y + delta.Y)
-    end
-end)
+local borderCorner=Instance.new("UICorner",borderFrame)
+borderCorner.CornerRadius=UDim.new(1,0)
 
-UIS.InputEnded:Connect(function(input)
-    if islandDragging and (input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch) then
-        islandDragging = false
-    end
-end)
+local borderGradient=Instance.new("UIGradient",borderFrame)
+borderGradient.Color=ColorSequence.new({
+    ColorSequenceKeypoint.new(0, Color3.new(1, 0.2, 0.8)),
+    ColorSequenceKeypoint.new(0.5, Color3.new(0.4, 0.6, 1)),
+    ColorSequenceKeypoint.new(1, Color3.new(0.6, 1, 0.9))
+})
+borderGradient.Rotation=90
 
--- 主面板
+local innerFrame=Instance.new("Frame",island)
+innerFrame.Size=UDim2.new(1,-4,1,-4)
+innerFrame.Position=UDim2.new(0,2,0,2)
+innerFrame.BackgroundColor3=Color3.new(20/255,20/255,20/255)
+innerFrame.BackgroundTransparency=0.1
+innerFrame.BorderSizePixel=0
+innerFrame.ZIndex=162
+
+local innerCorner=Instance.new("UICorner",innerFrame)
+innerCorner.CornerRadius=UDim.new(1,0)
+
+local moveIcon=Instance.new("TextLabel",innerFrame)
+moveIcon.Size=UDim2.new(0,24,1,0)
+moveIcon.Position=UDim2.new(0,6,0,0)
+moveIcon.BackgroundTransparency=1
+moveIcon.Text="⇔"
+moveIcon.TextColor3=Color3.new(1,1,1)
+moveIcon.Font=Enum.Font.SourceSansBold
+moveIcon.TextSize=16
+moveIcon.TextXAlignment=Enum.TextXAlignment.Center
+moveIcon.TextYAlignment=Enum.TextYAlignment.Center
+moveIcon.ZIndex=163
+
+local titleLabel=Instance.new("TextLabel",innerFrame)
+titleLabel.Size=UDim2.new(0,80,1,0)
+titleLabel.Position=UDim2.new(0,32,0,0)
+titleLabel.BackgroundTransparency=1
+titleLabel.Text="机械脚本"
+titleLabel.Font=Enum.Font.SourceSansBold
+titleLabel.TextSize=13
+titleLabel.TextXAlignment=Enum.TextXAlignment.Left
+titleLabel.TextYAlignment=Enum.TextYAlignment.Center
+titleLabel.ZIndex=163
+
+local titleGradient=Instance.new("UIGradient",titleLabel)
+titleGradient.Color=ColorSequence.new({
+    ColorSequenceKeypoint.new(0, Color3.new(1, 0.4, 0.9)),
+    ColorSequenceKeypoint.new(0.5, Color3.new(0.6, 0.8, 1)),
+    ColorSequenceKeypoint.new(1, Color3.new(0.8, 1, 0.9))
+})
+titleGradient.Rotation=0
+
+local titleStroke=Instance.new("UIStroke",titleLabel)
+titleStroke.Color=Color3.new(1,1,1)
+titleStroke.Thickness=1
+titleStroke.Transparency=0
+
+local openLabel=Instance.new("TextLabel",innerFrame)
+openLabel.Size=UDim2.new(0,40,1,0)
+openLabel.Position=UDim2.new(1,-46,0,0)
+openLabel.BackgroundTransparency=1
+openLabel.Text="打开"
+openLabel.TextColor3=Color3.new(1,1,1)
+openLabel.Font=Enum.Font.SourceSansBold
+openLabel.TextSize=13
+openLabel.TextXAlignment=Enum.TextXAlignment.Right
+openLabel.TextYAlignment=Enum.TextYAlignment.Center
+openLabel.ZIndex=163
+
+-- 主面板（从屏幕中心弹出）
 local panel=Instance.new("Frame",gui)
-panel.Size=UDim2.new(0,340,0,260)
-panel.Position=UDim2.new(0.5,-170,0.5,-130)
+panel.AnchorPoint=Vector2.new(0.5,0.5)
+panel.Size=UDim2.new(0,30,0,30)
+panel.Position=UDim2.new(0.5,0,0.5,0)
 panel.BackgroundColor3=Color3.new(22/255,22/255,22/255)
 panel.BorderSizePixel=3
 panel.BorderColor3=Color3.new(1,0,0)
 panel.Visible=false
 panel.ZIndex=50
+panel.ClipsDescendants = true
 
---标题栏
+-- 标题栏
 local titleBar=Instance.new("Frame",panel)
 titleBar.Size=UDim2.new(1,0,0,30)
 titleBar.BackgroundColor3=Color3.new(35/255,35/255,35/255)
@@ -312,21 +284,22 @@ titleText.Font=Enum.Font.SourceSansBold
 titleText.TextSize=17
 titleText.TextXAlignment=Enum.TextXAlignment.Left
 
+-- 叉号按钮（彻底关闭脚本）
 local closeBtn=Instance.new("TextButton",titleBar)
 closeBtn.Size=UDim2.new(0,24,0,24)
 closeBtn.Position=UDim2.new(1,-28,0,3)
 closeBtn.BackgroundColor3=Color3.new(220/255,50/255,50/255)
-closeBtn.Text="X"
+closeBtn.Text="×"
 closeBtn.TextColor3=Color3.new(1,1,1)
 closeBtn.Font=Enum.Font.SourceSansBold
-closeBtn.TextSize=12
+closeBtn.TextSize=18
 closeBtn.AutoLocalize=false
-closeBtn.MouseButton1Click:Connect(function() panel.Visible=false end)
+closeBtn.ZIndex=80
 
---页面容器9页
+-- 页面容器10页
 local pages={}
-local names={"自瞄合集","透视合集","武器合集","移动合集","生存合集","通用合集","娱乐合集","其他合集","更多合集"}
-for i=1,9 do
+local names={"自瞄合集","透视合集","武器合集","移动合集","生存合集","通用合集","娱乐合集","其他合集","更多合集","外部脚本"}
+for i=1,10 do
     local p=Instance.new("Frame",panel)
     p.Size=UDim2.new(1,0,1,-50)
     p.Position=UDim2.new(0,0,0,30)
@@ -373,7 +346,7 @@ local pageLabel=Instance.new("TextLabel",panel)
 pageLabel.Size=UDim2.new(0,80,0,20)
 pageLabel.Position=UDim2.new(0.5,-40,1,-28)
 pageLabel.BackgroundTransparency=1
-pageLabel.Text="第1/9页"
+pageLabel.Text="第1/10页"
 pageLabel.TextColor3=Color3.new(1,1,1)
 pageLabel.Font=Enum.Font.SourceSansBold
 pageLabel.TextSize=11
@@ -381,23 +354,95 @@ pageLabel.ZIndex=70
 pageLabel.TextXAlignment=Enum.TextXAlignment.Center
 
 local function showPage(p)
-    for i=1,9 do pages[i].Visible=(i==p) end
+    for i=1,10 do pages[i].Visible=(i==p) end
     prevBtn.Visible=(p>1)
-    nextBtn.Visible=(p<9)
-    pageLabel.Text="第"..p.."/9页"
+    nextBtn.Visible=(p<10)
+    pageLabel.Text="第"..p.."/10页"
     curPage=p
 end
 prevBtn.MouseButton1Click:Connect(function() showPage(curPage-1) end)
 nextBtn.MouseButton1Click:Connect(function() showPage(curPage+1) end)
 
-island.MouseButton1Click:Connect(function()
-    if islandDragMoved then
-        islandDragMoved = false
-        return
+-- 主面板动画函数（从中心弹出，从小变大 + 弹性抖动）
+local panelTween = nil
+local function animatePanel(show)
+    if scriptClosed then return end
+    if panelTween then panelTween:Cancel() end
+    if show then
+        panel.Visible = true
+        panel.Size = UDim2.new(0,30,0,30)
+        panelTween = TweenService:Create(panel, TweenInfo.new(0.35, Enum.EasingStyle.Elastic, Enum.EasingDirection.Out), {
+            Size = UDim2.new(0,340,0,260)
+        })
+        panelTween:Play()
+    else
+        panelTween = TweenService:Create(panel, TweenInfo.new(0.25, Enum.EasingStyle.Back, Enum.EasingDirection.In), {
+            Size = UDim2.new(0,30,0,30)
+        })
+        panelTween:Play()
+        panelTween.Completed:Connect(function()
+            panel.Visible = false
+        end)
     end
+end
+
+-- 灵动岛拖拽
+local islandDragging = false
+local islandDragStart = nil
+local islandStartPos = nil
+local islandDragMoved = false
+
+island.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+        islandDragging = true
+        islandDragStart = input.Position
+        islandStartPos = island.AbsolutePosition
+        islandDragMoved = false
+    end
+end)
+
+UIS.InputChanged:Connect(function(input)
+    if islandDragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
+        local delta = input.Position - islandDragStart
+        if delta.Magnitude > 12 then
+            islandDragMoved = true
+        end
+        island.Position = UDim2.new(0, islandStartPos.X + delta.X, 0, islandStartPos.Y + delta.Y)
+    end
+end)
+
+UIS.InputEnded:Connect(function(input)
+    if islandDragging and (input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch) then
+        islandDragging = false
+        islandDragMoved = false
+    end
+end)
+
+-- 灵动岛点击切换面板
+island.MouseButton1Click:Connect(function()
+    if scriptClosed then return end
+    if panel.Visible then
+        animatePanel(false)
+    else
+        showPage(curPage)
+        animatePanel(true)
+    end
+end)
+
+-- 叉号彻底关闭脚本
+closeBtn.MouseButton1Click:Connect(function()
+    scriptClosed = true
+    st.fly = false
+    st.aim = false
+    st.silent = false
+    st.esp = false
+    gui:Destroy()
     pcall(function()
-        panel.Visible = not panel.Visible
-        if panel.Visible then showPage(curPage) end
+        if player.Character and player.Character:FindFirstChild("Humanoid") then
+            local hum = player.Character.Humanoid
+            hum.PlatformStand = false
+            hum.WalkSpeed = 16
+        end
     end)
 end)
 
@@ -405,11 +450,12 @@ end)
 UIS.InputBegan:Connect(function(input,gameProcessed)
     if gameProcessed then return end
     if input.KeyCode == Enum.KeyCode.Insert then
-        if accessGranted then
-            pcall(function()
-                panel.Visible = not panel.Visible
-                if panel.Visible then showPage(curPage) end
-            end)
+        if scriptClosed then return end
+        if panel.Visible then
+            animatePanel(false)
+        else
+            showPage(curPage)
+            animatePanel(true)
         end
     end
 end)
@@ -479,12 +525,6 @@ flyCloseBtn.ZIndex=202
 flyCloseBtn.MouseButton1Click:Connect(function()
     st.fly=false
     flyControlUI.Visible=false
-    for _,btn in ipairs(pages[6]:GetChildren()) do
-        if btn:IsA("TextButton") and string.find(btn.Text,"飞行") then
-            btn.Text="飞行：关"
-            btn.BackgroundColor3=Color3.new(110/255,110/255,110/255)
-        end
-    end
 end)
 
 local flyNoclipBtn=Instance.new("TextButton",flyControlUI)
@@ -568,7 +608,7 @@ speedControlUI.InputEnded:Connect(function(input)
     if input.UserInputType==Enum.UserInputType.MouseButton1 then speedUIDragging=false end
 end)
 
--- ========== 玩家列表悬浮面板 ==========
+-- 玩家列表面板
 local playerListPanel = Instance.new("Frame", gui)
 playerListPanel.Size = UDim2.new(0, 180, 0, 240)
 playerListPanel.Position = UDim2.new(0.75, -90, 0.3, -100)
@@ -605,7 +645,7 @@ playerListContainer.ZIndex = 501
 
 local function refreshPlayerList()
     for _, child in ipairs(playerListContainer:GetChildren()) do
-        if child:IsA("TextButton") or child:IsA("Frame") or child:IsA("TextLabel") then
+        if child:IsA("TextButton") or child:IsA("TextLabel") then
             child:Destroy()
         end
     end
@@ -659,7 +699,6 @@ local function refreshPlayerList()
     playerListContainer.CanvasSize = UDim2.new(0,0,0,math.max(yPos+10, 30))
 end
 
--- 玩家列表拖拽
 local playerListDragging = false
 local playerListDragStart = nil
 local playerListStartPos = nil
@@ -682,9 +721,7 @@ playerListTitleBar.InputEnded:Connect(function(input)
     end
 end)
 
-Players.PlayerAdded:Connect(function()
-    refreshPlayerList()
-end)
+Players.PlayerAdded:Connect(function() refreshPlayerList() end)
 Players.PlayerRemoving:Connect(function(p)
     if selectedTarget == p then
         selectedTarget = nil
@@ -927,6 +964,74 @@ end)
 
 addButton(pages[9],"一键交互","fastInteract",10,70)
 
+-- ========== 外部脚本页（第10页） ==========
+local piButton = Instance.new("TextButton", pages[10])
+piButton.Size = UDim2.new(0,100,0,35)
+piButton.Position = UDim2.new(0,10,0,25)
+piButton.BackgroundColor3 = Color3.new(80/255,130/255,200/255)
+piButton.Text = "皮脚本"
+piButton.TextColor3 = Color3.new(1,1,1)
+piButton.Font = Enum.Font.SourceSansBold
+piButton.TextSize = 13
+piButton.AutoLocalize = false
+piButton.ZIndex = 80
+piButton.MouseButton1Click:Connect(function()
+    pcall(function()
+        getgenv().XiaoPi = "皮脚本QQ群894995244"
+        loadstring(game:HttpGet("https://raw.githubusercontent.com/xiaopi77/xiaopi77/main/QQ1002100032-Roblox-Pi-script.lua"))()
+    end)
+end)
+
+local yeButton = Instance.new("TextButton", pages[10])
+yeButton.Size = UDim2.new(0,100,0,35)
+yeButton.Position = UDim2.new(0,120,0,25)
+yeButton.BackgroundColor3 = Color3.new(80/255,130/255,200/255)
+yeButton.Text = "叶脚本"
+yeButton.TextColor3 = Color3.new(1,1,1)
+yeButton.Font = Enum.Font.SourceSansBold
+yeButton.TextSize = 13
+yeButton.AutoLocalize = false
+yeButton.ZIndex = 80
+yeButton.MouseButton1Click:Connect(function()
+    pcall(function()
+        loadstring(game:HttpGet("https://raw.githubusercontent.com/roblox-ye/QQ515966991/refs/heads/main/ROBLOX-CNVIP-XIAOYE.lua"))()
+    end)
+end)
+
+local translateButton = Instance.new("TextButton", pages[10])
+translateButton.Size = UDim2.new(0,100,0,35)
+translateButton.Position = UDim2.new(0,230,0,25)
+translateButton.BackgroundColor3 = Color3.new(80/255,130/255,200/255)
+translateButton.Text = "翻译脚本"
+translateButton.TextColor3 = Color3.new(1,1,1)
+translateButton.Font = Enum.Font.SourceSansBold
+translateButton.TextSize = 13
+translateButton.AutoLocalize = false
+translateButton.ZIndex = 80
+translateButton.MouseButton1Click:Connect(function()
+    pcall(function()
+        TX = "TX Script"
+        Script = "全自动翻译"
+        loadstring(game:HttpGet("https://raw.githubusercontent.com/JsYb666/Item/refs/heads/main/Auto-language"))()
+    end)
+end)
+
+local bloxButton = Instance.new("TextButton", pages[10])
+bloxButton.Size = UDim2.new(0,100,0,35)
+bloxButton.Position = UDim2.new(0,10,0,65)
+bloxButton.BackgroundColor3 = Color3.new(80/255,130/255,200/255)
+bloxButton.Text = "blox脚本"
+bloxButton.TextColor3 = Color3.new(1,1,1)
+bloxButton.Font = Enum.Font.SourceSansBold
+bloxButton.TextSize = 13
+bloxButton.AutoLocalize = false
+bloxButton.ZIndex = 80
+bloxButton.MouseButton1Click:Connect(function()
+    pcall(function()
+        loadstring(game:HttpGet("https://api.jnkie.com/api/v1/luascripts/public/aa8d71d17a46266cef7223aba0e9d4066a653f03ba06bb8ac8364e42ab0ace63/download"))()
+    end)
+end)
+
 -- 开机动画
 local introCoroutine = nil
 local function finishIntro()
@@ -935,21 +1040,7 @@ local function finishIntro()
         rainFrame.Visible = false
         blur.Enabled = false
         skipButton.Visible = false
-        keyGui.Visible = true
-        -- 打字机显示卡密信息
-        task.spawn(function()
-            local lines = {"获取卡密", "作者QQ:3769995688"}
-            keyInfo.Text = ""
-            for _, line in ipairs(lines) do
-                for i = 1, #line do
-                    keyInfo.Text = line:sub(1, i) .. "█"
-                    task.wait(0.08)
-                end
-                keyInfo.Text = keyInfo.Text:gsub("█", "") .. "\n"
-                task.wait(0.2)
-            end
-            keyInfo.Text = lines[1] .. "\n" .. lines[2]
-        end)
+        island.Visible = true
     end)
 end
 
@@ -959,57 +1050,6 @@ skipButton.MouseButton1Click:Connect(function()
         introCoroutine = nil
     end
     finishIntro()
-end)
-
--- 卡密确认
-keyConfirmBtn.MouseButton1Click:Connect(function()
-    if accessGranted then return end
-    if keyTextBox.Text == validKey then
-        accessGranted = true
-        keyGui.Visible = false
-        island.Visible = true
-        notif("卡密验证成功")
-    else
-        wrongAttempts = wrongAttempts + 1
-        keyErrorLabel.Text = "卡密错误"
-        keyTextBox.Text = ""
-        if wrongAttempts >= 2 then
-            pcall(function()
-                player:Kick("请联系作者，作者QQ:3769995688")
-            end)
-            keyGui.Visible = false
-            island.Visible = false
-            hackOverlay.Visible = false
-            rainFrame.Visible = false
-            gui.Enabled = false
-        end
-    end
-end)
-
-keyTextBox.FocusLost:Connect(function(enterPressed)
-    if enterPressed then
-        if accessGranted then return end
-        if keyTextBox.Text == validKey then
-            accessGranted = true
-            keyGui.Visible = false
-            island.Visible = true
-            notif("卡密验证成功")
-        else
-            wrongAttempts = wrongAttempts + 1
-            keyErrorLabel.Text = "卡密错误"
-            keyTextBox.Text = ""
-            if wrongAttempts >= 2 then
-                pcall(function()
-                    player:Kick("请联系作者，作者QQ:3769995688")
-                end)
-                keyGui.Visible = false
-                island.Visible = false
-                hackOverlay.Visible = false
-                rainFrame.Visible = false
-                gui.Enabled = false
-            end
-        end
-    end
 end)
 
 introCoroutine = task.spawn(function()
@@ -1033,16 +1073,7 @@ introCoroutine = task.spawn(function()
     typeText("> 目标服务器：ROBLOX_SERVER_01\n",Color3.new(0,1,0),0.04)
     typeText("> IP: 192.168.1.7\n\n",Color3.new(0,1,0),0.04)
 
-    local redLines = {
-        "0x7F3A9C20 inject...",
-        "bypass check...",
-        "loading modules...",
-        "hooking functions...",
-        "decrypting data...",
-        "preparing access...",
-        "bypassing firewall...",
-        "establishing connection..."
-    }
+    local redLines = {"0x7F3A9C20 inject...","bypass check...","loading modules...","hooking functions...","decrypting data...","preparing access...","bypassing firewall...","establishing connection..."}
     for _,line in ipairs(redLines) do
         typeText("> "..line.."\n",Color3.new(1,0,0),0.03)
     end
@@ -1094,27 +1125,38 @@ introCoroutine = task.spawn(function()
     progressFill.Size=UDim2.new(1,0,1,0)
     task.wait(0.5)
 
-    local fadeOut=TweenService:Create(hackOverlay,TweenInfo.new(0.7),{BackgroundTransparency=1})
-    local termOut=TweenService:Create(terminal,TweenInfo.new(0.7),{BackgroundTransparency=1})
-    local textOut=TweenService:Create(termText,TweenInfo.new(0.7),{TextTransparency=1})
-    fadeOut:Play()
-    termOut:Play()
-    textOut:Play()
-    blur.Enabled=false
-    task.wait(0.7)
-    hackOverlay.Visible=false
-    rainFrame.Visible=false
+    -- 同时淡出所有启动UI元素
+    local fade1 = TweenService:Create(hackOverlay, TweenInfo.new(0.5, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {BackgroundTransparency = 1})
+    local fade2 = TweenService:Create(terminal, TweenInfo.new(0.5, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {BackgroundTransparency = 1})
+    local fade3 = TweenService:Create(termText, TweenInfo.new(0.5, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {TextTransparency = 1})
+    local fade4 = TweenService:Create(rainFrame, TweenInfo.new(0.5, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {BackgroundTransparency = 1})
+    fade1:Play()
+    fade2:Play()
+    fade3:Play()
+    fade4:Play()
+    blur.Enabled = false
+    task.wait(0.5)
 
+    hackOverlay.Visible = false
+    rainFrame.Visible = false
     finishIntro()
 end)
 
--- 灵动岛彩虹闪烁边框
+-- 灵动岛彩虹闪烁
 local hue2=0
 task.spawn(function()
     while true do
         hue2=(hue2+0.02)%1
-        island.BorderColor3=Color3.fromHSV(hue2,1,1)
-        island.TextColor3=Color3.fromHSV(hue2,1,1)
+        borderGradient.Color=ColorSequence.new({
+            ColorSequenceKeypoint.new(0, Color3.fromHSV(hue2,1,1)),
+            ColorSequenceKeypoint.new(0.5, Color3.fromHSV((hue2+0.3)%1,1,1)),
+            ColorSequenceKeypoint.new(1, Color3.fromHSV((hue2+0.6)%1,1,1))
+        })
+        titleGradient.Color=ColorSequence.new({
+            ColorSequenceKeypoint.new(0, Color3.fromHSV(hue2,1,1)),
+            ColorSequenceKeypoint.new(0.5, Color3.fromHSV((hue2+0.3)%1,1,1)),
+            ColorSequenceKeypoint.new(1, Color3.fromHSV((hue2+0.6)%1,1,1))
+        })
         task.wait(0.1)
     end
 end)
@@ -1386,7 +1428,7 @@ end
 
 -- 主循环
 RS.RenderStepped:Connect(function()
-    if not accessGranted then return end
+    if scriptClosed then return end
 
     pcall(function()
         updateAimCircle()
@@ -1586,12 +1628,33 @@ RS.RenderStepped:Connect(function()
             local targets=getEnemies()
             for _,tChar in ipairs(targets) do
                 local tRoot=tChar:FindFirstChild("HumanoidRootPart")
-                if tRoot then
+                local tHum=tChar:FindFirstChild("Humanoid")
+                if tRoot and tHum then
                     local dist=(tRoot.Position-myRoot.Position).Magnitude
-                    if dist<8 then
-                        local dir=(tRoot.Position-myRoot.Position).Unit
-                        tRoot.Velocity=dir*1000
-                        tRoot.AssemblyLinearVelocity=dir*1000
+                    if dist<10 then
+                        local dir = myRoot.CFrame.LookVector
+                        dir = Vector3.new(dir.X, 0, dir.Z)
+                        if dir.Magnitude < 0.1 then dir = Vector3.new(1, 0, 0) end
+                        dir = dir.Unit
+                        -- 增加向上分量，撞飞更明显
+                        local launchDir = (dir + Vector3.new(0, 0.35, 0)).Unit
+
+                        tHum.PlatformStand = true
+                        task.delay(0.5, function()
+                            pcall(function()
+                                tHum.PlatformStand = false
+                            end)
+                        end)
+
+                        local bodyVel = Instance.new("BodyVelocity")
+                        bodyVel.MaxForce = Vector3.new(math.huge, math.huge, math.huge)
+                        bodyVel.Velocity = launchDir * 1800
+                        bodyVel.Parent = tRoot
+                        game:GetService("Debris"):AddItem(bodyVel, 0.5)
+
+                        pcall(function()
+                            tRoot.AssemblyLinearVelocity = launchDir * 1500
+                        end)
                     end
                 end
             end
@@ -1662,7 +1725,7 @@ UIS.InputBegan:Connect(function(input,gp)
         finishIntro()
         return
     end
-    if not accessGranted then return end
+    if scriptClosed then return end
     if input.KeyCode == Enum.KeyCode.F1 then
         if player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
             savedPos = player.Character.HumanoidRootPart.CFrame
